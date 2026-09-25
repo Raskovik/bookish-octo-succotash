@@ -38,9 +38,7 @@ export function ClaimRewardModal({
 
     supabase
       .from("expeditions")
-      .select(
-        "pending_species_id, pending_item_id, species(name, image_url, rarity), items!expeditions_pending_item_id_fkey(name, image_url, rarity)",
-      )
+      .select("pending_item_id, items!expeditions_pending_item_id_fkey(name, image_url, rarity)")
       .eq("id", expeditionId)
       .single()
       .then(({ data, error }) => {
@@ -100,7 +98,6 @@ export function ClaimRewardModal({
   }
 
   if (bonus?.bonus_kind) {
-    const borderColor = bonus.bonus_kind === "pet" ? "border-blue-600" : "border-green-600";
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -117,7 +114,7 @@ export function ClaimRewardModal({
               alt={bonus.bonus_name ?? ""}
               width={96}
               height={96}
-              className={`h-24 w-24 rounded border-2 ${borderColor}`}
+              className="h-24 w-24 rounded border-2 border-green-600"
             />
           ) : (
             <div className="h-24 w-24 rounded bg-green-200 dark:bg-stone-800" />
@@ -149,23 +146,6 @@ export function ClaimRewardModal({
           <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>
         ) : !reveal ? (
           <p className="text-sm text-stone-500">Opening…</p>
-        ) : reveal.species ? (
-          <>
-            <h2 className="text-lg font-semibold tracking-tight">You found a pet:</h2>
-            {reveal.species.image_url ? (
-              <Image
-                src={reveal.species.image_url}
-                alt={reveal.species.name}
-                width={112}
-                height={112}
-                className="h-28 w-28 rounded border-2 border-blue-600"
-              />
-            ) : (
-              <div className="h-28 w-28 rounded bg-green-200 dark:bg-stone-800" />
-            )}
-            <p className="font-medium">{reveal.species.name}</p>
-            <p className="text-xs capitalize text-stone-500">{reveal.species.rarity}</p>
-          </>
         ) : reveal.items ? (
           <>
             <h2 className="text-lg font-semibold tracking-tight">You found an item:</h2>
@@ -194,7 +174,7 @@ export function ClaimRewardModal({
         ) : null}
 
         <div className="flex w-full gap-3">
-          {reveal?.species || reveal?.items ? (
+          {reveal?.items ? (
             <>
               <button
                 type="button"

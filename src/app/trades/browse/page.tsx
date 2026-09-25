@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { TRADING_ENABLED } from "@/lib/feature-flags";
 import { createClient } from "@/lib/supabase/server";
+import { petImageUrl, petTypeName } from "@/lib/pet-display";
 import type { PetRarity } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 24;
@@ -52,14 +53,22 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
     }
   }
 
-  let petRows: { id: string; rarity: PetRarity; custom_name: string | null; owner_id: string; species: { name: string; image_url: string | null } | null }[] = [];
+  let petRows: {
+    id: string;
+    rarity: PetRarity;
+    custom_name: string | null;
+    owner_id: string;
+    composited_image_url: string | null;
+    species: { name: string; image_url: string | null } | null;
+    breed: { name: string } | null;
+  }[] = [];
   let itemRows: { item_id: string; owner_id: string; quantity: number; items: { name: string; image_url: string | null; rarity: PetRarity; type: string } | null }[] = [];
   let totalCount = 0;
 
   if (tab === "pets") {
     let query = supabase
       .from("pets")
-      .select("id, rarity, custom_name, owner_id, species!inner(name, image_url)", {
+      .select("id, rarity, custom_name, owner_id, composited_image_url, species(name, image_url), breed:breeds(name)", {
         count: "exact",
       })
       .eq("is_for_trade", true)
@@ -67,6 +76,10 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
 
     if (rarity) query = query.eq("rarity", rarity);
     if (ownerIds) query = query.in("owner_id", ownerIds);
+    // Only matches legacy (species-based) pets — searching breed names
+    // for trait-based pets would need a second, OR'd embedded-table
+    // filter PostgREST doesn't support cleanly alongside pagination's
+    // exact count. Acceptable gap while trading stays disabled.
     if (q.length > 0) query = query.ilike("species.name", `%${q}%`);
 
     const { data, count } = await query.order("id", { ascending: true }).range(offset, offset + PAGE_SIZE - 1);
@@ -194,10 +207,10 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
                 key={pet.id}
                 className="flex flex-col items-center gap-1.5 rounded-lg border border-green-200 p-3 text-center dark:border-stone-800"
               >
-                {pet.species?.image_url ? (
+                {petImageUrl(pet) ? (
                   <Image
-                    src={pet.species.image_url}
-                    alt={pet.species?.name ?? ""}
+                    src={petImageUrl(pet)!}
+                    alt={petTypeName(pet)}
                     width={64}
                     height={64}
                     className="h-16 w-16 rounded border-2 border-blue-600"
@@ -205,9 +218,9 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
                 ) : (
                   <div className="h-16 w-16 rounded bg-green-200 dark:bg-stone-800" />
                 )}
-                <p className="text-xs font-medium">{pet.custom_name ?? pet.species?.name}</p>
+                <p className="text-xs font-medium">{pet.custom_name ?? petTypeName(pet)}</p>
                 <p className="text-[10px] capitalize text-stone-500">
-                  {pet.species?.name} · {pet.rarity}
+                  {petTypeName(pet)} · {pet.rarity}
                 </p>
                 <Link
                   href={`/trades/new?to=${encodeURIComponent(nameById.get(pet.owner_id) ?? "")}&petId=${pet.id}`}

@@ -243,6 +243,16 @@ This project is being built one module at a time. Current state:
       `image_stage4_url` field on `/admin/garden-plants`, and the
       client-side stage calc split into quarters instead of thirds so
       plots visually progress through all four. See Notes below
+- [x] Trait-based breeding — pets are no longer one fixed species image.
+      A new `breeds`/`colors`/`patterns`/`eye_types` catalog (with new
+      `/admin/breeds`, `/admin/colors`, `/admin/patterns`,
+      `/admin/eye-types` screens) composites a pet's look server-side
+      from 5 independent traits; a new `/breeding` page lets two same-
+      breed, opposite-gender pets nest an egg that inherits or mutates
+      each trait independently. Zones no longer grant pets at all —
+      only items — and every player now starts with two breedable
+      starter pets instead of one. Existing pets are grandfathered
+      unchanged. See Notes below
 
 ---
 
@@ -3204,3 +3214,167 @@ signs in.
   (worked out algebraically from the display math, since the sandbox
   can't load the placehold.co preview art itself to eyeball directly),
   plus the admin form showing all 4 stage fields with live thumbnails.
+- **Trait-based breeding** (`0038`-`0041`) is by far the largest single
+  change this project has taken on — a full rework of how a pet looks
+  and where pets come from, built from a design-doc spec covering data
+  model, art pipeline, rollout order, and several explicitly-undecided
+  open questions. Asked to build "everything in the doc," one genuinely
+  blocking question (where a second, breedable pet comes from, since
+  zones stop granting pets) needed the user's own decision before any
+  of this could work at all — they picked "every player gets a second
+  free starter." Every other open question (inheritance split, timer
+  length, coin cost, same-breed-only for v1, a bred pet's blank name)
+  was resolved by taking the doc's own proposed defaults, since it
+  explicitly frames those as starting points rather than blockers.
+  - **Schema** (`0038_trait_breeding_schema.sql`): four new catalog
+    tables — `breeds` (replaces species as the pet-identity table; a
+    body shape only, no color baked in), `colors` (shared across every
+    breed), `patterns`/`eye_types` (breed-specific, since their overlay
+    masks must match that breed's proportions) — each on a new,
+    narrower `trait_rarity` enum (common/uncommon/rare, a separate
+    concept from items/pets' existing 5-tier `rarity_tier`, not a
+    subset of it). `pets` gains nullable `breed_id` +
+    `primary_color_id`/`secondary_color_id`/`tertiary_color_id` +
+    `pattern_id`/`eye_type_id` + `gender` + `composited_image_url` +
+    `parent_a_id`/`parent_b_id`, and a `pets_legacy_xor_trait` check
+    constraint enforces that every pet has *exactly* one of
+    `species_id` (legacy) or `breed_id` (every pet created from this
+    migration forward) — never both, never neither.
+  - **Deliberate deviation from the spec doc's own illustrative SQL**:
+    the doc's Section 2 code sample shows `drop column species_id, drop
+    column color` on `pets`, but its own Section 8 rollout plan is
+    explicit that existing pets are grandfathered, not retrofitted, and
+    that dropping those columns is "the only genuinely breaking change"
+    that should happen "only after [breeding] is fully live and
+    verified" — a later cleanup migration, not this one. This migration
+    follows Section 8, not the Section 2 snippet: `species_id`/
+    `color_variant` stay exactly as they are, every already-issued pet
+    keeps displaying through them unchanged, and only new pets set
+    `breed_id` instead.
+  - **`zone_pet_pool` is dropped outright** — zones only ever grant
+    items now. `pick_weighted_zone_reward` drops its pet branch entirely
+    (return type changes from a `{reward_kind, species_id, item_id}`
+    row to a plain `item_id`) and gains a `p_rarity_bias` parameter that
+    re-weights the draw toward uncommon/rare-tier items — what
+    `rarity_boost` potions now actually do, having been unimplemented
+    since `0006`. `item_find_boost` (which biased a pet-vs-item split
+    that no longer exists) is retired by repurposing its one existing
+    potion recipe to `rarity_boost` in place, rather than leaving
+    orphaned catalog content around or trying to drop the now-unusable
+    enum value (Postgres can't drop enum values without recreating the
+    type).
+  - **Where the second starter pet comes from**: the existing tutorial
+    flow already granted a starter pet instantly *and* auto-granted a
+    second pet when the flavor "first adventure" tutorial expedition
+    resolved 10 minutes later (previously both via zone pool rolls) —
+    this shape is kept exactly, just switched from a pool roll to two
+    fixed, hand-picked trait combinations (same breed, opposite gender,
+    so the pair is breedable together the moment the second one
+    arrives) — "granted the same way it always was," per the doc's own
+    note about the tutorial pet.
+  - **Compositing** (`src/lib/pet-compositor.ts`, using `sharp`): layer
+    stack back to front is breed base line-art → primary/secondary/
+    tertiary color fills → pattern overlay → eye-type overlay. Colors
+    are applied by treating one region-mask image's R/G/B channels as
+    each region's alpha coverage (`joinChannel`) — a standard multi-
+    region recolor technique that needs only one mask file per breed
+    rather than three. Verified directly against in-memory-generated
+    test images (the sandbox can't reach placehold.co to fetch real
+    layer URLs): a masked region tints to exactly the requested color,
+    output is byte-for-byte deterministic for identical inputs, and
+    differs for different inputs.
+  - **Compositing can't run inside Postgres** (no `sharp`/Storage access
+    from `plpgsql`), so every RPC that creates a trait-based pet leaves
+    `composited_image_url` null; `compositeMissingPetImages()` — called
+    right after `grant_starter_pet_and_tutorial`/`resolve_due_expeditions`/
+    `resolve_due_breeding` on `/profile`, `/expeditions`, `/breeding` —
+    finds any of the caller's pets still missing one, composites, and
+    persists it via a new `set_pet_composited_image()` RPC that only
+    ever fills in a currently-null value for a pet the caller owns
+    (verified: a second call attempting to overwrite an already-set
+    image is silently ignored) — a player can't use it to change their
+    pet's display to an arbitrary URL after the fact.
+  - **Deliberate deviation from the spec doc's cache-key design**: the
+    doc describes caching composites by a hash of the trait combination
+    alone, shared across every player who happens to roll the same
+    combo. Implementing that literally would need a public storage path
+    writable by any signed-in player's own session (no service-role
+    client exists anywhere in this codebase — every trusted write goes
+    through a Postgres security-definer RPC instead, and Storage writes
+    can only happen from Node) keyed purely by the trait hash — meaning
+    any player could overwrite the shared file for a trait combo they
+    don't even own a pet of, potentially with offensive content that
+    then displays for every player who has or later rolls that combo.
+    That's a real content-safety hole, not a hypothetical one, so
+    writes are scoped by owner instead (`pets/<owner_id>/<hash>.png`,
+    RLS-enforced the same way `avatars` already scopes uploads by
+    `auth.uid()`) — the hash-as-filename idea is kept (re-compositing
+    the same combo for the same owner is still a cheap upsert), just
+    not shared cross-player. A separate `previews/` path, gated by
+    `current_user_is_admin()` instead, backs the admin "preview a
+    random pet" button.
+  - **Breeding** (`0040_breeding.sql`): `breeding_attempts` reuses
+    `brew_status` verbatim (its `in_progress`/`awaiting_claim`/
+    `completed` values already mean exactly what's needed) rather than
+    defining a near-identical enum. `start_breeding` enforces: both pets
+    owned by the caller, same non-null `breed_id` (legacy pets can't
+    breed — they have none), opposite `gender`, neither pet already
+    mid-breeding or mid-expedition, and a flat 200-coin cost (the doc
+    leaves flat-vs-escalating as an open question; flat is its own
+    simplest default). `resolve_due_breeding` rolls each of the 5 trait
+    slots independently — 45% parent A / 45% parent B / 10% mutate
+    (`roll_wild_color()`/`roll_wild_pattern()`/`roll_wild_eye_type()`,
+    weighted by `trait_rarity` the same way a wild roll works) — the
+    doc's own proposed starting percentages. `claim_egg` mirrors
+    `claim_expedition_reward`'s keep/release shape exactly, computing
+    the new pet's effective rarity (`effective_pet_rarity()`, the
+    rarest trait tier across the five slots) and setting
+    `parent_a_id`/`parent_b_id` for a future family-tree view.
+  - **Admin tooling**: `/admin/breeds` (replaces `/admin/species` for
+    new pets; `/admin/species` stays for editing legacy art) gets a
+    "preview a random pet" button that rolls a wild combo and composites
+    it on the spot — the same verification-before-shipping idea this
+    project already applies to the recipe-book layout and garden
+    growth-stage art, just for layer alignment instead. `/admin/colors`/
+    `/admin/patterns`/`/admin/eye-types` are plain catalog CRUD (URL-only
+    images with live thumbnails, matching garden plants/breeds — no
+    file-upload support was added for this catalog either).
+  - **Marketplace/trading fixes**: `create_pet_listing` still `join`ed
+    (inner) `pets` to `species` — meaning listing *any* trait-based pet
+    failed outright with "Pet not found," since an inner join excludes
+    a row whose `species_id` is null. Fixed to a `coalesce`d left join
+    against both `species` and `breeds` (verified: listing a starter
+    pet, which has no `species_id`, now succeeds and correctly
+    snapshots the breed name). Marketplace's listing *display* needed
+    no changes at all — it already only reads the flat snapshot columns
+    `create_pet_listing` writes, never a live join. Every place trading
+    (still disabled behind `TRADING_ENABLED`) reads a pet's name/image
+    directly — the picker modal, the trade detail page, the for-trade
+    browse listing — was updated to the same `petImageUrl()`/
+    `petTypeName()` fallback helpers (`src/lib/pet-display.ts`) pets/
+    expeditions/marketplace already use, so re-enabling trading later
+    isn't gated on a second pass through this code, per the doc's own
+    explicit instruction to fix this even while the feature stays off.
+  - Verified against local Postgres across three rounds: the schema
+    migration (12 scenarios — starter-grant fixed traits, the
+    `pets_legacy_xor_trait` constraint rejecting both invalid states,
+    the tutorial expedition's second-pet grant, `effective_pet_rarity`'s
+    max-across-five-slots math including the all-null fallback,
+    `roll_wild_traits`, a 2000-roll weighting sanity check landing
+    within a point of the expected ratio, confirming `zone_pet_pool` is
+    gone, the new item-only `pick_weighted_zone_reward` signature,
+    `item_find_boost`'s retirement, and `set_pet_composited_image`'s
+    set-once guard), breeding (10 scenarios — eligibility on every
+    rejected case, a successful attempt's exact coin deduction, the
+    pending-lock preventing a second attempt on the same pets, the
+    resolve→claim flow producing a pet with both parent links set, a
+    double-claim rejection, and a 3000-roll inheritance-ratio sanity
+    check landing within a point of 45/45/10), and the marketplace fix
+    (listing a trait-based pet, previously broken, now succeeds). Also
+    verified visually with a temporary preview route + dev server +
+    Playwright (cleaned up after): all three `/breeding` states (pet
+    picker, nesting countdown, egg-ready trait reveal with keep/release),
+    and the admin breed/color forms with their live URL/hex previews. A
+    full `next build` + `eslint` pass is clean across every touched
+    file (18 pre-existing files updated, 26 new ones, spanning 4
+    migrations).

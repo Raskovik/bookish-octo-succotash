@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PawPrint, Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { compositeMissingPetImages } from "@/lib/pet-compositor";
 import { bbcodeToHtml } from "@/lib/bbcode";
 import { ExpeditionCountdown } from "@/components/expedition-countdown";
 import { PlayerLink } from "@/components/player-link";
@@ -35,6 +36,10 @@ export default async function ProfilePage() {
   // Lazily resolves any expedition whose timer has already elapsed —
   // there's no background job in this phase, so this runs on every load.
   await supabase.rpc("resolve_due_expeditions", { p_user_id: user.id });
+  // Either RPC above can create a trait-based pet with no composited
+  // image yet (Postgres can't run the sharp-based compositor itself) —
+  // this fills it in, a no-op once every owned pet already has one.
+  await compositeMissingPetImages(supabase, user.id);
 
   const [{ count: petCount }, { data: expeditionsData }] = await Promise.all([
     supabase

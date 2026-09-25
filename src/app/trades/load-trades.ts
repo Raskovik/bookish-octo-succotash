@@ -1,4 +1,5 @@
 import type { createClient } from "@/lib/supabase/server";
+import { petImageUrl, petTypeName } from "@/lib/pet-display";
 import type { TradeItemLine, TradePetLine, TradeWithParticipants } from "@/lib/supabase/types";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
@@ -41,7 +42,7 @@ export async function loadTrades(
       supabase
         .from("trade_pets")
         .select(
-          "trade_id, side, pet_id, pets(rarity, custom_name, species(name, image_url))",
+          "trade_id, side, pet_id, pets(rarity, custom_name, composited_image_url, species(name, image_url), breed:breeds(name))",
         )
         .in("trade_id", tradeIds),
       supabase
@@ -60,15 +61,17 @@ export async function loadTrades(
     pets: {
       rarity: TradePetLine["rarity"];
       custom_name: string | null;
+      composited_image_url: string | null;
       species: { name: string; image_url: string | null } | null;
+      breed: { name: string } | null;
     } | null;
   }[]) {
     const list = petsByTrade.get(row.trade_id) ?? [];
     list.push({
       side: row.side,
       petId: row.pet_id,
-      speciesName: row.pets?.species?.name ?? "Unknown pet",
-      imageUrl: row.pets?.species?.image_url ?? null,
+      speciesName: row.pets ? petTypeName(row.pets) : "Unknown pet",
+      imageUrl: row.pets ? petImageUrl(row.pets) : null,
       rarity: row.pets?.rarity ?? "common",
       customName: row.pets?.custom_name ?? null,
     });

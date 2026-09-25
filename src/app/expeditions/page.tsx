@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { compositeMissingPetImages } from "@/lib/pet-compositor";
 import { ExpeditionMap } from "@/components/expedition-map";
 import type {
   ActiveExpeditionSummary,
@@ -8,14 +9,11 @@ import type {
   PetWithSpecies,
 } from "@/lib/supabase/types";
 
-// Row shapes of the zone_pet_pool -> species, zone_loot_table -> items,
-// and user_inventory -> items (potions only) joins below. Hand-cast, like
-// the other joined selects in this project — see the comment on
-// PetWithSpecies in lib/supabase/types.ts.
-type ZonePetPoolJoinRow = {
-  zone_id: string;
-  species: { id: string; name: string; image_url: string | null; rarity: string } | null;
-};
+// Row shape of the zone_loot_table -> items and user_inventory -> items
+// (potions only) joins below. Hand-cast, like the other joined selects in
+// this project — see the comment on PetWithSpecies in
+// lib/supabase/types.ts. Zones only ever grant items now (see
+// 0038_trait_breeding_schema.sql) — zone_pet_pool is gone.
 type ZoneLootTableJoinRow = {
   zone_id: string;
   items: { id: string; name: string; image_url: string | null; rarity: string } | null;
@@ -39,10 +37,12 @@ export default async function ExpeditionsPage() {
   // Same lazy-resolution pattern as the profile page: settle anything
   // whose timer has already elapsed before reading current state.
   await supabase.rpc("resolve_due_expeditions", { p_user_id: user.id });
+  // The tutorial branch of resolve_due_expeditions above can grant a
+  // second trait-based starter pet with no composited image yet.
+  await compositeMissingPetImages(supabase, user.id);
 
   const [
     { data: zonesData },
-    { data: petPoolData },
     { data: lootTableData },
     { data: petsData },
     { data: activeData },
@@ -54,11 +54,10 @@ export default async function ExpeditionsPage() {
       .eq("is_active", true)
       .eq("is_tutorial", false)
       .order("tier", { ascending: true }),
-    supabase.from("zone_pet_pool").select("zone_id, species(id, name, image_url, rarity)"),
     supabase.from("zone_loot_table").select("zone_id, items(id, name, image_url, rarity)"),
     supabase
       .from("pets")
-      .select("id, rarity, color_variant, created_at, species(name, image_url)")
+      .select("id, rarity, color_variant, created_at, composited_image_url, gender, species(name, image_url), breed:breeds(name)")
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true }),
     supabase
@@ -74,27 +73,13 @@ export default async function ExpeditionsPage() {
       .gt("quantity", 0),
   ]);
 
-  // Pets and items are drawn from the same weighted roll server-side (see
-  // pick_weighted_zone_reward), so the preview merges both pools into one
-  // kind-tagged list rather than showing them separately.
+  // Item-only now — zones no longer grant pets (pick_weighted_zone_reward
+  // draws from zone_loot_table alone, see 0038_trait_breeding_schema.sql).
   const poolByZone = new Map<string, ExplorableZone["pool"]>();
-  for (const row of (petPoolData ?? []) as unknown as ZonePetPoolJoinRow[]) {
-    if (!row.species) continue;
-    const list = poolByZone.get(row.zone_id) ?? [];
-    list.push({
-      kind: "pet",
-      id: row.species.id,
-      name: row.species.name,
-      image_url: row.species.image_url,
-      rarity: row.species.rarity as ExplorableZone["pool"][number]["rarity"],
-    });
-    poolByZone.set(row.zone_id, list);
-  }
   for (const row of (lootTableData ?? []) as unknown as ZoneLootTableJoinRow[]) {
     if (!row.items) continue;
     const list = poolByZone.get(row.zone_id) ?? [];
     list.push({
-      kind: "item",
       id: row.items.id,
       name: row.items.name,
       image_url: row.items.image_url,

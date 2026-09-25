@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { petImageUrl, petTypeName } from "@/lib/pet-display";
 import { NewFolderForm } from "./new-folder-form";
 import { FolderHeader } from "./folder-header";
 import { BulkForTradeButton } from "./bulk-for-trade-button";
@@ -31,10 +32,10 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
             className="flex flex-col items-center gap-2 rounded-xl border border-green-200 bg-white/60 p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-stone-800 dark:bg-stone-950/40"
           >
             <div className="relative">
-              {pet.species?.image_url ? (
+              {petImageUrl(pet) ? (
                 <Image
-                  src={pet.species.image_url}
-                  alt={pet.species?.name ?? ""}
+                  src={petImageUrl(pet)!}
+                  alt={petTypeName(pet)}
                   width={112}
                   height={112}
                   className="h-28 w-28 rounded-lg border-2 border-blue-600 object-cover"
@@ -53,7 +54,7 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
               {pet.custom_name ?? "Unnamed"}
             </p>
             <p className="text-xs capitalize text-stone-500">
-              {pet.species?.name} · {pet.rarity}
+              {petTypeName(pet)} · {pet.rarity}
             </p>
           </Link>
         </li>
@@ -133,7 +134,7 @@ export default async function PetsPage(props: PageProps<"/pets">) {
   let petsQuery = supabase
     .from("pets")
     .select(
-      "id, rarity, color_variant, folder_id, custom_name, is_for_trade, created_at, species(name, image_url)",
+      "id, rarity, color_variant, folder_id, custom_name, is_for_trade, created_at, composited_image_url, gender, species(name, image_url), breed:breeds(name)",
     )
     .eq("owner_id", userId);
 

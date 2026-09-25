@@ -5,13 +5,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PetPickerModal, ItemPickerModal, type PickerPet, type PickerItem } from "@/components/picker-modal";
+import { petImageUrl, petTypeName } from "@/lib/pet-display";
 import type { ItemWithQuantity, PetWithSpecies } from "@/lib/supabase/types";
 
 function toPickerPets(pets: PetWithSpecies[]): PickerPet[] {
   return pets.map((p) => ({
     id: p.id,
-    name: p.custom_name ?? p.species?.name ?? "Unknown pet",
-    imageUrl: p.species?.image_url ?? null,
+    name: p.custom_name ?? petTypeName(p),
+    imageUrl: petImageUrl(p),
     rarity: p.rarity,
   }));
 }

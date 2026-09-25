@@ -111,42 +111,6 @@ export async function updateZone(
   return null;
 }
 
-export async function addPoolEntry(formData: FormData) {
-  const { supabase } = await requireAdmin();
-
-  const zoneId = String(formData.get("zone_id") ?? "");
-  const speciesId = String(formData.get("species_id") ?? "");
-  const dropWeight = Number(formData.get("drop_weight") ?? "1");
-
-  if (zoneId.length === 0 || speciesId.length === 0) return;
-  if (!Number.isInteger(dropWeight) || dropWeight < 1) return;
-
-  await supabase
-    .from("zone_pet_pool")
-    .upsert(
-      { zone_id: zoneId, species_id: speciesId, drop_weight: dropWeight },
-      { onConflict: "zone_id,species_id" },
-    );
-
-  revalidatePath(`/admin/zones/${zoneId}`);
-}
-
-export async function removePoolEntry(formData: FormData) {
-  const { supabase } = await requireAdmin();
-
-  const zoneId = String(formData.get("zone_id") ?? "");
-  const speciesId = String(formData.get("species_id") ?? "");
-  if (zoneId.length === 0 || speciesId.length === 0) return;
-
-  await supabase
-    .from("zone_pet_pool")
-    .delete()
-    .eq("zone_id", zoneId)
-    .eq("species_id", speciesId);
-
-  revalidatePath(`/admin/zones/${zoneId}`);
-}
-
 export async function addLootEntry(formData: FormData) {
   const { supabase } = await requireAdmin();
 

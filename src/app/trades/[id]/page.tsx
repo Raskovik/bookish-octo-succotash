@@ -50,7 +50,7 @@ export default async function TradeDetailPage(props: PageProps<"/trades/[id]">) 
       supabase
         .from("pets")
         .select(
-          "id, rarity, color_variant, folder_id, custom_name, is_for_trade, created_at, species(name, image_url)",
+          "id, rarity, color_variant, folder_id, custom_name, is_for_trade, created_at, composited_image_url, gender, species(name, image_url), breed:breeds(name)",
         )
         .eq("owner_id", user.id)
         .order("created_at", { ascending: true }),

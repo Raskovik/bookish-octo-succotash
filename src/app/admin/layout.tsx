@@ -25,6 +25,18 @@ export default async function AdminLayout({
           <Link href="/admin/species" className="hover:underline">
             Species
           </Link>
+          <Link href="/admin/breeds" className="hover:underline">
+            Breeds
+          </Link>
+          <Link href="/admin/colors" className="hover:underline">
+            Colors
+          </Link>
+          <Link href="/admin/patterns" className="hover:underline">
+            Patterns
+          </Link>
+          <Link href="/admin/eye-types" className="hover:underline">
+            Eye types
+          </Link>
           <Link href="/admin/recipes" className="hover:underline">
             Potion recipes
           </Link>

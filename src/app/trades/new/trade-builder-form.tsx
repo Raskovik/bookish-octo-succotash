@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PetPickerModal, ItemPickerModal, type PickerPet, type PickerItem } from "@/components/picker-modal";
+import { petImageUrl, petTypeName } from "@/lib/pet-display";
 import type { ItemWithQuantity, PetWithSpecies } from "@/lib/supabase/types";
 
 type ModalTarget = "myPets" | "myItems" | "theirPets" | "theirItems" | null;
@@ -13,8 +14,8 @@ type ModalTarget = "myPets" | "myItems" | "theirPets" | "theirItems" | null;
 function toPickerPets(pets: PetWithSpecies[]): PickerPet[] {
   return pets.map((p) => ({
     id: p.id,
-    name: p.custom_name ?? p.species?.name ?? "Unknown pet",
-    imageUrl: p.species?.image_url ?? null,
+    name: p.custom_name ?? petTypeName(p),
+    imageUrl: petImageUrl(p),
     rarity: p.rarity,
   }));
 }
@@ -164,7 +165,7 @@ export function TradeBuilderForm({
     const [{ data: theirPetsData }, { data: theirItemsData }] = await Promise.all([
       supabase
         .from("pets")
-        .select("id, rarity, custom_name, species(name, image_url)")
+        .select("id, rarity, custom_name, composited_image_url, species(name, image_url), breed:breeds(name)")
         .eq("owner_id", profile.id)
         .eq("is_for_trade", true),
       supabase

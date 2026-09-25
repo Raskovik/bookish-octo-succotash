@@ -25,6 +25,7 @@ export async function SiteNav() {
         { href: "/expeditions", label: "Expeditions" },
         { href: "/brewing", label: "Brewing" },
         { href: "/garden", label: "Garden" },
+        { href: "/breeding", label: "Breeding" },
       ],
     },
     {

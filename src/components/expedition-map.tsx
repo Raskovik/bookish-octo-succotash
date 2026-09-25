@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ExpeditionCountdown } from "@/components/expedition-countdown";
 import { ClaimRewardModal } from "@/components/claim-reward-modal";
+import { petTypeName } from "@/lib/pet-display";
 import type {
   ActiveExpeditionSummary,
   ExplorableZone,
@@ -64,6 +65,8 @@ export function ExpeditionMap({
 
   const selectedZone = zones.find((z) => z.id === selectedZoneId) ?? null;
   const selectedZoneActive = selectedZoneId ? activeByZone.get(selectedZoneId) : undefined;
+  const activePet = selectedZoneActive ? petsById.get(selectedZoneActive.pet_id) : undefined;
+  const activePetTypeName = activePet ? petTypeName(activePet) : "Your pet";
 
   function openZone(zoneId: string) {
     setSelectedZoneId(zoneId);
@@ -196,32 +199,22 @@ export function ExpeditionMap({
           {selectedZone.pool.length > 0 ? (
             <div>
               <h3 className="text-sm font-medium">You might get:</h3>
-              <p className="text-xs text-stone-500">
-                Pets are shown in blue, crafting items in green.
-              </p>
               <ul className="mt-2 flex flex-wrap gap-3">
                 {selectedZone.pool.map((entry) => (
-                  <li
-                    key={`${entry.kind}-${entry.id}`}
-                    className="flex flex-col items-center gap-1 text-center"
-                  >
+                  <li key={entry.id} className="flex flex-col items-center gap-1 text-center">
                     {entry.image_url ? (
                       <Image
                         src={entry.image_url}
                         alt={entry.name}
                         width={56}
                         height={56}
-                        className={`h-14 w-14 rounded border-2 ${
-                          entry.kind === "pet" ? "border-blue-600" : "border-green-600"
-                        }`}
+                        className="h-14 w-14 rounded border-2 border-green-600"
                       />
                     ) : (
                       <div className="h-14 w-14 rounded bg-green-200 dark:bg-stone-800" />
                     )}
                     <span className="text-xs">{entry.name}</span>
-                    <span className="text-xs capitalize text-stone-500">
-                      {entry.kind} · {entry.rarity}
-                    </span>
+                    <span className="text-xs capitalize text-stone-500">{entry.rarity}</span>
                   </li>
                 ))}
               </ul>
@@ -230,10 +223,7 @@ export function ExpeditionMap({
 
           {selectedZoneActive?.status === "awaiting_claim" ? (
             <div className="flex flex-col items-start gap-2 rounded-md bg-emerald-50 p-3 text-sm dark:bg-emerald-950">
-              <p className="font-medium">
-                {petsById.get(selectedZoneActive.pet_id)?.species?.name ?? "Your pet"} has
-                returned!
-              </p>
+              <p className="font-medium">{activePetTypeName} has returned!</p>
               <button
                 type="button"
                 onClick={() =>
@@ -249,10 +239,7 @@ export function ExpeditionMap({
             </div>
           ) : selectedZoneActive ? (
             <div className="flex items-center justify-between gap-2 rounded-md bg-green-100 p-3 text-sm dark:bg-stone-900">
-              <span>
-                {petsById.get(selectedZoneActive.pet_id)?.species?.name ?? "A pet"} is exploring
-                here
-              </span>
+              <span>{activePetTypeName} is exploring here</span>
               <ExpeditionCountdown resolvesAt={selectedZoneActive.resolves_at} />
             </div>
           ) : availablePets.length === 0 ? (
@@ -273,7 +260,7 @@ export function ExpeditionMap({
                 >
                   {availablePets.map((pet) => (
                     <option key={pet.id} value={pet.id}>
-                      {pet.species?.name ?? "Unnamed pet"} ({pet.rarity})
+                      {pet.custom_name ?? petTypeName(pet)} ({pet.rarity})
                     </option>
                   ))}
                 </select>

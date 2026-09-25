@@ -57,10 +57,18 @@ export type SpeciesRow = {
   created_at: string;
 };
 
+export type PetGender = "male" | "female";
+
+// See 0038_trait_breeding_schema.sql. species_id/color_variant are now
+// nullable — a pet has EXACTLY one of species_id (legacy, pre-trait) or
+// breed_id (every pet created from that migration forward), never both,
+// never neither (pets_legacy_xor_trait). Use src/lib/pet-display.ts's
+// helpers rather than reading species_id/breed_id directly at a display
+// call site, so that fallback logic lives in exactly one place.
 export type PetRow = {
   id: string;
   owner_id: string;
-  species_id: string;
+  species_id: string | null;
   color_variant: string | null;
   rarity: PetRarity;
   folder_id: string | null;
@@ -70,6 +78,19 @@ export type PetRow = {
   // only through set_pet_bio() (0034_pet_bio.sql), never a direct
   // client UPDATE (pets has never had one; see custom_name/folder_id).
   bio: string | null;
+  breed_id: string | null;
+  primary_color_id: string | null;
+  secondary_color_id: string | null;
+  tertiary_color_id: string | null;
+  pattern_id: string | null;
+  eye_type_id: string | null;
+  gender: PetGender | null;
+  // Cache column populated by src/lib/pet-compositor.ts shortly after a
+  // trait-based pet is created — null in the brief gap before that runs,
+  // and always null for a legacy (species_id-based) pet.
+  composited_image_url: string | null;
+  parent_a_id: string | null;
+  parent_b_id: string | null;
   created_at: string;
 };
 
@@ -96,10 +117,53 @@ export type ZoneRow = {
   created_at: string;
 };
 
-export type ZonePetPoolRow = {
-  zone_id: string;
-  species_id: string;
-  drop_weight: number;
+// zone_pet_pool was dropped in 0038_trait_breeding_schema.sql — zones
+// only ever grant items now (see zone_loot_table below); pets come from
+// the starter grant/tutorial or breeding (0039/0040).
+
+// ── Trait-based breeding (0038/0039/0040) ───────────────────────────────
+// A separate, narrower 3-tier enum from PetRarity/ItemRarity — Flight-
+// Rising-style "gene tiers," not a subset of the 5-tier rarity_tier.
+export type TraitRarity = "common" | "uncommon" | "rare";
+
+export type BreedRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  rarity_weight: number;
+  base_layer_url: string | null;
+  mask_layer_url: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type ColorRow = {
+  id: string;
+  name: string;
+  hex_swatch: string;
+  rarity_tier: TraitRarity;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type PatternRow = {
+  id: string;
+  breed_id: string;
+  name: string;
+  rarity_tier: TraitRarity;
+  layer_url: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type EyeTypeRow = {
+  id: string;
+  breed_id: string;
+  name: string;
+  rarity_tier: TraitRarity;
+  layer_url: string | null;
+  is_active: boolean;
+  created_at: string;
 };
 
 export type ItemRow = {
@@ -296,15 +360,87 @@ export type ExpeditionRow = {
 // Database["public"]["Tables"] Relationships metadata below — that's kept
 // minimal since this project hand-writes its types rather than running
 // `supabase gen types`. Query call sites cast to these explicitly.
+// species is null for a trait-based pet (breed_id set instead); breed is
+// null for a legacy pet (species_id set instead) — see PetRow's comment.
+// Use src/lib/pet-display.ts's petImageUrl()/petTypeName() rather than
+// reading species/breed/composited_image_url directly at a display call
+// site.
 export type PetWithSpecies = Pick<
   PetRow,
-  "id" | "rarity" | "color_variant" | "folder_id" | "custom_name" | "is_for_trade" | "created_at"
+  | "id"
+  | "rarity"
+  | "color_variant"
+  | "folder_id"
+  | "custom_name"
+  | "is_for_trade"
+  | "created_at"
+  | "composited_image_url"
+  | "gender"
 > & {
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
+  breed: Pick<BreedRow, "name"> | null;
 };
 
 // Everything PetWithSpecies has, plus bio — shown on /pets/[petId].
 export type PetDetail = PetWithSpecies & Pick<PetRow, "bio">;
+
+// Everything PetDetail has, plus the resolved trait panel — shown only on
+// /pets/[petId], never the grid (too much joined data to fetch per card).
+// Each trait is null for a legacy pet (no breed_id) or an unset slot
+// (tertiary_color_id is often intentionally null).
+export type PetDetailWithTraits = PetDetail & {
+  primaryColor: Pick<ColorRow, "name" | "hex_swatch" | "rarity_tier"> | null;
+  secondaryColor: Pick<ColorRow, "name" | "hex_swatch" | "rarity_tier"> | null;
+  tertiaryColor: Pick<ColorRow, "name" | "hex_swatch" | "rarity_tier"> | null;
+  pattern: Pick<PatternRow, "name" | "rarity_tier"> | null;
+  eyeType: Pick<EyeTypeRow, "name" | "rarity_tier"> | null;
+  parentA: Pick<PetRow, "id" | "custom_name"> | null;
+  parentB: Pick<PetRow, "id" | "custom_name"> | null;
+};
+
+// See 0040_breeding.sql. Reuses BrewStatus's exact 3 values (in_progress
+// -> awaiting_claim -> completed) rather than a near-identical new enum.
+export type BreedingAttemptRow = {
+  id: string;
+  user_id: string;
+  pet_a_id: string;
+  pet_b_id: string;
+  status: BrewStatus;
+  started_at: string;
+  resolves_at: string;
+  pending_breed_id: string | null;
+  pending_primary_color_id: string | null;
+  pending_secondary_color_id: string | null;
+  pending_tertiary_color_id: string | null;
+  pending_pattern_id: string | null;
+  pending_eye_type_id: string | null;
+  pending_gender: PetGender | null;
+  result_pet_id: string | null;
+  created_at: string;
+};
+
+// A breedable pet as shown on /breeding's pet picker — enough to check
+// eligibility (breed_id/gender) and display it.
+export type BreedablePet = Pick<PetRow, "id" | "custom_name" | "gender" | "composited_image_url"> & {
+  breed: Pick<BreedRow, "id" | "name"> | null;
+};
+
+// The player's one active (in_progress or awaiting_claim) breeding
+// attempt, if any — mirrors ActiveBrewSummary's shape/role.
+export type ActiveBreedingAttempt = Pick<BreedingAttemptRow, "id" | "status" | "resolves_at" | "pet_a_id" | "pet_b_id">;
+
+// The revealed egg contents for an awaiting_claim breeding attempt —
+// fetched only once resolved, so the result stays a surprise until then
+// (same idea as ExpeditionRewardReveal).
+export type EggReveal = {
+  pending_gender: PetGender | null;
+  breed: Pick<BreedRow, "name"> | null;
+  primaryColor: Pick<ColorRow, "name" | "hex_swatch" | "rarity_tier"> | null;
+  secondaryColor: Pick<ColorRow, "name" | "hex_swatch" | "rarity_tier"> | null;
+  tertiaryColor: Pick<ColorRow, "name" | "hex_swatch" | "rarity_tier"> | null;
+  pattern: Pick<PatternRow, "name" | "rarity_tier"> | null;
+  eyeType: Pick<EyeTypeRow, "name" | "rarity_tier"> | null;
+};
 
 // A stack in the player's inventory, as shown on /items.
 export type ItemWithQuantity = {
@@ -357,19 +493,17 @@ export type ActiveExpeditionSummary = Pick<
 // The revealed reward for a single awaiting_claim expedition, fetched
 // only when the player explicitly opens the claim popup — deliberately
 // not part of the map's initial data load, so the reward stays a
-// surprise until then.
+// surprise until then. Item-only — zones no longer grant pets (see
+// 0038_trait_breeding_schema.sql).
 export type ExpeditionRewardReveal = {
-  pending_species_id: string | null;
   pending_item_id: string | null;
-  species: Pick<SpeciesRow, "name" | "image_url" | "rarity"> | null;
   items: Pick<ItemRow, "name" | "image_url" | "rarity"> | null;
 };
 
-// What claim_expedition_reward returns: the granted pet id (if a pet was
-// kept), plus an optional bonus from a double_reward_chance potion.
+// What claim_expedition_reward returns — an optional bonus item from a
+// double_reward_chance potion. Never a pet (see ExpeditionRewardReveal).
 export type ClaimExpeditionResult = {
-  granted_pet_id: string | null;
-  bonus_kind?: "pet" | "item";
+  bonus_kind?: "item";
   bonus_name?: string;
   bonus_image_url?: string | null;
 };
@@ -436,15 +570,14 @@ export type BuyListingResult =
   | { status: "sold"; currency: ListingCurrency; price: number }
   | { status: "unavailable"; reason: string };
 
-// A zone's pool preview ("what you might get") — pets and items are drawn
-// from the same weighted roll (see pick_weighted_zone_reward), so the
-// preview is one merged, kind-tagged list rather than two separate ones.
+// A zone's pool preview ("what you might get") — item-only now that
+// zones no longer grant pets (see 0038_trait_breeding_schema.sql;
+// pick_weighted_zone_reward draws from zone_loot_table alone).
 export type ZonePoolEntry = {
-  kind: "pet" | "item";
   id: string;
   name: string;
   image_url: string | null;
-  rarity: PetRarity;
+  rarity: ItemRarity;
 };
 
 // A recipe as shown on /brewing: the output potion, its ingredients (each
@@ -869,16 +1002,16 @@ export type Database = {
         Partial<Omit<UserRow, "id">>
       >;
       species: TableOf<SpeciesRow, Partial<SpeciesRow> & { name: string }>;
-      pets: TableOf<
-        PetRow,
-        Partial<PetRow> & { owner_id: string; species_id: string; rarity: PetRarity }
-      >;
+      pets: TableOf<PetRow, Partial<PetRow> & { owner_id: string; rarity: PetRarity }>;
       pet_folders: TableOf<
         PetFolderRow,
         Partial<PetFolderRow> & { owner_id: string; name: string }
       >;
       zones: TableOf<ZoneRow, Partial<ZoneRow> & { name: string }>;
-      zone_pet_pool: TableOf<ZonePetPoolRow>;
+      breeds: TableOf<BreedRow, Partial<BreedRow> & { name: string }>;
+      colors: TableOf<ColorRow, Partial<ColorRow> & { name: string; hex_swatch: string }>;
+      patterns: TableOf<PatternRow, Partial<PatternRow> & { breed_id: string; name: string }>;
+      eye_types: TableOf<EyeTypeRow, Partial<EyeTypeRow> & { breed_id: string; name: string }>;
       items: TableOf<ItemRow, Partial<ItemRow> & { name: string }>;
       user_inventory: TableOf<
         UserInventoryRow,
@@ -899,6 +1032,10 @@ export type Database = {
           zone_id: string;
           resolves_at: string;
         }
+      >;
+      breeding_attempts: TableOf<
+        BreedingAttemptRow,
+        Partial<BreedingAttemptRow> & { user_id: string; pet_a_id: string; pet_b_id: string; resolves_at: string }
       >;
       admin_audit_log: TableOf<AdminAuditLogRow>;
       trades: TableOf<TradeRow>;
@@ -981,6 +1118,37 @@ export type Database = {
         };
         Returns: ClaimExpeditionResult;
       };
+      set_pet_composited_image: {
+        Args: { p_user_id: string; p_pet_id: string; p_image_url: string };
+        Returns: null;
+      };
+      roll_wild_color: {
+        Args: Record<string, never>;
+        Returns: string;
+      };
+      roll_wild_pattern: {
+        Args: { p_breed_id: string };
+        Returns: string;
+      };
+      roll_wild_eye_type: {
+        Args: { p_breed_id: string };
+        Returns: string;
+      };
+      roll_wild_traits: {
+        Args: { p_breed_id: string };
+        // A SQL function `returns table (...)` is set-returning at the
+        // wire level even though this always produces exactly one row —
+        // typed as an array so `.rpc(...).single()` (used at both call
+        // sites) narrows correctly, same as any other RPC returning
+        // `setof`/`table`.
+        Returns: {
+          primary_color_id: string | null;
+          secondary_color_id: string | null;
+          tertiary_color_id: string | null;
+          pattern_id: string | null;
+          eye_type_id: string | null;
+        }[];
+      };
       start_brew: {
         Args: {
           p_user_id: string;
@@ -998,6 +1166,18 @@ export type Database = {
           p_brew_id: string;
         };
         Returns: null;
+      };
+      start_breeding: {
+        Args: { p_user_id: string; p_pet_a_id: string; p_pet_b_id: string };
+        Returns: string;
+      };
+      resolve_due_breeding: {
+        Args: { p_user_id: string };
+        Returns: null;
+      };
+      claim_egg: {
+        Args: { p_user_id: string; p_attempt_id: string; p_keep: boolean };
+        Returns: string | null;
       };
       expand_den: {
         Args: { p_user_id: string };
