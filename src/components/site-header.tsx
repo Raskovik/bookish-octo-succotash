@@ -4,6 +4,7 @@ import { Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isConversationUnread } from "@/lib/dm-unread";
 import { CURRENCY } from "@/config";
+import { CurrencyIcon } from "@/components/currency-icon";
 
 export async function SiteHeader() {
   const supabase = await createClient();
@@ -52,10 +53,10 @@ export async function SiteHeader() {
         <div className="flex items-center gap-3 rounded-md border-2 border-amber-900 bg-yellow-400 px-4 py-2 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-medium text-stone-900">
             <span title={CURRENCY.coin.label}>
-              {CURRENCY.coin.emoji} {coinBalance ?? 0}
+              <CurrencyIcon kind="coin" /> {coinBalance ?? 0}
             </span>
             <span title={CURRENCY.gem.label}>
-              {CURRENCY.gem.emoji} {gemBalance ?? 0}
+              <CurrencyIcon kind="gem" /> {gemBalance ?? 0}
             </span>
           </div>
           <Link

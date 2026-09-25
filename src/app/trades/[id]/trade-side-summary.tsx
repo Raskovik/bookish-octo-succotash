@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { TradeWithParticipants } from "@/lib/supabase/types";
 
 export function TradeSideSummary({
@@ -70,8 +71,16 @@ export function TradeSideSummary({
 
           {coins > 0 || gems > 0 ? (
             <div className="flex gap-3 text-sm">
-              {coins > 0 ? <span>🪙 {coins}</span> : null}
-              {gems > 0 ? <span>💎 {gems}</span> : null}
+              {coins > 0 ? (
+                <span>
+                  <CurrencyIcon kind="coin" /> {coins}
+                </span>
+              ) : null}
+              {gems > 0 ? (
+                <span>
+                  <CurrencyIcon kind="gem" /> {gems}
+                </span>
+              ) : null}
             </div>
           ) : null}
         </>

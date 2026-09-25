@@ -7,6 +7,7 @@ import { compositeMissingPetImages } from "@/lib/pet-compositor";
 import { bbcodeToHtml } from "@/lib/bbcode";
 import { ExpeditionCountdown } from "@/components/expedition-countdown";
 import { PlayerLink } from "@/components/player-link";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { ExpeditionWithZone } from "@/lib/supabase/types";
 
 export default async function ProfilePage() {
@@ -104,11 +105,15 @@ export default async function ProfilePage() {
             </h2>
             <dl className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm">
               <div className="flex items-center gap-1">
-                <dt className="text-stone-500">🪙</dt>
+                <dt className="text-stone-500">
+                  <CurrencyIcon kind="coin" />
+                </dt>
                 <dd className="font-medium">{profile.coin_balance}</dd>
               </div>
               <div className="flex items-center gap-1">
-                <dt className="text-stone-500">💎</dt>
+                <dt className="text-stone-500">
+                  <CurrencyIcon kind="gem" />
+                </dt>
                 <dd className="font-medium">{profile.gem_balance}</dd>
               </div>
               <div className="flex items-center gap-1">

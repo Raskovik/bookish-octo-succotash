@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { CurrencyIcon } from "@/components/currency-icon";
 
 // Same shape as ExpandDenButton — an RPC call + router.refresh(), the
 // cost shown here is display-only (expand_garden() re-derives and
@@ -45,7 +46,13 @@ export function ExpandGardenButton({
         disabled={isPending || !canAfford}
         className="rounded-md border border-green-300 bg-white/80 px-4 py-2 text-sm font-medium hover:bg-green-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900/80 dark:hover:bg-stone-800"
       >
-        {isPending ? "Expanding…" : `Unlock row — 🪙 ${cost}`}
+        {isPending ? (
+          "Expanding…"
+        ) : (
+          <>
+            Unlock row — <CurrencyIcon kind="coin" /> {cost}
+          </>
+        )}
       </button>
       {!canAfford ? <p className="text-xs text-stone-500">Not enough coins yet.</p> : null}
       {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}

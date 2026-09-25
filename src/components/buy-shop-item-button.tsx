@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { CurrencyIcon } from "@/components/currency-icon";
 
 // Same client-RPC-then-refresh shape as ExpandGardenButton/ForTradeToggle —
 // buy_shop_item() re-derives and enforces the real price/balance
@@ -51,7 +52,13 @@ export function BuyShopItemButton({
         disabled={isPending || !canAfford}
         className="w-full rounded-md bg-green-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
       >
-        {isPending ? "Buying…" : `Buy — 🪙 ${price}`}
+        {isPending ? (
+          "Buying…"
+        ) : (
+          <>
+            Buy — <CurrencyIcon kind="coin" /> {price}
+          </>
+        )}
       </button>
       {!canAfford ? <p className="text-xs text-stone-500">Not enough coins.</p> : null}
       {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}

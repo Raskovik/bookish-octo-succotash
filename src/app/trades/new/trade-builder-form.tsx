@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PetPickerModal, ItemPickerModal, type PickerPet, type PickerItem } from "@/components/picker-modal";
 import { petImageUrl, petTypeName } from "@/lib/pet-display";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { ItemWithQuantity, PetWithSpecies } from "@/lib/supabase/types";
 
 type ModalTarget = "myPets" | "myItems" | "theirPets" | "theirItems" | null;
@@ -322,7 +323,7 @@ export function TradeBuilderForm({
           <h3 className="text-sm font-semibold">You give</h3>
           <div className="flex gap-4">
             <label className="flex items-center gap-1.5 text-sm">
-              🪙
+              <CurrencyIcon kind="coin" />
               <input
                 type="number"
                 min={0}
@@ -333,7 +334,7 @@ export function TradeBuilderForm({
               />
             </label>
             <label className="flex items-center gap-1.5 text-sm">
-              💎
+              <CurrencyIcon kind="gem" />
               <input
                 type="number"
                 min={0}
@@ -380,7 +381,7 @@ export function TradeBuilderForm({
             <>
               <div className="flex gap-4">
                 <label className="flex items-center gap-1.5 text-sm">
-                  🪙
+                  <CurrencyIcon kind="coin" />
                   <input
                     type="number"
                     min={0}
@@ -390,7 +391,7 @@ export function TradeBuilderForm({
                   />
                 </label>
                 <label className="flex items-center gap-1.5 text-sm">
-                  💎
+                  <CurrencyIcon kind="gem" />
                   <input
                     type="number"
                     min={0}

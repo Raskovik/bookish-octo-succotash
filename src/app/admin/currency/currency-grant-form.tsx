@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { grantSelfCurrency, type CurrencyGrantState } from "./actions";
+import { CurrencyIcon } from "@/components/currency-icon";
 
 const initialState: CurrencyGrantState = null;
 
@@ -12,7 +13,7 @@ export function CurrencyGrantForm() {
     <form action={formAction} className="flex max-w-sm flex-col gap-5">
       <div className="flex flex-col gap-1.5">
         <label htmlFor="coin_delta" className="text-sm font-medium">
-          🪙 Coins
+          <CurrencyIcon kind="coin" /> Coins
         </label>
         <input
           id="coin_delta"
@@ -26,7 +27,7 @@ export function CurrencyGrantForm() {
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="gem_delta" className="text-sm font-medium">
-          💎 Gems
+          <CurrencyIcon kind="gem" /> Gems
         </label>
         <input
           id="gem_delta"

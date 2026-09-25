@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { CurrencyIcon } from "@/components/currency-icon";
 
 export function ExpandDenButton({
   userId,
@@ -42,7 +43,13 @@ export function ExpandDenButton({
         disabled={isPending || !canAfford}
         className="self-start rounded-md border border-green-300 px-4 py-2 text-sm hover:bg-green-100 disabled:opacity-50 dark:border-stone-700 dark:hover:bg-stone-900"
       >
-        {isPending ? "Expanding…" : `Expand den (+25 slots) — 🪙 ${cost}`}
+        {isPending ? (
+          "Expanding…"
+        ) : (
+          <>
+            Expand den (+25 slots) — <CurrencyIcon kind="coin" /> {cost}
+          </>
+        )}
       </button>
       {!canAfford ? (
         <p className="text-xs text-stone-500">Not enough coins for the next expansion yet.</p>

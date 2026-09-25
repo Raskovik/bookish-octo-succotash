@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PetPickerModal, ItemPickerModal, type PickerPet, type PickerItem } from "@/components/picker-modal";
 import { petImageUrl, petTypeName } from "@/lib/pet-display";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { ItemWithQuantity, ListingDurationDays, PetWithSpecies } from "@/lib/supabase/types";
 
 const DURATIONS: { value: ListingDurationDays; label: string }[] = [
@@ -187,7 +188,7 @@ export function SellForm({
         </p>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 text-sm">
-            🪙
+            <CurrencyIcon kind="coin" />
             <input
               type="number"
               min={0}
@@ -197,7 +198,7 @@ export function SellForm({
             />
           </label>
           <label className="flex items-center gap-2 text-sm">
-            💎
+            <CurrencyIcon kind="gem" />
             <input
               type="number"
               min={0}

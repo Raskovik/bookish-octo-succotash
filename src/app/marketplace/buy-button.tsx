@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { ListingCurrency } from "@/lib/supabase/types";
 
 export function BuyButton({
@@ -92,7 +93,7 @@ export function BuyButton({
           title={canAffordCoins ? undefined : "Not enough coins"}
           className="rounded-md bg-green-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
         >
-          Buy — 🪙 {priceCoins}
+          Buy — <CurrencyIcon kind="coin" /> {priceCoins}
         </button>
       ) : null}
       {priceGems !== null ? (
@@ -103,7 +104,7 @@ export function BuyButton({
           title={canAffordGems ? undefined : "Not enough gems"}
           className="rounded-md bg-green-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
         >
-          Buy — 💎 {priceGems}
+          Buy — <CurrencyIcon kind="gem" /> {priceGems}
         </button>
       ) : null}
     </div>

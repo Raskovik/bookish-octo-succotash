@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { TradeWithParticipants } from "@/lib/supabase/types";
 
 const STATUS_STYLES: Record<TradeWithParticipants["status"], string> = {
@@ -43,8 +44,18 @@ function OfferPreview({ trade, side }: { trade: TradeWithParticipants; side: "in
       {thumbnails.length > 4 ? (
         <span className="text-xs text-stone-500">+{thumbnails.length - 4}</span>
       ) : null}
-      {coins > 0 ? <span className="text-xs">🪙{coins}</span> : null}
-      {gems > 0 ? <span className="text-xs">💎{gems}</span> : null}
+      {coins > 0 ? (
+        <span className="text-xs">
+          <CurrencyIcon kind="coin" />
+          {coins}
+        </span>
+      ) : null}
+      {gems > 0 ? (
+        <span className="text-xs">
+          <CurrencyIcon kind="gem" />
+          {gems}
+        </span>
+      ) : null}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PetPickerModal, ItemPickerModal, type PickerPet, type PickerItem } from "@/components/picker-modal";
 import { petImageUrl, petTypeName } from "@/lib/pet-display";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { ItemWithQuantity, PetWithSpecies } from "@/lib/supabase/types";
 
 function toPickerPets(pets: PetWithSpecies[]): PickerPet[] {
@@ -143,7 +144,7 @@ export function RespondForm({
 
       <div className="flex gap-4">
         <label className="flex items-center gap-2 text-sm">
-          🪙
+          <CurrencyIcon kind="coin" />
           <input
             type="number"
             min={0}
@@ -155,7 +156,7 @@ export function RespondForm({
           <span className="text-xs text-stone-500">/ {coinBalance}</span>
         </label>
         <label className="flex items-center gap-2 text-sm">
-          💎
+          <CurrencyIcon kind="gem" />
           <input
             type="number"
             min={0}

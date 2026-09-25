@@ -25,12 +25,19 @@ export const FOOTER_TEXT = `${SITE_NAME} — a hobby project, not affiliated wit
 
 
 // ─── 2. CURRENCY ─────────────────────────────────────────────────
-// Every place that shows a coin or gem amount reads its emoji/label
-// from here.
+// Every place that shows a coin or gem amount goes through
+// <CurrencyIcon> (src/components/currency-icon.tsx), which reads
+// its emoji/label/image from here.
+//
+// To use a picture instead of the emoji: drop a square image at
+// public/icons/coin.png (and/or gem.png — that folder already holds
+// the site's other small icons), then set `image` below to
+// '/icons/coin.png'. Leave `image` as null to keep the emoji.
 export const CURRENCY = {
-  coin: { label: "Coins", emoji: "🪙" },
-  gem: { label: "Gems", emoji: "💎" },
+  coin: { label: "Coins", emoji: "🪙", image: null as string | null },
+  gem: { label: "Gems", emoji: "💎", image: null as string | null },
 };
+export type CurrencyKind = keyof typeof CURRENCY;
 
 
 // ─── 3. FEATURE FLAGS ────────────────────────────────────────────

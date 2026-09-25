@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BuyButton } from "./buy-button";
+import { PriceLabel } from "@/components/price-label";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { PetRarity } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 24;
@@ -14,13 +16,6 @@ function isRarity(value: string): value is PetRarity {
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function priceLabel(priceCoins: number | null, priceGems: number | null): string {
-  const parts: string[] = [];
-  if (priceCoins !== null) parts.push(`🪙 ${priceCoins}`);
-  if (priceGems !== null) parts.push(`💎 ${priceGems}`);
-  return parts.join(" or ");
 }
 
 function timeLeftLabel(expiresAt: string): string {
@@ -183,7 +178,8 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Marketplace</h1>
           <p className="text-sm text-stone-500">
-            Buy pets and items other players have listed. 🪙 {coinBalance} · 💎 {gemBalance}
+            Buy pets and items other players have listed. <CurrencyIcon kind="coin" /> {coinBalance} ·{" "}
+            <CurrencyIcon kind="gem" /> {gemBalance}
           </p>
         </div>
         <div className="flex gap-2">
@@ -295,7 +291,7 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
                   {pet.pet_species_name} · {pet.pet_rarity}
                 </p>
                 <p className="text-[10px] text-stone-500">
-                  {priceLabel(pet.price_coins, pet.price_gems)}
+                  <PriceLabel priceCoins={pet.price_coins} priceGems={pet.price_gems} />
                 </p>
                 <p className="text-[10px] text-stone-500">
                   by {nameById.get(pet.seller_id) ?? "Unknown"} · {timeLeftLabel(pet.expires_at)}
@@ -335,7 +331,7 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
               <p className="text-xs font-medium">{row.items?.name}</p>
               <p className="text-[10px] text-stone-500">×{row.item_quantity}</p>
               <p className="text-[10px] text-stone-500">
-                {priceLabel(row.price_coins, row.price_gems)}
+                <PriceLabel priceCoins={row.price_coins} priceGems={row.price_gems} />
               </p>
               <p className="text-[10px] text-stone-500">
                 by {nameById.get(row.seller_id) ?? "Unknown"} · {timeLeftLabel(row.expires_at)}

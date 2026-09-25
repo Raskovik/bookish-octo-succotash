@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { CancelListingButton } from "./cancel-listing-button";
+import { PriceLabel } from "@/components/price-label";
 import type { MarketplaceListing } from "@/lib/supabase/types";
 
 const STATUS_STYLES: Record<MarketplaceListing["status"], string> = {
@@ -15,13 +16,6 @@ function timeLeftLabel(expiresAt: string): string {
   const hours = Math.ceil(msLeft / (60 * 60 * 1000));
   if (hours < 24) return `Expires in ${hours}h`;
   return `Expires in ${Math.ceil(hours / 24)}d`;
-}
-
-function priceLabel(priceCoins: number | null, priceGems: number | null): string {
-  const parts: string[] = [];
-  if (priceCoins !== null) parts.push(`🪙 ${priceCoins}`);
-  if (priceGems !== null) parts.push(`💎 ${priceGems}`);
-  return parts.join(" or ");
 }
 
 export function ListingCard({
@@ -55,7 +49,7 @@ export function ListingCard({
           {!isPet && listing.item_quantity ? ` ×${listing.item_quantity}` : ""}
         </p>
         <p className="text-xs text-stone-500">
-          {priceLabel(listing.price_coins, listing.price_gems)} ·{" "}
+          <PriceLabel priceCoins={listing.price_coins} priceGems={listing.price_gems} /> ·{" "}
           {isSeller ? `to ${listing.buyerName ?? "—"}` : `from ${listing.sellerName}`}
         </p>
         {listing.status === "active" ? (

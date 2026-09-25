@@ -3394,8 +3394,30 @@ signs in.
   the Supabase migrations, not the browser — `BREEDING_COST` here is
   a display-only mirror of `start_breeding()` in
   `0040_breeding.sql`, called out with a comment so it's not mistaken
-  for the source of truth. The ~30 other inline `🪙`/`💎` literals
-  across the trades/marketplace/shop pages were left as-is rather than
-  swept into `CURRENCY` in this pass, to keep the change small and
-  low-risk — worth doing as a follow-up if the emoji ever need to
-  change.
+  for the source of truth.
+
+- **`CURRENCY` now supports a picture, not just an emoji, and every
+  currency display was swept onto it**: `CURRENCY.coin`/`CURRENCY.gem`
+  in `src/config.ts` each gained an `image: string | null` field —
+  set it to a path like `/icons/coin.png` (drop the file in
+  `public/icons/`, which already holds the site's other small icons)
+  and every coin/gem shown anywhere switches from the emoji to that
+  picture at once; leave it `null` to keep the emoji. This is read by
+  a new shared `<CurrencyIcon kind="coin" | "gem" />` component
+  (`src/components/currency-icon.tsx`), which every currency display
+  in the app was rewired onto — the ~30 remaining inline `🪙`/`💎`
+  literals across `site-header.tsx`, the shop/den/garden-expand
+  buttons, breeding, marketplace (browse, sell, buy, listing cards),
+  the admin currency page, `/profile`, and the trades pages (trade
+  card, side summary, respond form, trade builder). The two
+  marketplace min/max price filter `placeholder="Min 🪙"` attributes
+  were left as plain emoji, since an HTML `placeholder` can't hold an
+  image. Also extracted a shared `<PriceLabel priceCoins priceGems />`
+  component (`src/components/price-label.tsx`) to replace two
+  near-identical `priceLabel()` string-building functions that had
+  been duplicated between `marketplace/page.tsx` and
+  `marketplace/listing-card.tsx` — both now render through it.
+  Verified with a temporary preview route rendering `CurrencyIcon` and
+  `PriceLabel` directly + Playwright screenshot (cleaned up after,
+  confirmed via `git status --short`); a full `next build` + `eslint`
+  pass across `src` is clean.

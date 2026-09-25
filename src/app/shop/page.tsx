@@ -2,6 +2,7 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BuyShopItemButton } from "@/components/buy-shop-item-button";
+import { CurrencyIcon } from "@/components/currency-icon";
 import type { ItemRow, ShopItem } from "@/lib/supabase/types";
 
 type ShopItemRow = Pick<ItemRow, "id" | "name" | "image_url" | "rarity" | "type" | "shop_price">;
@@ -49,7 +50,7 @@ export default async function ShopPage() {
           <p className="text-sm text-stone-500">Spend your coins on seeds to plant in your garden.</p>
         </div>
         <p className="whitespace-nowrap rounded-md border border-green-300 bg-white/80 px-3 py-1.5 text-sm font-medium dark:border-stone-700 dark:bg-stone-900/80">
-          🪙 {coinBalance}
+          <CurrencyIcon kind="coin" /> {coinBalance}
         </p>
       </div>
 

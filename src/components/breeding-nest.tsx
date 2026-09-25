@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ExpeditionCountdown } from "@/components/expedition-countdown";
 import { petImageUrl } from "@/lib/pet-display";
-import { BREEDING_COST, CURRENCY } from "@/config";
+import { CurrencyIcon } from "@/components/currency-icon";
+import { BREEDING_COST } from "@/config";
 import type { ActiveBreedingAttempt, BreedablePet, EggReveal } from "@/lib/supabase/types";
 
 function TraitRow({ label, name, rarityTier, hex }: { label: string; name: string; rarityTier?: string; hex?: string }) {
@@ -237,7 +238,13 @@ export function BreedingNest({
         disabled={!eligible || isPending || !canAffordBreeding}
         className="self-start rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
       >
-        {isPending ? "Starting…" : `Start breeding — ${CURRENCY.coin.emoji} ${BREEDING_COST}`}
+        {isPending ? (
+          "Starting…"
+        ) : (
+          <>
+            Start breeding — <CurrencyIcon kind="coin" /> {BREEDING_COST}
+          </>
+        )}
       </button>
       {!canAffordBreeding ? <p className="text-xs text-stone-500">Not enough coins yet.</p> : null}
     </div>
