@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
+import { SITE_NAME, SITE_TAGLINE } from "@/config";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Furgarden",
-  description: "Adopt, hatch, and trade virtual pets.",
+  title: SITE_NAME,
+  description: SITE_TAGLINE,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

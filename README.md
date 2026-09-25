@@ -3378,3 +3378,24 @@ signs in.
     full `next build` + `eslint` pass is clean across every touched
     file (18 pre-existing files updated, 26 new ones, spanning 4
     migrations).
+
+- **Master site config (`src/config.ts`)**: a single file for site
+  identity (`SITE_NAME`/`SITE_TAGLINE`/`FOOTER_TEXT`, wired into
+  `layout.tsx`'s metadata and `site-footer.tsx`), currency display
+  labels/emoji (`CURRENCY.coin`/`CURRENCY.gem`, wired into
+  `site-header.tsx` and `breeding-nest.tsx`), and the `TRADING_ENABLED`
+  feature flag (`src/lib/feature-flags.ts` is now a one-line re-export
+  of it, so the 11 existing `from "@/lib/feature-flags"` imports keep
+  working unchanged). Deliberately scoped smaller than a typical
+  static-site config (e.g. lookbook's `src/config.mjs`): this is a
+  live Next.js + Supabase app, so colors/layout are Tailwind classes
+  baked into each component rather than a handful of theme variables,
+  and real gameplay numbers (costs, rewards, timers) are enforced in
+  the Supabase migrations, not the browser — `BREEDING_COST` here is
+  a display-only mirror of `start_breeding()` in
+  `0040_breeding.sql`, called out with a comment so it's not mistaken
+  for the source of truth. The ~30 other inline `🪙`/`💎` literals
+  across the trades/marketplace/shop pages were left as-is rather than
+  swept into `CURRENCY` in this pass, to keep the change small and
+  low-risk — worth doing as a follow-up if the emoji ever need to
+  change.
