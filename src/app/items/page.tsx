@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { ItemType, ItemWithQuantity } from "@/lib/supabase/types";
 import { ForTradeToggle } from "./for-trade-toggle";
-import { TRADING_ENABLED } from "@/lib/feature-flags";
+import { TRADING_ENABLED, BREWING_ENABLED } from "@/lib/feature-flags";
 
 const TABS: { value: ItemType | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -47,12 +47,16 @@ export default async function ItemsPage(props: PageProps<"/items">) {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Items ({allItems.length})</h1>
         <p className="text-sm text-stone-500">
-          Crafting ingredients and brewed potions — not for decorating pets. Turn ingredients into
-          potions on the{" "}
-          <Link href="/brewing" className="underline">
-            Brewing
-          </Link>{" "}
-          page.{" "}
+          Crafting ingredients and cosmetics — not for decorating pets.{" "}
+          {BREWING_ENABLED ? (
+            <>
+              Turn ingredients into potions on the{" "}
+              <Link href="/brewing" className="underline">
+                Brewing
+              </Link>{" "}
+              page.{" "}
+            </>
+          ) : null}
           <Link href="/pets" className="underline">
             Looking for pets?
           </Link>

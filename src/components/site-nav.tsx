@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { TRADING_ENABLED } from "@/lib/feature-flags";
+import { TRADING_ENABLED, BREWING_ENABLED } from "@/lib/feature-flags";
 import { NavGroups, type NavGroup } from "@/components/nav-groups";
 
 export async function SiteNav() {
@@ -23,7 +23,7 @@ export async function SiteNav() {
       label: "Play",
       links: [
         { href: "/expeditions", label: "Expeditions" },
-        { href: "/brewing", label: "Brewing" },
+        ...(BREWING_ENABLED ? [{ href: "/brewing", label: "Brewing" }] : []),
         { href: "/garden", label: "Garden" },
       ],
     },

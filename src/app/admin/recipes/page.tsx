@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { BREWING_ENABLED } from "@/lib/feature-flags";
 import type { PotionEffectType } from "@/lib/supabase/types";
 
 // Hand-cast, like the other joined selects in this project — see the
@@ -14,6 +16,10 @@ type RecipeListRow = {
 };
 
 export default async function AdminRecipesPage() {
+  if (!BREWING_ENABLED) {
+    notFound();
+  }
+
   const { supabase } = await requireAdmin();
 
   const { data: recipesData } = await supabase

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { BREWING_ENABLED } from "@/lib/feature-flags";
 import { EditRecipeForm } from "../edit-recipe-form";
 import { addIngredient, removeIngredient } from "../actions";
 import { SearchablePicker } from "@/components/admin/searchable-picker";
@@ -25,6 +26,10 @@ type RecipeDetailRow = {
 };
 
 export default async function EditRecipePage(props: PageProps<"/admin/recipes/[id]">) {
+  if (!BREWING_ENABLED) {
+    notFound();
+  }
+
   const { id } = await props.params;
   const { supabase } = await requireAdmin();
 

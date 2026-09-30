@@ -55,8 +55,8 @@ export default async function Home(props: PageProps<"/">) {
         Adopt, hatch, and trade virtual pets
       </h1>
       <p className="max-w-md text-lg text-stone-600 dark:text-stone-400">
-        Send your pets on expeditions, brew potions, offer items to the
-        statue, and build your collection.
+        Send your pets on expeditions, tend a garden, and build your
+        collection.
       </p>
       <Link
         href={user ? "/profile" : "/login"}

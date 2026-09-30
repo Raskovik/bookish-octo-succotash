@@ -1,7 +1,13 @@
+import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { BREWING_ENABLED } from "@/lib/feature-flags";
 import { NewRecipeForm } from "../new-recipe-form";
 
 export default async function NewRecipePage() {
+  if (!BREWING_ENABLED) {
+    notFound();
+  }
+
   const { supabase } = await requireAdmin();
 
   const { data: existingPotions } = await supabase

@@ -1,6 +1,7 @@
 import Image from "next/image";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { BREWING_ENABLED } from "@/lib/feature-flags";
 import { BrewingStand } from "@/components/brewing-stand";
 import type {
   ActiveBrewSummary,
@@ -38,6 +39,10 @@ type ActiveBrewJoinRow = {
 };
 
 export default async function BrewingPage() {
+  if (!BREWING_ENABLED) {
+    notFound();
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

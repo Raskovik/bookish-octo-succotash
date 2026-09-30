@@ -30,15 +30,20 @@ This project is being built one module at a time. Current state:
       (keep the reward or send it away)
 - [x] Items + inventory — zones now sometimes drop a crafting item instead
       of a pet (blue = pet art, green = item art, for easy testing)
-- [x] Potions & brewing — a "Brewing" tab: a 3-slot brewing stand players
-      fill with owned ingredients, a recipe-book popup showing
-      every fixed, shared recipe for reference/testing, and matching the
-      slots against the book to start a brew — a fixed 2-minute timer,
-      then return and claim the finished potion the same way as an
-      expedition. Five potions total: shorter expedition timers, a higher
-      chance of finding an item instead of a pet, and a chance of a bonus
-      second reward. Purple potion art; real potions are consumed on the
-      expeditions map to apply their effect
+- [~] Potions & brewing — **built, tested, but currently disabled**
+      behind `BREWING_ENABLED` in `src/config.ts` (set to `false`) —
+      hidden per a change of direction, kept intact rather than deleted
+      in case it comes back. No nav link (player or admin), no admin
+      dashboard card, and `/brewing` + every `/admin/recipes` page 404s
+      while disabled. A 3-slot brewing stand players fill with owned
+      ingredients, a recipe-book popup showing every fixed, shared
+      recipe for reference/testing, and matching the slots against the
+      book to start a brew — a fixed 2-minute timer, then return and
+      claim the finished potion the same way as an expedition. Five
+      potions total: shorter expedition timers, a higher chance of
+      finding an item instead of a pet, and a chance of a bonus second
+      reward. Purple potion art; real potions are consumed on the
+      expeditions map to apply their effect. See Notes below
 - [x] Admin panel & audit log — an "Admin" tab (visible only to you) for
       managing zones (incl. pet pool + loot table), items, species, and
       potion recipes (incl. ingredients), plus a read-only audit log of
@@ -3476,3 +3481,41 @@ signs in.
     repo-wide grep for every trait/breeding identifier (`breed_id`,
     `composited_image_url`, `BreedRow`, `pet-compositor`, etc.) turned up
     nothing left behind.
+
+- **Brewing hidden behind a feature flag; statue offerings confirmed
+  never built**: same on/off shape as `TRADING_ENABLED` — a new
+  `BREWING_ENABLED` constant in `src/config.ts` (re-exported from
+  `src/lib/feature-flags.ts`, same as `TRADING_ENABLED`), set to
+  `false`. Nothing about brewing's schema, RPCs, or code was touched —
+  this is purely a view-layer hide, reversible by flipping the flag
+  back to `true`.
+  - `/brewing` and all three `/admin/recipes` pages (`page.tsx`,
+    `[id]/page.tsx`, `new/page.tsx`) call `notFound()` as their very
+    first line, before any auth check, so they 404 unconditionally
+    while disabled (verified: `curl`ing `/brewing` returns 404 even
+    signed out, same as `/trades/*` already does for `TRADING_ENABLED`).
+  - Every entry point removed: the player nav's "Play" group drops the
+    Brewing link, the admin panel's own nav bar drops "Potion recipes,"
+    the admin dashboard drops that stat card (and skips the
+    `potion_recipes` count query entirely rather than querying and just
+    not showing it), and the `/items` page's "Turn ingredients into
+    potions on the Brewing page" sentence disappears from its empty-
+    state copy (the adjacent "Looking for pets?" link stays). The
+    homepage hero's "brew potions, offer items to the statue" line was
+    also outdated on two counts — brewing's now hidden, and statue
+    offerings never shipped in the first place (confirmed by grepping
+    the whole repo: the only real hits are the checklist's own `[ ]
+    Statue offerings` line and a couple of comments explicitly noting
+    the module "doesn't exist" — no table, no route, no component) — so
+    it's rewritten to just "expeditions, tend a garden, and build your
+    collection."
+  - The item type filter tabs on `/items` (All/Ingredients/Potions/
+    Cosmetics) and potions' role as a consumable expedition-timer boost
+    are untouched — those aren't "the Brewing system" itself, just
+    generic inventory/expedition code that happens to touch potion-type
+    items, so disabling brewing doesn't need to disable them too.
+  - Verified with `next build` + `eslint` (clean) and a local dev server
+    + `curl`: `/brewing` returns `404`, while an unrelated route like
+    `/expeditions` still behaves normally (redirects unauthenticated
+    visitors to login, same as always) — confirming the flag didn't
+    catch anything it shouldn't have.

@@ -48,3 +48,11 @@ export type CurrencyKind = keyof typeof CURRENCY;
 // link, button, and page checks this flag, so flipping it is the
 // whole re-enable.
 export const TRADING_ENABLED = false;
+
+// Brewing (src/app/brewing/, /admin/recipes, migrations 0006/0008) is
+// fully built and tested but hidden for now per a change of direction —
+// same on/off shape as TRADING_ENABLED above: flip this back to true to
+// bring it back, nothing else needs to change. /brewing and every
+// /admin/recipes page 404 while this is false, and its nav links (player
+// "Play" menu, admin panel nav, admin dashboard card) disappear too.
+export const BREWING_ENABLED = false;

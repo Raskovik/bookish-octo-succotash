@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
+import { BREWING_ENABLED } from "@/lib/feature-flags";
 
 export default async function AdminLayout({
   children,
@@ -25,9 +26,11 @@ export default async function AdminLayout({
           <Link href="/admin/species" className="hover:underline">
             Species
           </Link>
-          <Link href="/admin/recipes" className="hover:underline">
-            Potion recipes
-          </Link>
+          {BREWING_ENABLED ? (
+            <Link href="/admin/recipes" className="hover:underline">
+              Potion recipes
+            </Link>
+          ) : null}
           <Link href="/admin/forums" className="hover:underline">
             Forums
           </Link>
