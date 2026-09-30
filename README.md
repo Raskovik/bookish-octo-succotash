@@ -262,10 +262,10 @@ This project is being built one module at a time. Current state:
       individual uses, no components touched — picks up a new value the
       moment you edit that block. See Notes below
 - [x] New homepage — replaces the old "coming soon" landing page with a
-      Chicken-Smoothie-style layout: a condensed hero up top, then a
-      two-column "Site News" (admin-postable, via a new `/admin/news`
-      CRUD page) and "Forum Activity" (the site's most recently active
-      threads) side by side. See Notes below
+      Chicken-Smoothie-style two-column layout: "Site News" (admin-
+      postable, via a new `/admin/news` CRUD page) and "Forum Activity"
+      (the site's most recently active threads) side by side. See Notes
+      below
 
 ---
 
@@ -3582,9 +3582,12 @@ signs in.
 
 - **New homepage — site news + forum activity preview**: the old `/`
   was a placeholder "coming soon" page; it's now a real landing page,
-  Chicken-Smoothie-style — a condensed hero (sign-in CTA still intact)
-  above a two-column strip: "Site News" on the left, "Forum Activity"
-  on the right.
+  Chicken-Smoothie-style — a two-column strip filling the whole
+  content container: "Site News" on the left, "Forum Activity" on the
+  right. (An initial pass also added a hero image/tagline/CTA above the
+  strip; it was removed right after per feedback that the container
+  should be just the two panels — sign-in is still reachable from the
+  site header, which was never removed.)
   - **Site News**: a new `site_news_posts` table (migration `0043`,
     `id`/`author_id`/`title`/`body`/`is_active`/`created_at`/
     `edited_at`) with RLS matching every other admin-authored content

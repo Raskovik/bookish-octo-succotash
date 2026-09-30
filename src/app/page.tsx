@@ -1,5 +1,3 @@
-import Image from "next/image";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SiteNewsPanel } from "@/components/site-news-panel";
 import { ForumActivityPanel } from "@/components/forum-activity-panel";
@@ -44,9 +42,6 @@ type ForumThreadJoinRow = {
 // before this page ever renders a "you're signed in" state for them.
 export default async function Home(props: PageProps<"/">) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const searchParams = await props.searchParams;
   const banned = first(searchParams.banned);
@@ -118,30 +113,7 @@ export default async function Home(props: PageProps<"/">) {
   }));
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12">
-      <div className="flex flex-col items-center gap-4 text-center">
-        <Image
-          src="/ui/furgarden-hero.png"
-          alt="Furgarden"
-          width={2274}
-          height={1080}
-          priority
-          className="h-auto w-full max-w-xl rounded-xl shadow-sm"
-        />
-        <h1 className="max-w-xl text-3xl font-semibold tracking-tight">
-          Adopt, hatch, and trade virtual pets
-        </h1>
-        <p className="max-w-md text-stone-600 dark:text-stone-400">
-          Send your pets on expeditions, tend a garden, and build your collection.
-        </p>
-        <Link
-          href={user ? "/profile" : "/login"}
-          className="rounded-md bg-green-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-        >
-          {user ? "Go to your profile" : "Sign in with Google"}
-        </Link>
-      </div>
-
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
         <SiteNewsPanel posts={newsPosts} />
         <ForumActivityPanel threads={recentThreads} />
