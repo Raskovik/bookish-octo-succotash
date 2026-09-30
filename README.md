@@ -254,6 +254,13 @@ This project is being built one module at a time. Current state:
       fixed species image each (Chicken-Smoothie-style), zones grant
       pets again, and breeding no longer exists as a feature. See Notes
       below
+- [x] One-file site theming — a "SITE THEME COLORS" block at the top of
+      `src/app/globals.css` overrides Tailwind's `green`/`stone`/
+      `yellow`/`amber` palettes (the site's brand accent, neutral gray,
+      and header/nav trim colors), so every existing `bg-green-800`,
+      `border-stone-700`, etc. class across the whole app — 1,900+
+      individual uses, no components touched — picks up a new value the
+      moment you edit that block. See Notes below
 
 ---
 
@@ -3519,3 +3526,51 @@ signs in.
     `/expeditions` still behaves normally (redirects unauthenticated
     visitors to login, same as always) — confirming the flag didn't
     catch anything it shouldn't have.
+
+- **One-file site theming**: the site had no centralized theme before
+  this — every color was a literal Tailwind class (`bg-green-800`,
+  `border-stone-700`, ...) hardcoded directly in whichever component
+  needed it, confirmed by grepping the whole `src/` tree: **1,929**
+  such class uses across **116** files. Reskinning meant hand-editing
+  every one of them, same as the "Furgarden rebrand" entry above
+  actually did by hand.
+  - **The mechanism**: Tailwind v4 compiles a class like `bg-green-800`
+    to `background-color: var(--color-green-800)` rather than inlining
+    a literal value — confirmed by inspecting the built CSS output
+    directly. That means redefining `--color-green-800` (and its
+    siblings) in one place changes every one of its uses at once, with
+    zero component changes, since they were never hardcoded values to
+    begin with — just references to a token whoever ships this project
+    had never actually overridden. `globals.css` already did exactly
+    this in miniature for the page background/foreground; this extends
+    the same idea to the app's actual color palette.
+  - **What's covered**: the `green` (buttons/links/card borders/the
+    main accent), `stone` (neutral text/backgrounds), `yellow` (top nav
+    bar), and `amber` (header/footer/nav trim) Tailwind color families
+    — the ones this codebase's own styling conventions already use
+    exclusively for its brand look. Each gets its full 50→950 scale
+    overridden in a new `@theme { ... }` block in `globals.css`, with
+    the default value for each of the 44 shades computed directly from
+    Tailwind's own OKLCH defaults (`node_modules/tailwindcss/theme.css`)
+    converted to hex via the standard OKLab→sRGB formulas, so the file
+    starts as an exact no-op — nothing changes in appearance until a
+    value in that block is actually edited.
+  - **What's deliberately left out**: `red` (errors/destructive
+    actions), `blue` (marks "this is a pet" vs. green "this is an
+    item" on a couple of specific expedition-reward/pet-image spots),
+    and `purple` (potion art) are status/meaning colors, not brand
+    colors — folding them into the reskin block would risk quietly
+    breaking what a color *means* somewhere in the UI, not just how it
+    looks, so they stay as Tailwind's plain defaults. Both are called
+    out in the block's own comment so a future edit doesn't assume
+    every color in the app is fair game.
+  - Verified by temporarily swapping the `green` scale to a test purple
+    palette, confirming via a `next build` inspection that
+    `--color-green-800` compiled to the new hex value and that
+    `.bg-green-800` still referenced it by variable (not a baked-in
+    literal), then visually with a local dev server + Playwright
+    screenshot of the homepage — the logo box and "Sign in with Google"
+    button both switched from green to purple with no code changes
+    beyond the CSS block — before reverting back to the exact original
+    values (confirmed identical via `diff`) so nothing shipped changed.
+    A full `next build` + `eslint` pass is clean.
