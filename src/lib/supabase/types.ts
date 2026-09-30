@@ -682,6 +682,18 @@ export type ForumPostRow = {
   hidden_at: string | null;
 };
 
+// A recently-active thread as shown on the homepage's forum-activity
+// preview — enough to link to it and show who started it, when it was
+// last active, and how busy it's been. authorName is resolved via
+// user_profiles, same pattern as SiteNewsPostWithAuthor.
+export type RecentForumThread = Pick<
+  ForumThreadRow,
+  "id" | "category_id" | "title" | "reply_count" | "last_post_at"
+> & {
+  categoryName: string;
+  authorName: string;
+};
+
 // A top-level forum category with its subcategories nested — how /forums
 // and the admin category list both want the two-level hierarchy shaped,
 // rather than a flat list callers re-group themselves.
@@ -799,6 +811,29 @@ export type CannedStaffMessageRow = {
   is_active: boolean;
   sort_order: number;
   created_at: string;
+};
+
+// body is raw BBCode — same as pets.bio/users.bio, rendered via
+// bbcodeToHtml() at read time rather than a stored body_html column
+// (see 0043_site_news.sql).
+export type SiteNewsPostRow = {
+  id: string;
+  author_id: string;
+  title: string;
+  body: string;
+  is_active: boolean;
+  created_at: string;
+  edited_at: string | null;
+};
+
+// A site news post with its author's display name/staff status
+// resolved via user_profiles (users only lets a player see their own
+// row — same pattern as TradeWithParticipants) — shown on the
+// homepage and in /admin/news.
+export type SiteNewsPostWithAuthor = SiteNewsPostRow & {
+  authorName: string;
+  authorIsAdmin: boolean;
+  authorIsModerator: boolean;
 };
 
 export type BanType = "dm" | "sales" | "forums" | "account";
@@ -936,6 +971,10 @@ export type Database = {
       canned_staff_messages: TableOf<
         CannedStaffMessageRow,
         Partial<CannedStaffMessageRow> & { label: string; body: string }
+      >;
+      site_news_posts: TableOf<
+        SiteNewsPostRow,
+        Partial<SiteNewsPostRow> & { author_id: string; title: string; body: string }
       >;
       blocks: TableOf<BlockRow, Partial<BlockRow> & { blocker_id: string; blocked_id: string }>;
       player_notes: TableOf<

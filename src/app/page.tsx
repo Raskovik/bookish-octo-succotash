@@ -1,10 +1,41 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { SiteNewsPanel } from "@/components/site-news-panel";
+import { ForumActivityPanel } from "@/components/forum-activity-panel";
+import type { RecentForumThread, SiteNewsPostWithAuthor } from "@/lib/supabase/types";
+
+const NEWS_LIMIT = 5;
+const FORUM_ACTIVITY_LIMIT = 6;
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
+
+// Row shapes of the joined/looked-up selects below. Hand-cast, like the
+// other joined selects in this project — see the comment on
+// PetWithSpecies in lib/supabase/types.ts. user_profiles is a view, so
+// (unlike forum_categories, a real table) its rows can't be embedded via
+// a foreign-key select — author names are resolved with a second lookup
+// query instead, same pattern as TradeWithParticipants/forum threads.
+type SiteNewsPostJoinRow = {
+  id: string;
+  author_id: string;
+  title: string;
+  body: string;
+  is_active: boolean;
+  created_at: string;
+  edited_at: string | null;
+};
+type ForumThreadJoinRow = {
+  id: string;
+  category_id: string;
+  author_id: string;
+  title: string;
+  reply_count: number;
+  last_post_at: string;
+  forum_categories: { name: string } | null;
+};
 
 // ?banned=account&until=...&reason=... is set by /auth/callback when an
 // account-banned player tries to sign in — the OAuth handshake itself
@@ -41,29 +72,80 @@ export default async function Home(props: PageProps<"/">) {
     );
   }
 
+  const [{ data: newsData }, { data: threadsData }] = await Promise.all([
+    supabase
+      .from("site_news_posts")
+      .select("id, author_id, title, body, is_active, created_at, edited_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(NEWS_LIMIT),
+    supabase
+      .from("forum_threads")
+      .select("id, category_id, author_id, title, reply_count, last_post_at, forum_categories!inner(name, is_active)")
+      .eq("forum_categories.is_active", true)
+      .order("last_post_at", { ascending: false })
+      .limit(FORUM_ACTIVITY_LIMIT),
+  ]);
+
+  const newsRows = (newsData ?? []) as SiteNewsPostJoinRow[];
+  const threadRows = (threadsData ?? []) as unknown as ForumThreadJoinRow[];
+
+  const authorIds = [...new Set([...newsRows.map((n) => n.author_id), ...threadRows.map((t) => t.author_id)])];
+  const { data: profiles } =
+    authorIds.length > 0
+      ? await supabase.from("user_profiles").select("id, display_name, is_admin, is_moderator").in("id", authorIds)
+      : { data: [] };
+  const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+  const newsPosts: SiteNewsPostWithAuthor[] = newsRows.map((post) => {
+    const author = profileById.get(post.author_id);
+    return {
+      ...post,
+      authorName: author?.display_name ?? "Unknown",
+      authorIsAdmin: author?.is_admin ?? false,
+      authorIsModerator: author?.is_moderator ?? false,
+    };
+  });
+
+  const recentThreads: RecentForumThread[] = threadRows.map((thread) => ({
+    id: thread.id,
+    category_id: thread.category_id,
+    title: thread.title,
+    reply_count: thread.reply_count,
+    last_post_at: thread.last_post_at,
+    categoryName: thread.forum_categories?.name ?? "Unknown",
+    authorName: profileById.get(thread.author_id)?.display_name ?? "Unknown",
+  }));
+
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
-      <Image
-        src="/ui/furgarden-hero.png"
-        alt="Furgarden — coming soon"
-        width={2274}
-        height={1080}
-        priority
-        className="h-auto w-full max-w-2xl rounded-xl shadow-sm"
-      />
-      <h1 className="max-w-xl text-4xl font-semibold tracking-tight">
-        Adopt, hatch, and trade virtual pets
-      </h1>
-      <p className="max-w-md text-lg text-stone-600 dark:text-stone-400">
-        Send your pets on expeditions, tend a garden, and build your
-        collection.
-      </p>
-      <Link
-        href={user ? "/profile" : "/login"}
-        className="rounded-md bg-green-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-      >
-        {user ? "Go to your profile" : "Sign in with Google"}
-      </Link>
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-10 px-6 py-12">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <Image
+          src="/ui/furgarden-hero.png"
+          alt="Furgarden"
+          width={2274}
+          height={1080}
+          priority
+          className="h-auto w-full max-w-xl rounded-xl shadow-sm"
+        />
+        <h1 className="max-w-xl text-3xl font-semibold tracking-tight">
+          Adopt, hatch, and trade virtual pets
+        </h1>
+        <p className="max-w-md text-stone-600 dark:text-stone-400">
+          Send your pets on expeditions, tend a garden, and build your collection.
+        </p>
+        <Link
+          href={user ? "/profile" : "/login"}
+          className="rounded-md bg-green-800 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
+        >
+          {user ? "Go to your profile" : "Sign in with Google"}
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+        <SiteNewsPanel posts={newsPosts} />
+        <ForumActivityPanel threads={recentThreads} />
+      </div>
     </main>
   );
 }

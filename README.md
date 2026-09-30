@@ -261,6 +261,11 @@ This project is being built one module at a time. Current state:
       `border-stone-700`, etc. class across the whole app — 1,900+
       individual uses, no components touched — picks up a new value the
       moment you edit that block. See Notes below
+- [x] New homepage — replaces the old "coming soon" landing page with a
+      Chicken-Smoothie-style layout: a condensed hero up top, then a
+      two-column "Site News" (admin-postable, via a new `/admin/news`
+      CRUD page) and "Forum Activity" (the site's most recently active
+      threads) side by side. See Notes below
 
 ---
 
@@ -3574,3 +3579,60 @@ signs in.
     beyond the CSS block — before reverting back to the exact original
     values (confirmed identical via `diff`) so nothing shipped changed.
     A full `next build` + `eslint` pass is clean.
+
+- **New homepage — site news + forum activity preview**: the old `/`
+  was a placeholder "coming soon" page; it's now a real landing page,
+  Chicken-Smoothie-style — a condensed hero (sign-in CTA still intact)
+  above a two-column strip: "Site News" on the left, "Forum Activity"
+  on the right.
+  - **Site News**: a new `site_news_posts` table (migration `0043`,
+    `id`/`author_id`/`title`/`body`/`is_active`/`created_at`/
+    `edited_at`) with RLS matching every other admin-authored content
+    table in this project — publicly readable, insert/update
+    restricted to `current_user_is_admin()`, no delete policy at all
+    (deactivate via `is_active`, same "never actually delete admin
+    content" convention as recipes/zones/species/garden plants), and
+    the standard `log_admin_action()` audit trigger on insert/update.
+    `body` stores raw BBCode only, rendered through the existing
+    `bbcodeToHtml()` at read time — the same pattern pet/profile bios
+    already use, not the forum posts' write-time-rendered-HTML
+    pattern, since news is read far more often than it's written and
+    this way there's no raw/HTML drift to worry about.
+  - **Admin CRUD**: a new `/admin/news` section (list, `/new`,
+    `/[id]` edit) mirroring `/admin/canned-messages`'s structure
+    exactly — the post body uses the existing `BBCodeEditor` component
+    (not a plain textarea), same as the pet bio editor. Wired into the
+    admin nav and the admin dashboard's stat-card grid. No `/news`
+    archive page — older posts just roll off the homepage's top-5 list
+    once newer ones are posted; revisit that if it ever actually comes
+    up, rather than building it speculatively now.
+  - **Forum Activity**: no new schema — reuses `forum_threads.
+    last_post_at`/`reply_count` (already trigger-maintained) to pull
+    the 6 most-recently-active threads sitewide, joined to
+    `forum_categories` (via `!inner(name, is_active)`, filtered to
+    active categories the same way `items!inner(...)` filters
+    elsewhere in this codebase) for the category name. "Started by"
+    shows the thread's original author rather than the latest replier
+    — avoids a second per-thread subquery for zero requested benefit.
+  - Both sections are built as small presentational components
+    (`SiteNewsPanel`, `ForumActivityPanel`) that take already-fetched
+    data as props and do no fetching themselves, reusing the existing
+    `ForumPanel` bordered/headered box and `PlayerLink` staff-colored
+    name component. Author names for both news posts and forum
+    threads are resolved with one batched `user_profiles` lookup
+    against the combined set of author ids — `user_profiles` is a
+    view, so (like every other author-name lookup in this project) it
+    can't be embedded via a PostgREST foreign-key select and needs its
+    own query plus a `Map`, rather than one per row.
+  - Verified with `next build` + `eslint` (clean) and a Playwright
+    screenshot of both components fed realistic mock data directly
+    (populated and empty states side by side) plus the real, rewritten
+    `/` route rendered end-to-end against a dummy local Supabase
+    project — hero, CTA, and the two-column News/Forum Activity grid
+    all matched the intended layout. Migration `0043` was checked
+    against a disposable local scratch Postgres with all 43 migrations
+    replayed cleanly, and its RLS was specifically re-verified with a
+    genuinely non-superuser role (`SET ROLE` to a role created without
+    `BYPASSRLS`) after an earlier pass falsely "passed" a negative test
+    by running as the Postgres superuser, which ignores RLS entirely —
+    worth remembering for testing any future migration's policies too.

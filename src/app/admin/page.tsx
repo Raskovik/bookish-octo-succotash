@@ -10,6 +10,7 @@ export default async function AdminDashboardPage() {
     { count: itemCount },
     { count: speciesCount },
     { count: recipeCount },
+    { count: newsCount },
     { count: forumCategoryCount },
     { count: gardenPlantCount },
   ] = await Promise.all([
@@ -19,6 +20,7 @@ export default async function AdminDashboardPage() {
     BREWING_ENABLED
       ? supabase.from("potion_recipes").select("*", { count: "exact", head: true })
       : Promise.resolve({ count: null }),
+    supabase.from("site_news_posts").select("*", { count: "exact", head: true }),
     supabase.from("forum_categories").select("*", { count: "exact", head: true }),
     supabase.from("garden_plants").select("*", { count: "exact", head: true }),
   ]);
@@ -28,6 +30,7 @@ export default async function AdminDashboardPage() {
     { href: "/admin/items", label: "Items", count: itemCount ?? 0 },
     { href: "/admin/species", label: "Species", count: speciesCount ?? 0 },
     ...(BREWING_ENABLED ? [{ href: "/admin/recipes", label: "Potion recipes", count: recipeCount ?? 0 }] : []),
+    { href: "/admin/news", label: "Site news", count: newsCount ?? 0 },
     { href: "/admin/forums", label: "Forum categories", count: forumCategoryCount ?? 0 },
     { href: "/admin/garden-plants", label: "Garden plants", count: gardenPlantCount ?? 0 },
   ];

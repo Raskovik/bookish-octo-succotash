@@ -31,6 +31,9 @@ export default async function AdminLayout({
               Potion recipes
             </Link>
           ) : null}
+          <Link href="/admin/news" className="hover:underline">
+            Site news
+          </Link>
           <Link href="/admin/forums" className="hover:underline">
             Forums
           </Link>
