@@ -5,6 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { isConversationUnread } from "@/lib/dm-unread";
 import { CURRENCY } from "@/config";
 import { CurrencyIcon } from "@/components/currency-icon";
+import { NotificationBell } from "@/components/notification-bell";
+import type { NotificationWithActor } from "@/lib/supabase/types";
+
+const NOTIFICATION_LIMIT = 20;
 
 export async function SiteHeader() {
   const supabase = await createClient();
@@ -17,9 +21,10 @@ export async function SiteHeader() {
   let coinBalance: number | null = null;
   let gemBalance: number | null = null;
   let unreadCount = 0;
+  let notifications: NotificationWithActor[] = [];
 
   if (user) {
-    const [{ data: profile }, { data: conversationsData }] = await Promise.all([
+    const [{ data: profile }, { data: conversationsData }, { data: notificationRows }] = await Promise.all([
       supabase
         .from("users")
         .select("display_name, avatar_url, coin_balance, gem_balance")
@@ -29,12 +34,36 @@ export async function SiteHeader() {
         .from("dm_conversations")
         .select("user_one_id, last_message_at, last_message_sender_id, user_one_last_read_at, user_two_last_read_at")
         .or(`user_one_id.eq.${user.id},user_two_id.eq.${user.id}`),
+      supabase
+        .from("notifications")
+        .select("id, user_id, type, actor_id, target_label, link, is_read, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(NOTIFICATION_LIMIT),
     ]);
     displayName = profile?.display_name ?? null;
     avatarUrl = profile?.avatar_url ?? null;
     coinBalance = profile?.coin_balance ?? null;
     gemBalance = profile?.gem_balance ?? null;
     unreadCount = (conversationsData ?? []).filter((c) => isConversationUnread(c, user.id)).length;
+
+    const rows = notificationRows ?? [];
+    const actorIds = [...new Set(rows.map((n) => n.actor_id).filter((id): id is string => id !== null))];
+    const { data: actors } =
+      actorIds.length > 0
+        ? await supabase.from("user_profiles").select("id, display_name, is_admin, is_moderator").in("id", actorIds)
+        : { data: [] };
+    const actorById = new Map((actors ?? []).map((a) => [a.id, a]));
+
+    notifications = rows.map((n) => {
+      const actor = n.actor_id ? actorById.get(n.actor_id) : undefined;
+      return {
+        ...n,
+        actorName: actor?.display_name ?? null,
+        actorIsAdmin: actor?.is_admin ?? false,
+        actorIsModerator: actor?.is_moderator ?? false,
+      };
+    });
   }
 
   return (
@@ -71,6 +100,7 @@ export async function SiteHeader() {
               </span>
             ) : null}
           </Link>
+          <NotificationBell initialNotifications={notifications} />
           <Link
             href="/profile"
             className="flex items-center gap-2 border-l border-stone-900/20 pl-3 text-sm font-medium text-stone-900 hover:underline"

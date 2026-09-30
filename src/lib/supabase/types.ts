@@ -836,6 +836,40 @@ export type SiteNewsPostWithAuthor = SiteNewsPostRow & {
   authorIsModerator: boolean;
 };
 
+// See 0044_notifications.sql for which DB event creates each type, and
+// notification-message.ts for how each is turned into a sentence.
+export type NotificationType =
+  | "dm"
+  | "forum_reply"
+  | "trade_offer"
+  | "trade_response"
+  | "marketplace_sold"
+  | "marketplace_expired"
+  | "ban_issued"
+  | "report_filed";
+
+export type NotificationRow = {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  actor_id: string | null;
+  target_label: string | null;
+  link: string;
+  is_read: boolean;
+  created_at: string;
+};
+
+// actor_id resolved to a display name/staff status via user_profiles,
+// same batched-lookup pattern as SiteNewsPostWithAuthor/RecentForumThread
+// — null when a notification has no single actor (there isn't one here
+// yet, but actor_id itself is nullable on the table for future event
+// types that have no single "who").
+export type NotificationWithActor = NotificationRow & {
+  actorName: string | null;
+  actorIsAdmin: boolean;
+  actorIsModerator: boolean;
+};
+
 export type BanType = "dm" | "sales" | "forums" | "account";
 
 // See 0029_bans_and_staff_fixes.sql — a player can hold several of these
@@ -976,6 +1010,10 @@ export type Database = {
         SiteNewsPostRow,
         Partial<SiteNewsPostRow> & { author_id: string; title: string; body: string }
       >;
+      // Never written by a plain client insert (see 0044_notifications.sql
+      // — rows come only from the notify_on_* triggers), so this table
+      // is select-only in practice; TableOf still needs an Insert shape.
+      notifications: TableOf<NotificationRow>;
       blocks: TableOf<BlockRow, Partial<BlockRow> & { blocker_id: string; blocked_id: string }>;
       player_notes: TableOf<
         PlayerNoteRow,
@@ -1227,6 +1265,14 @@ export type Database = {
       };
       mark_dm_conversation_read: {
         Args: { p_user_id: string; p_conversation_id: string };
+        Returns: null;
+      };
+      mark_notification_read: {
+        Args: { p_user_id: string; p_notification_id: string };
+        Returns: null;
+      };
+      mark_all_notifications_read: {
+        Args: { p_user_id: string };
         Returns: null;
       };
       send_staff_message: {

@@ -266,6 +266,11 @@ This project is being built one module at a time. Current state:
       postable, via a new `/admin/news` CRUD page) and "Forum Activity"
       (the site's most recently active threads) side by side. See Notes
       below
+- [x] Notification system — a bell icon in the header (next to Messages)
+      with a dropdown activity feed covering DMs, forum replies, trade
+      offers/responses, marketplace sales/expirations, bans, and (staff-
+      only) newly filed reports. Page-load data only, no realtime. See
+      Notes below
 
 ---
 
@@ -3639,3 +3644,80 @@ signs in.
     `BYPASSRLS`) after an earlier pass falsely "passed" a negative test
     by running as the Postgres superuser, which ignores RLS entirely —
     worth remembering for testing any future migration's policies too.
+
+- **Notification system**: a bell icon in the header, next to (not
+  replacing) the existing unread-DM badge — a broader activity feed
+  that happens to include DMs, not a second inbox indicator.
+  - **Schema**: one `notifications` table (migration `0044`) —
+    `user_id` (recipient), `type` (an 8-value enum), `actor_id` (who/
+    what caused it, nullable), `target_label` (a short text snapshot —
+    a thread title, an item/pet name, a ban type, a trade's resolved
+    status — so the sentence still reads right even if the underlying
+    row changes later), `link`, `is_read`. RLS is select-only for the
+    owning user; there's no insert/update policy at all for plain
+    clients — same "no plain client write" shape as `dm_conversations`.
+  - **How rows get created**: a `notify_on_*` trigger per event,
+    `security definer` so it can write to `notifications` regardless of
+    the RLS the triggering user has — `dm_messages` insert (notifies
+    the other participant; this also covers staff warning DMs for free,
+    since `send_staff_message` inserts into `dm_messages` directly),
+    `forum_posts` insert (notifies the thread's author, skipped when
+    the poster IS the author — covers both "your own thread's opening
+    post" and "you replied to your own thread" with one check, since
+    `forum_threads.reply_count` counts the opening post too), `trades`
+    insert/update (offer received, then accepted/declined), `bans`
+    insert (notifies the banned player), and `reports` insert — the one
+    fan-out case, inserting one row per current moderator/admin rather
+    than a single recipient, since a filed report has no one owner.
+    `marketplace_listings` gets one trigger covering BOTH a sale and an
+    expiration (`buy_listing`/`resolve_expired_listings` both just flip
+    the same `status` column, so one `AFTER UPDATE` trigger catches
+    either transition regardless of which RPC caused it).
+  - **Trading's triggers are currently dormant, not unreachable** —
+    `TRADING_ENABLED` (`config.ts`) still hides `/trades` from the UI,
+    but the underlying schema/RPCs were never touched, so
+    `notify_on_trade_created`/`notify_on_trade_response` fire correctly
+    the moment the flag flips back on. They were verified directly
+    against `create_trade`/`respond_to_trade` (the RPCs) rather than
+    through the UI, since the UI path is 404'd while the flag is off.
+  - **Read state**: `mark_notification_read`/`mark_all_notifications_read`
+    RPCs (both re-check `auth.uid() = p_user_id`, same pattern as
+    `mark_dm_conversation_read`) — no raw `UPDATE` policy on the table
+    at all. The dropdown marks a notification read when you click
+    through to it, and offers an explicit "Mark all as read" link
+    rather than auto-marking everything read just from opening the
+    dropdown, so glancing at the bell doesn't lose the "new" indicator
+    before you've actually looked.
+  - **Frontend**: `NotificationBell` (a client component, click-outside-
+    to-close dropdown, same pattern as `ThreadAdminControls`) is fed
+    already-fetched, already-resolved data from the header — no data
+    fetching of its own, same "presentational" split as
+    `SiteNewsPanel`/`ForumActivityPanel`. `describeNotification()`
+    (`notification-message.ts`) is a small pure function turning a row
+    into its one-line sentence, kept separate from the component so a
+    mock-data preview can exercise it without a live Supabase project.
+    Actor names are resolved the same batched `user_profiles` lookup
+    way as everywhere else in this app that needs one (views can't be
+    embedded via a PostgREST foreign-key select).
+  - Verified two ways. **Database**: all 43 migrations replayed against
+    a disposable local scratch Postgres (with a hand-built `auth`/
+    `storage` schema stub — `auth.uid()`/`auth.role()`, a minimal
+    `auth.users`/`storage.buckets`/`storage.objects`, and
+    `storage.foldername()` — since this was the first time a from-
+    scratch replay needed anything from either schema); then every one
+    of the 8 notification types was actually triggered through its real
+    RPC/insert path (not just inspected) as a genuinely non-superuser
+    role, confirming the right recipient, the right `actor_id`, no
+    stray self-notification on a thread's own opening post, and that
+    `mark_notification_read` both succeeds for your own row and silently
+    no-ops (doubly protected by the SELECT policy) for someone else's.
+    One real bug surfaced this way and got fixed before shipping: the
+    marketplace trigger's `case ... end` branches were plain text
+    literals Postgres couldn't infer as the `notification_type` enum in
+    that context, raising a type-mismatch error the very first time a
+    listing actually sold — fixed with an explicit
+    `::public.notification_type` cast. **Frontend**: `next build` +
+    `eslint` (clean) and a Playwright screenshot of `NotificationBell`
+    fed realistic mock data directly, both closed (confirming the badge
+    count) and open (confirming all 4 sample sentence types render
+    correctly, with unread ones bolded and dotted).
