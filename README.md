@@ -243,16 +243,12 @@ This project is being built one module at a time. Current state:
       `image_stage4_url` field on `/admin/garden-plants`, and the
       client-side stage calc split into quarters instead of thirds so
       plots visually progress through all four. See Notes below
-- [x] Trait-based breeding — pets are no longer one fixed species image.
-      A new `breeds`/`colors`/`patterns`/`eye_types` catalog (with new
-      `/admin/breeds`, `/admin/colors`, `/admin/patterns`,
-      `/admin/eye-types` screens) composites a pet's look server-side
-      from 5 independent traits; a new `/breeding` page lets two same-
-      breed, opposite-gender pets nest an egg that inherits or mutates
-      each trait independently. Zones no longer grant pets at all —
-      only items — and every player now starts with two breedable
-      starter pets instead of one. Existing pets are grandfathered
-      unchanged. See Notes below
+- [x] Trait-based breeding, and later a Flight-Rising-style layered trait
+      system built on top of it — tried across several rounds, then fully
+      reverted per a later change of direction: pets are back to one
+      fixed species image each (Chicken-Smoothie-style), zones grant
+      pets again, and breeding no longer exists as a feature. See Notes
+      below
 
 ---
 
@@ -3421,3 +3417,62 @@ signs in.
   `PriceLabel` directly + Playwright screenshot (cleaned up after,
   confirmed via `git status --short`); a full `next build` + `eslint`
   pass across `src` is clean.
+
+- **Traits and breeding, fully removed — back to static Chicken-Smoothie-
+  style pets**: after trying trait-based breeding above, and a further
+  Flight-Rising-style layered-slot system on top of it in later rounds,
+  the direction changed back to the simpler model: every pet is one
+  fixed species image again, chosen from a zone's pool or a starter
+  grant, never composited or bred. Nothing in this round is a design
+  decision of its own — it's a straight, careful reversal back to the
+  schema and code shape from just before `0038_trait_breeding_schema.sql`
+  first shipped.
+  - **Migration `0042_remove_traits_and_breeding.sql`**: drops
+    `breeding_attempts` and its three RPCs (`start_breeding`/
+    `resolve_due_breeding`/`claim_egg`); drops the `composited-pets`
+    storage bucket and its policies; restores `create_pet_listing` to
+    its pre-trait species-only join (with the sales-ban check picked up
+    since, from `0029`); drops the trait-only helper functions
+    (`set_pet_composited_image`/`effective_pet_rarity`/`roll_wild_*`/
+    `trait_rarity_weight`); reassigns any pet that actually ended up
+    trait-based (`breed_id` set) to a fallback species before dropping
+    `pets.breed_id`/`primary_color_id`/`secondary_color_id`/
+    `tertiary_color_id`/`pattern_id`/`eye_type_id`/`gender`/
+    `composited_image_url`/`parent_a_id`/`parent_b_id` and restoring
+    `species_id not null`; drops `breeds`/`colors`/`patterns`/
+    `eye_types` and the `trait_rarity` type; recreates `zone_pet_pool`
+    (empty — its original rows were deleted outright when `0038` dropped
+    that table, so an admin needs to re-populate each zone's pool via
+    `/admin/zones` after this runs) and `pick_weighted_zone_species`;
+    restores `pick_weighted_zone_reward`/`start_expedition`/
+    `resolve_due_expeditions`/`claim_expedition_reward`/
+    `grant_starter_pet_and_tutorial` to their pre-`0038` pet-or-item
+    bodies (sourced from `0002`/`0008`, the last migrations to define
+    each before `0038` touched them); and un-repurposes the
+    `item_find_boost` potion recipe `0038` had turned into `rarity_boost`.
+  - **App code**: deleted everything that only ever existed for this —
+    `/breeding`, `breeding-nest.tsx`, `/admin/breeds`, `/admin/colors`,
+    `/admin/patterns`, `/admin/eye-types`, `pet-compositor.ts` (and the
+    now-unused `sharp` dependency) — and restored every file the original
+    trait-breeding change had modified (`pet-display.ts`'s species-only
+    fallback, `types.ts`'s `PetRow`/`PetWithSpecies`/`ZonePoolEntry`/
+    `ExpeditionRewardReveal`/`ClaimExpeditionResult` shapes, the admin
+    zones pool UI, `expedition-map.tsx`/`claim-reward-modal.tsx`'s pet-or-
+    item branches, the pets/marketplace/trades pages' select queries) to
+    their pre-`0038` shape, checked line-by-line against that commit's
+    own diff rather than rewritten from scratch, so nothing drifts from
+    exactly how it worked before. `config.ts`'s `BREEDING_COST` constant
+    is gone along with the feature it mirrored. `TRADING_ENABLED` trading
+    code (still off) got the same species-only fix even though nothing
+    exercises it right now, so it isn't silently broken if it's ever
+    flipped back on.
+  - Verified by replaying every migration `0001` through `0042` against a
+    fresh local scratch Postgres (all 42 apply cleanly), a scripted
+    smoke test of the full starter-grant → tutorial-resolve → second-pet
+    flow and a normal zone expedition roll confirming pets and items both
+    still come back correctly, and `create_pet_listing` confirmed to
+    populate a listing's species snapshot columns correctly again. A
+    full `next build` + `eslint` pass across `src` is clean, and a
+    repo-wide grep for every trait/breeding identifier (`breed_id`,
+    `composited_image_url`, `BreedRow`, `pet-compositor`, etc.) turned up
+    nothing left behind.

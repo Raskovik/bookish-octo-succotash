@@ -58,9 +58,7 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
     rarity: PetRarity;
     custom_name: string | null;
     owner_id: string;
-    composited_image_url: string | null;
     species: { name: string; image_url: string | null } | null;
-    breed: { name: string } | null;
   }[] = [];
   let itemRows: { item_id: string; owner_id: string; quantity: number; items: { name: string; image_url: string | null; rarity: PetRarity; type: string } | null }[] = [];
   let totalCount = 0;
@@ -68,7 +66,7 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
   if (tab === "pets") {
     let query = supabase
       .from("pets")
-      .select("id, rarity, custom_name, owner_id, composited_image_url, species(name, image_url), breed:breeds(name)", {
+      .select("id, rarity, custom_name, owner_id, species(name, image_url)", {
         count: "exact",
       })
       .eq("is_for_trade", true)
@@ -76,10 +74,6 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
 
     if (rarity) query = query.eq("rarity", rarity);
     if (ownerIds) query = query.in("owner_id", ownerIds);
-    // Only matches legacy (species-based) pets — searching breed names
-    // for trait-based pets would need a second, OR'd embedded-table
-    // filter PostgREST doesn't support cleanly alongside pagination's
-    // exact count. Acceptable gap while trading stays disabled.
     if (q.length > 0) query = query.ilike("species.name", `%${q}%`);
 
     const { data, count } = await query.order("id", { ascending: true }).range(offset, offset + PAGE_SIZE - 1);

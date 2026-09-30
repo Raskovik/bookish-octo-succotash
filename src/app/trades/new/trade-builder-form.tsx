@@ -166,7 +166,7 @@ export function TradeBuilderForm({
     const [{ data: theirPetsData }, { data: theirItemsData }] = await Promise.all([
       supabase
         .from("pets")
-        .select("id, rarity, custom_name, composited_image_url, species(name, image_url), breed:breeds(name)")
+        .select("id, rarity, custom_name, species(name, image_url)")
         .eq("owner_id", profile.id)
         .eq("is_for_trade", true),
       supabase

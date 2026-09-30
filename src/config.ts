@@ -48,7 +48,3 @@ export type CurrencyKind = keyof typeof CURRENCY;
 // link, button, and page checks this flag, so flipping it is the
 // whole re-enable.
 export const TRADING_ENABLED = false;
-
-
-// ─── 4. GAMEPLAY DISPLAY CONSTANTS (mirror only, see note above) ──
-export const BREEDING_COST = 200; // enforced in supabase/migrations/0040_breeding.sql: start_breeding()

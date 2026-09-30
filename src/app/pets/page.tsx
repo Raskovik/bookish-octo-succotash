@@ -134,7 +134,7 @@ export default async function PetsPage(props: PageProps<"/pets">) {
   let petsQuery = supabase
     .from("pets")
     .select(
-      "id, rarity, color_variant, folder_id, custom_name, is_for_trade, created_at, composited_image_url, gender, species(name, image_url), breed:breeds(name)",
+      "id, rarity, color_variant, folder_id, custom_name, is_for_trade, created_at, species(name, image_url)",
     )
     .eq("owner_id", userId);
 
