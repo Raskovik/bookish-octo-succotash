@@ -99,12 +99,12 @@ This project is being built one module at a time. Current state:
       accounts can share one, and changing it costs 15 gems and can only
       be done once every 14 days. See Notes below
 - [ ] Statue offerings
-- [~] Trading — **built, tested, but currently disabled** behind
-      `TRADING_ENABLED` in `src/lib/feature-flags.ts` (set to `false`) —
-      superseded by the Marketplace below per a later change of
-      direction, kept intact rather than deleted in case it comes back.
-      No nav link, no entry points anywhere, and every `/trades/*` route
-      404s while disabled. See Notes below for what it was
+- [x] Trading — re-enabled (`TRADING_ENABLED` in `src/config.ts`, set
+      back to `true`) alongside the gem purchase system below, so
+      players have a way to trade gems for coins (or anything else)
+      peer-to-peer, not just buy them outright. Was disabled for a
+      while in favor of the Marketplace, kept fully intact the whole
+      time. See Notes below
 - [x] Marketplace — Flight-Rising-style fixed-price listings (not a
       timed-bid auction): list a pet or a stack of items, anyone can buy
       instantly at the listed price. A listing can be priced in coins,
@@ -271,6 +271,12 @@ This project is being built one module at a time. Current state:
       offers/responses, marketplace sales/expirations, bans, and (staff-
       only) newly filed reports. Page-load data only, no realtime. See
       Notes below
+- [x] Gem purchases — a new `/gems` page lets players buy gems with real
+      money via Stripe Checkout (test mode by default — see Getting
+      Started Step 6), admin-managed packages on `/admin/gem-packages`.
+      Trading was also re-enabled alongside this, so players can trade
+      gems for coins (or anything else) peer-to-peer too, not just buy
+      them outright. See Notes below
 
 ---
 
@@ -477,7 +483,7 @@ Google requires this before it will let you create credentials.
 
 1. Still in Supabase, go to **Authentication → URL Configuration**.
 2. Set **Site URL** to `http://localhost:3000` for now (you'll add your
-   live production URL here too, once you deploy — see Step 7).
+   live production URL here too, once you deploy — see Step 8).
 3. Under **Redirect URLs**, add:
    ```
    http://localhost:3000/auth/callback
@@ -486,7 +492,43 @@ Google requires this before it will let you create credentials.
    an allow-list, not a single value.
 4. Click **Save**.
 
-### Step 6: Run the app locally
+### Step 6 (optional): Set up Stripe test keys (for gem purchases)
+
+Only needed for the "Get Gems" page (`/gems`) — every other page works
+fine without this. Stripe's **test mode** is free and moves no real
+money, so there's no reason not to set this up even just to try it.
+
+1. Go to [stripe.com](https://stripe.com) and sign up (or log in). You
+   land in test mode by default — the toggle in the dashboard's left
+   sidebar should say **Test mode**.
+2. Go to **Developers → API keys**. Copy the **Secret key** (starts with
+   `sk_test_...`) into `.env.local` as `STRIPE_SECRET_KEY`.
+3. Get your Supabase **service role key**: back in your Supabase
+   dashboard, **Project Settings → API**, copy the **service_role**
+   key (the other one on that page, below the anon key you copied in
+   Step 2 — treat it like a password, it bypasses every RLS policy) into
+   `.env.local` as `SUPABASE_SERVICE_ROLE_KEY`.
+4. The webhook (what actually credits gems once a payment completes)
+   needs a way to reach your machine. For local development, install the
+   [Stripe CLI](https://docs.stripe.com/stripe-cli), run
+   `stripe login` once, then leave this running in its own terminal
+   whenever you're testing a purchase:
+   ```bash
+   stripe listen --forward-to localhost:3000/api/stripe/webhook
+   ```
+   It prints a webhook signing secret (`whsec_...`) — copy that into
+   `.env.local` as `STRIPE_WEBHOOK_SECRET`. This changes every time you
+   restart `stripe listen`, so re-copy it if the command isn't left
+   running continuously.
+5. On a live deployment instead (see Step 8), skip the CLI: in the
+   Stripe dashboard go to **Developers → Webhooks → Add endpoint**, set
+   the URL to `https://your-domain/api/stripe/webhook`, select the
+   `checkout.session.completed` event, and copy the signing secret it
+   shows you into your deployment's `STRIPE_WEBHOOK_SECRET` instead.
+6. Add at least one package on `/admin/gem-packages` (name, gem amount,
+   price) — `/gems` shows nothing to buy until one exists.
+
+### Step 7: Run the app locally
 
 ```bash
 npm run dev
@@ -501,7 +543,7 @@ If anything goes wrong, check [Troubleshooting](#troubleshooting) below —
 auth setup is the single most common thing to get slightly wrong on the
 first try, and almost every failure mode has a specific fix there.
 
-### Step 7 (optional): Deploy it live with Vercel
+### Step 8 (optional): Deploy it live with Vercel
 
 Vercel is a hosting service made by the creators of Next.js; connecting it
 to your GitHub repository gives you a live URL and automatic "preview"
@@ -514,9 +556,14 @@ deployments for every branch/PR.
    repository. Vercel auto-detects it's a Next.js app — you don't need to
    change any build settings.
 4. Before clicking Deploy, expand **Environment Variables** and add the
-   same two variables from your `.env.local`:
+   same variables from your `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - If you set up gem purchases (Step 6): `STRIPE_SECRET_KEY`,
+     `SUPABASE_SERVICE_ROLE_KEY`, and a `STRIPE_WEBHOOK_SECRET` from a
+     **live** webhook endpoint pointed at your Vercel URL (not the one
+     `stripe listen` printed locally — that one only works while the CLI
+     is running on your machine).
 5. Click **Deploy**. After it finishes, Vercel gives you a URL like
    `https://your-project.vercel.app`.
 6. Update Supabase and Google so the live URL is allowed to sign in:
@@ -3721,3 +3768,98 @@ signs in.
     fed realistic mock data directly, both closed (confirming the badge
     count) and open (confirming all 4 sample sentence types render
     correctly, with unread ones bolded and dotted).
+
+- **Gem purchases (Stripe) + Trading re-enabled**: gems previously had
+  no earn path at all outside an admin's own testing grant (a gap
+  `0011_currency_and_den_expansion.sql`'s own comment on `gem_balance`
+  called out from the start). This closes it two ways: real-money
+  purchases via Stripe, and — by re-enabling Trading alongside it —
+  player-to-player exchange, since Trading already supported offering
+  pure coins/gems with no pets/items attached and needed no new schema
+  for that half of it at all.
+  - **Schema** (`0045_gem_purchases.sql`): `gem_packages`, an admin
+    catalog (same deactivate-not-delete shape as items/species/zones) —
+    no `stripe_price_id` column, a Checkout Session is built from
+    ad-hoc `price_data` straight off this row at purchase time, so
+    editing a package here is a plain row edit with nothing to keep in
+    sync on Stripe's side. `gem_purchases` is a permanent record,
+    written only by `credit_gems_from_purchase` — `gem_amount`/
+    `price_cents` are a snapshot of the package *as agreed to at
+    checkout*, not a live join, so an edited or deactivated package
+    doesn't retroactively change what a past purchase says it cost.
+  - **The actual security boundary**: `credit_gems_from_purchase` is
+    `security definer` but has no `auth.uid()` check at all — Stripe's
+    webhook call has no player session to check. Instead it's simply
+    never granted to `authenticated`, only to `service_role`
+    (`revoke all ... from public; grant execute ... to service_role`),
+    so a player calling it directly gets a flat "permission denied,"
+    confirmed by an actual negative test (see Verified below) rather
+    than just reading the grant statement and assuming it works.
+    Idempotent via a unique constraint on `stripe_checkout_session_id`
+    (`on conflict do nothing`, with the `gem_balance` update gated on
+    the insert having actually inserted a row) — Stripe legitimately
+    retries webhook deliveries, and this makes a retry for an
+    already-credited payment a true no-op instead of double-crediting.
+    Uses the same `begin_trusted_user_write()` idiom as
+    `admin_grant_self_currency` before touching `gem_balance`, a
+    `protect_privileged_user_fields`-guarded column.
+  - **New `src/lib/supabase/service.ts`**: a service-role Supabase
+    client (bypasses RLS entirely, satisfies
+    `protect_privileged_user_fields`'s `auth.role() = 'service_role'`
+    escape hatch on its own) — used ONLY by the webhook route, since
+    that's the one place in this app with no player session to
+    authenticate as. Every other Supabase access in the app still goes
+    through the cookie-scoped client in `lib/supabase/server.ts`.
+  - **Flow**: `/gems` lists active packages → `BuyGemsButton` submits a
+    real Server Action (`gems/actions.ts`, not a client-side RPC call
+    like every other "Buy" button in this app — Stripe's secret key
+    can never reach the browser) → that action snapshots the package's
+    current `gem_amount`/`price_cents`/id into the Checkout Session's
+    metadata and redirects to Stripe's hosted payment page → Stripe
+    calls `api/stripe/webhook/route.ts` on `checkout.session.completed`
+    → the webhook verifies the `Stripe-Signature` header against
+    `STRIPE_WEBHOOK_SECRET` (raw request body, not the parsed JSON —
+    Route Handlers never auto-parse the body, so `request.text()`
+    already gets Stripe exactly what it signed) → calls
+    `credit_gems_from_purchase` via the service-role client. The gems
+    are credited by the webhook, never by the success-page visit itself
+    — `/gems/success` just checks whether `gem_purchases` already has
+    the row yet (webhook delivery can land a moment after the redirect)
+    and says so honestly either way.
+  - **Trading**: `TRADING_ENABLED` (`config.ts`) flipped back to
+    `true` — it was fully built, tested, and merely hidden behind this
+    exact flag the whole time (see the "Trading disabled, Marketplace
+    added instead" note further up), so this was a one-line change plus
+    re-adding its nav link, not a rebuild.
+  - Verified three ways. **Database**: all 45 migrations replayed
+    against a disposable local scratch Postgres — a fresh container
+    this time, so the stub also needed the `anon`/`authenticated`/
+    `service_role` roles themselves (not just `auth`/`storage`), which
+    a real Supabase project already has and earlier rounds' stubs never
+    needed to create by hand. `credit_gems_from_purchase` was called
+    for real (not just read) as `service_role` — confirming correct
+    crediting, and that calling it twice with the same session id
+    credits gems exactly once — and the negative test (calling it as a
+    plain `authenticated`-member test role) came back "permission
+    denied for function," not a logic-level rejection, confirming the
+    grant itself is the gate. `gem_packages`/`gem_purchases` RLS was
+    checked both ways too: a non-admin's insert into `gem_packages`
+    correctly rejected, an admin's correctly succeeded, and each of two
+    test players' `gem_purchases` SELECT came back scoped to only their
+    own rows. **Webhook signature logic**: tested directly against the
+    Stripe SDK with a fake key/secret (no network, no real Stripe
+    account needed for this part) — a validly-signed test payload
+    parses, the same payload with one field tampered with afterward is
+    rejected, and a correctly-signed payload checked against the wrong
+    secret is rejected. **Frontend**: `next build` + `eslint` (clean),
+    and a Playwright screenshot of the `/gems` card grid (name/gem
+    amount/price/Buy button, gem balance pill, the cancelled-checkout
+    notice) fed mock package data directly; clicking Buy on that
+    preview actually submitted to the real `createGemCheckoutSession`
+    Server Action against a dummy Supabase project, which correctly
+    found no session and redirected to `/login` — real end-to-end
+    confirmation of the action wiring itself, short of an actual
+    Stripe payment. The full live round-trip (a real card charge
+    through to a credited balance) needs real Stripe test keys, which
+    weren't available in this environment — Getting Started Step 6
+    walks through setting those up to try it for real.
