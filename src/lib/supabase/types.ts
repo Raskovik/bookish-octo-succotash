@@ -870,33 +870,6 @@ export type NotificationWithActor = NotificationRow & {
   actorIsModerator: boolean;
 };
 
-// See 0045_gem_purchases.sql. price_cents is USD cents, Stripe's own
-// smallest-unit convention.
-export type GemPackageRow = {
-  id: string;
-  name: string;
-  gem_amount: number;
-  price_cents: number;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-};
-
-// gem_amount/price_cents are a snapshot of the package at purchase time,
-// not a live join — see the comment on this table in 0045_gem_purchases.sql.
-export type GemPurchaseStatus = "completed" | "refunded";
-export type GemPurchaseRow = {
-  id: string;
-  user_id: string;
-  package_id: string | null;
-  gem_amount: number;
-  price_cents: number;
-  stripe_checkout_session_id: string;
-  stripe_payment_intent_id: string | null;
-  status: GemPurchaseStatus;
-  created_at: string;
-};
-
 export type BanType = "dm" | "sales" | "forums" | "account";
 
 // See 0029_bans_and_staff_fixes.sql — a player can hold several of these
@@ -1041,14 +1014,6 @@ export type Database = {
       // — rows come only from the notify_on_* triggers), so this table
       // is select-only in practice; TableOf still needs an Insert shape.
       notifications: TableOf<NotificationRow>;
-      gem_packages: TableOf<
-        GemPackageRow,
-        Partial<GemPackageRow> & { name: string; gem_amount: number; price_cents: number }
-      >;
-      // Never written by a plain client insert (see 0045_gem_purchases.sql
-      // — rows come only from credit_gems_from_purchase, called from the
-      // Stripe webhook via the service-role key).
-      gem_purchases: TableOf<GemPurchaseRow>;
       blocks: TableOf<BlockRow, Partial<BlockRow> & { blocker_id: string; blocked_id: string }>;
       player_notes: TableOf<
         PlayerNoteRow,
@@ -1308,17 +1273,6 @@ export type Database = {
       };
       mark_all_notifications_read: {
         Args: { p_user_id: string };
-        Returns: null;
-      };
-      credit_gems_from_purchase: {
-        Args: {
-          p_user_id: string;
-          p_package_id: string;
-          p_gem_amount: number;
-          p_price_cents: number;
-          p_stripe_checkout_session_id: string;
-          p_stripe_payment_intent_id: string | null;
-        };
         Returns: null;
       };
       send_staff_message: {

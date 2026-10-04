@@ -43,9 +43,6 @@ export default async function AdminLayout({
           <Link href="/admin/currency" className="hover:underline">
             Currency
           </Link>
-          <Link href="/admin/gem-packages" className="hover:underline">
-            Gem packages
-          </Link>
           <Link href="/admin/audit-log" className="hover:underline">
             Audit log
           </Link>

@@ -41,13 +41,13 @@ export type CurrencyKind = keyof typeof CURRENCY;
 
 
 // ─── 3. FEATURE FLAGS ────────────────────────────────────────────
-// Trading (src/app/trades/, migrations 0015-0017) was disabled for a
-// while in favor of the fixed-price marketplace, then re-enabled so
-// players have a way to trade gems for coins (or anything else)
-// peer-to-peer alongside buying gems outright — see the gem purchase
-// system below. Flip back to false to hide it again; nothing else
-// needs to change.
-export const TRADING_ENABLED = true;
+// Trading (src/app/trades/, migrations 0015-0017) is fully built and
+// tested but disabled for now while a fixed-price marketplace is
+// used instead — see README "Build status". Flip this back to true
+// to re-enable it; nothing else needs to change. Every trading nav
+// link, button, and page checks this flag, so flipping it is the
+// whole re-enable.
+export const TRADING_ENABLED = false;
 
 // Brewing (src/app/brewing/, /admin/recipes, migrations 0006/0008) is
 // fully built and tested but hidden for now per a change of direction —
