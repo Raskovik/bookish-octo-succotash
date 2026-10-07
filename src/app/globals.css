@@ -93,7 +93,13 @@
 }
 
 :root {
-  --background: #a9ddf9;
+  /* Matches the solid color the bottom edge of furgarden-background.webp
+     fades into (sampled directly from the file: RGB 8,62,76) — this is
+     what shows everywhere below the art on a page taller than one
+     viewport, so it has to match exactly or there'd be a visible seam
+     where the image ends. Re-sample the new file's bottom-edge pixel
+     color and update this if the art is ever replaced. */
+  --background: #083e4c;
   --foreground: #1c1917;
 }
 
@@ -105,31 +111,29 @@
 }
 
 /* Sitewide backdrop, behind the header/nav/white content box/footer
-   (see layout.tsx). This is a placeholder pattern standing in for a
-   real background image later — swap the two `background-image` layers
-   below for `url(...)` when that art exists and everything else (the
-   solid --background color underneath, sizing, the rest of the page)
-   keeps working unchanged. Two layers: the diagonal stripe texture on
-   top, and underneath it a sky-to-grass gradient echoing the Furgarden
-   hero art's own scene (blue sky above, green ground below) rather than
-   a flat single color. `background-attachment: fixed` pins the
-   gradient to the viewport height so the blue-to-green transition reads
-   the same on a short page and a long, scrolling one — without it, the
-   gradient would stretch across the full scrollable height and a tall
-   page would show almost nothing but blue. */
+   (see layout.tsx) — a forest-clearing scene (public/ui/
+   furgarden-background.webp, converted from the source PNG dropped in
+   game-assets/other/ for ~92% smaller file size with no visible quality
+   loss, since this is a plain CSS background rather than a next/image
+   component and so never gets Next's own automatic image optimization).
+   `background-attachment: fixed` sizes/positions the image against the
+   VIEWPORT rather than the full page height — exactly like the gradient
+   placeholder this replaced — so a short page and a long, scrolling one
+   both show the same framed treetops-and-meadow scene pinned in the
+   window, never stretched or re-scaled based on page length. Because of
+   that same pinning, only roughly one viewport's height of the image is
+   ever visible, no matter how tall the art is: the image was drawn with
+   that in mind (real linework in the top ~90%, fading to the flat
+   --background color in the bottom ~10%), so anything a tall page needs
+   below that single pinned viewport is just --background picking up
+   seamlessly where the art's own fade already ends. */
 body {
   background-color: var(--background);
-  background-image:
-    repeating-linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.35) 0px,
-      rgba(255, 255, 255, 0.35) 2px,
-      transparent 2px,
-      transparent 26px
-    ),
-    linear-gradient(to bottom, #a9ddf9 0%, #cdeeda 65%, #a8dd9a 100%);
-  background-repeat: repeat, no-repeat;
-  background-attachment: scroll, fixed;
+  background-image: url("/ui/furgarden-background.webp");
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: cover;
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }

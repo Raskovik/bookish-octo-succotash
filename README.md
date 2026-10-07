@@ -271,6 +271,10 @@ This project is being built one module at a time. Current state:
       offers/responses, marketplace sales/expirations, bans, and (staff-
       only) newly filed reports. Page-load data only, no realtime. See
       Notes below
+- [x] Real sitewide background art — the placeholder stripe-and-gradient
+      backdrop (`globals.css`) is now a real illustrated forest-clearing
+      scene, pinned to the browser window the same way the placeholder
+      was so it never stretches on a long page. See Notes below
 
 ---
 
@@ -3721,3 +3725,49 @@ signs in.
     fed realistic mock data directly, both closed (confirming the badge
     count) and open (confirming all 4 sample sentence types render
     correctly, with unread ones bolded and dotted).
+
+- **Real sitewide background art**: replaces the stripe-texture-over-
+  sky-to-grass-gradient placeholder `globals.css` had been using (see
+  the "One-file site theming" notes above) with a real illustrated
+  scene — framed treetops, bunting, and a meadow clearing — delivered
+  via the `game-assets/other/` drop-folder workflow
+  (`Furgarden_Background.png`, 3840×2494).
+  - **Format conversion, not just a drop-in**: a plain CSS
+    `background-image` (unlike every `<Image>`-rendered asset
+    elsewhere in the app) never goes through Next's automatic image
+    optimization, so the 2.39 MB source PNG would have shipped to
+    every visitor on every page exactly as-is. Converted to WebP
+    (quality 90, no alpha channel — confirmed the source was fully
+    opaque first) instead: 193 KB, a 92% reduction with no visible
+    quality loss. Lives at `public/ui/furgarden-background.webp`; the
+    original PNG stays in `game-assets/other/` as the untouched source.
+  - **Same pinning mechanism as the placeholder it replaced**:
+    `background-attachment: fixed` sizes/positions the image against
+    the *viewport*, not the page's full scrollable height, so a short
+    page and a long one both show the same framed scene, never
+    stretched or re-scaled by page length — this is exactly the "don't
+    want to worry about the art resizing every page" behavior that
+    was asked for, and it already existed in the placeholder it
+    replaced, just with a CSS gradient standing in for real art.
+  - **The one thing that makes this seamless**: the art's own bottom
+    edge fades to a flat, solid color (confirmed by sampling pixels
+    directly — a real flat band, not a visual illusion) — `#083e4c`,
+    now also `globals.css`'s `--background` value. Because of the
+    pinning above, only roughly one viewport's height of a `fixed`
+    background is ever visible no matter how tall the art is drawn, so
+    the art itself only needed real linework in its top ~90%; the
+    bottom ~10% flat band exists purely so that whatever a tall page
+    shows *below* the pinned art — which is just `--background` — picks
+    up at the exact same color the art already faded to, with no
+    seam. If the art is ever replaced, re-sample its new bottom-edge
+    pixel color and update `--background` to match, or the seam comes
+    back.
+  - Verified with `next build` + `eslint` (clean) and two Playwright
+    screenshots against a local dev server: one at normal scroll
+    position (confirming the framed-treetops scene renders behind the
+    header and fades cleanly into the white content box), and one
+    after injecting a 3000px tall spacer and scrolling 2500px down
+    (confirming the exact same pinned scene still renders identically
+    — not stretched, not repositioned — proving the long-page behavior
+    actually works rather than just trusting the CSS mechanism by
+    inspection).
