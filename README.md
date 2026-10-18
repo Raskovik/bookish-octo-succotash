@@ -275,6 +275,11 @@ This project is being built one module at a time. Current state:
       backdrop (`globals.css`) is now a real illustrated forest-clearing
       scene, pinned to the browser window the same way the placeholder
       was so it never stretches on a long page. See Notes below
+- [x] Developer lockdown gate — every visitor sees "Sorry, this site can
+      only be accessed by developers. Enter developer code." until they
+      enter the code, enforced on every request via `src/proxy.ts`. Flip
+      `DEV_LOCKDOWN_ENABLED` to `false` in `src/config.ts` when ready for
+      a real public launch. See Notes below
 
 ---
 
@@ -505,38 +510,141 @@ If anything goes wrong, check [Troubleshooting](#troubleshooting) below —
 auth setup is the single most common thing to get slightly wrong on the
 first try, and almost every failure mode has a specific fix there.
 
-### Step 7 (optional): Deploy it live with Vercel
+### Step 7: Deploy it live with Vercel
 
-Vercel is a hosting service made by the creators of Next.js; connecting it
-to your GitHub repository gives you a live URL and automatic "preview"
-deployments for every branch/PR.
+Vercel is the hosting platform made by the same people who build Next.js,
+which is what this whole site is built on — so this is a well-trodden,
+close-to-zero-config path, not a generic "make it work" integration.
+Connecting it to your GitHub repository gives you a live URL, a free custom
+domain if you want one (Step 7f), and **automatic deploys**: every time new
+code is pushed, the live site updates itself within about a minute, with no
+manual steps on your end (more on exactly how that works in Step 7g).
 
-1. Push this repository to GitHub if it isn't already there.
-2. Go to [vercel.com](https://vercel.com) and sign up/log in (using your
-   GitHub account is easiest).
-3. Click **Add New… → Project**, then find and **Import** your GitHub
-   repository. Vercel auto-detects it's a Next.js app — you don't need to
-   change any build settings.
-4. Before clicking Deploy, expand **Environment Variables** and add the
-   same two variables from your `.env.local`:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-5. Click **Deploy**. After it finishes, Vercel gives you a URL like
-   `https://your-project.vercel.app`.
-6. Update Supabase and Google so the live URL is allowed to sign in:
-   - In Supabase **Authentication → URL Configuration**, add
-     `https://your-project.vercel.app/auth/callback` to **Redirect URLs**
-     (keep the localhost one too), and consider updating **Site URL** to
-     your production domain once you have one you consider "final."
-   - In Google Cloud **Credentials**, open your OAuth client from Step 5c
-     and add `https://your-project.vercel.app` to Authorized JavaScript
-     origins if prompted, and confirm the redirect URI list still contains
-     your Supabase callback URL (it doesn't change — Google always redirects
-     to Supabase, which then redirects to your app, so you generally only
-     add new entries in Supabase's Redirect URLs, not in Google, when adding
-     a new deployment domain).
-7. Redeploy (or just push a new commit) after changing environment
-   variables in Vercel — they only take effect on the next build.
+**7a. Push this repository to GitHub**
+
+Already done if you're reading this from the GitHub repo — Vercel reads
+directly from there, nothing to prepare on your machine for this step.
+
+**7b. Create a Vercel account and import the project**
+
+1. Go to [vercel.com](https://vercel.com) and sign up — **use the "Continue
+   with GitHub" option**, not a plain email signup, so Vercel can see your
+   repositories without a separate connection step later.
+2. On your Vercel dashboard, click **Add New… → Project**.
+3. Find this repository in the list (search for its name if you have many)
+   and click **Import**. If you don't see it, click **Adjust GitHub App
+   Permissions** and grant Vercel access to it specifically (or to all
+   repositories, your choice).
+4. Vercel auto-detects this is a Next.js project and fills in the build
+   settings for you — you don't need to touch the **Build and Output
+   Settings** section at all.
+
+**7c. Add your environment variables**
+
+Still on that same "Import Project" screen, before clicking Deploy: expand
+**Environment Variables** and add the same two variables from your
+`.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://abcdefghijklmno.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...your-long-key-here
+```
+
+Paste your own real values here (the same ones from Step 2), not the
+placeholder text above.
+
+**7d. Deploy**
+
+Click **Deploy**. Vercel builds the project (watch the build log scroll by —
+this takes 1-3 minutes) and gives you a live URL that looks like
+`https://your-project-name.vercel.app`. Click it — you should see the site,
+though signing in won't work yet (next step fixes that).
+
+**7e. Point Supabase and Google at the new live URL**
+
+Sign-in is currently only configured for `localhost:3000`. Add the new live
+URL to both places that need to recognize it:
+
+- In Supabase, **Authentication → URL Configuration**: add
+  `https://your-project-name.vercel.app/auth/callback` to **Redirect URLs**
+  (keep the localhost one too — you'll still want local dev to keep
+  working), and consider updating **Site URL** to your production domain
+  once you have one you consider "final" (see Step 7f).
+- In Google Cloud **Credentials**, open your OAuth client from Step 5c and
+  add `https://your-project-name.vercel.app` to **Authorized JavaScript
+  origins** if prompted. You do **not** need to add anything new to the
+  redirect URI list there — Google always redirects to Supabase's own
+  callback URL regardless of which domain the player started on, and that
+  URL doesn't change between environments.
+
+**7f. Connect Furgarden.com (or whatever domain you want)**
+
+In your Vercel project, go to **Settings → Domains** and type in your
+domain. What happens next depends on whether you already own it:
+
+- **You already own it** (bought from GoDaddy, Namecheap, DreamHost's own
+  registration, wherever): Vercel shows you exactly which DNS records to
+  add — typically an **A record** for the bare domain (`furgarden.com`)
+  pointing at an IP Vercel gives you, and a **CNAME record** for `www`
+  pointing at a Vercel hostname it gives you. Log into wherever you
+  manage that domain's DNS, add those two records, then come back to
+  Vercel — it auto-detects the change and issues free SSL (the padlock)
+  automatically. This can take anywhere from a few minutes to about 24
+  hours to fully take effect, depending on DNS propagation.
+- **You don't own it yet**: you can register it directly through Vercel's
+  own domain purchase flow right there in that same **Domains** screen —
+  it connects automatically with no DNS setup needed at all, the simplest
+  path if you're starting fresh.
+
+Once it's connected, repeat Step 7e for the new domain too (add
+`https://furgarden.com/auth/callback` to Supabase's Redirect URLs, add
+`https://furgarden.com` to Google's Authorized JavaScript origins) — sign-in
+needs to recognize this domain the same way it needed to recognize the
+`.vercel.app` one.
+
+**7g. How updates work from here on**
+
+This is the part that's genuinely automatic, not a manual thing you (or I)
+need to repeat each time:
+
+- Every time new code is pushed to this repository's main branch
+  (`claude/virtual-pet-site-spec-pgrfba` — this repo doesn't have a separate
+  `main`, this branch *is* the one Vercel will treat as live), Vercel
+  detects the push, rebuilds the site, and replaces the live version — live
+  within about a minute, with **no manual steps, no SSH, no server to
+  restart**.
+- If a build ever fails (a real code error, not something you need to watch
+  for proactively), Vercel keeps serving the last working version rather
+  than taking the site down — you'd see the failure in Vercel's dashboard
+  under that project's **Deployments** tab, and the live site stays
+  untouched until it's fixed.
+- Pushing to any *other* branch gets its own separate "preview" URL instead
+  of touching the live site — useful for seeing a change before it goes
+  live, though in our usual workflow everything happens on the one branch
+  directly.
+- Environment variable changes (adding/editing something in **Settings →
+  Environment Variables**) do **not** apply retroactively — they only take
+  effect on the *next* deploy, so either push a small change or click
+  **Redeploy** on the latest deployment after changing one.
+
+**7h. Don't forget the developer lockdown gate**
+
+Every visitor — including you, on a fresh browser — currently sees "Sorry,
+this site can only be accessed by developers. Enter developer code." until
+they enter the code (see the checklist entry and Notes below). This is
+intentional and will also apply to your new live URL/domain the moment it
+deploys. Enter the code once in your own browser to get past it while you
+keep working. When you're actually ready for the public to get in freely,
+flip `DEV_LOCKDOWN_ENABLED` to `false` in `src/config.ts`, push, and it's
+gone for everyone on the next deploy — no other change needed.
+
+**One thing worth knowing before you get attached to the free plan**:
+Vercel's free "Hobby" tier is for personal, non-commercial projects. A
+virtual pet site with a shop is almost certainly fine on it as-is — but if
+real-money purchases (gems, etc.) ever come back, that crosses into
+"commercial," and you'd want to be on a paid Pro plan ($20/month) by that
+point. Not a concern today, just something to keep in mind rather than be
+surprised by later.
 
 ---
 
@@ -3771,3 +3879,46 @@ signs in.
     — not stretched, not repositioned — proving the long-page behavior
     actually works rather than just trusting the CSS mechanism by
     inspection).
+
+- **Developer lockdown gate**: a pre-launch wall, not real security — a
+  plain value sitting in `src/config.ts`, good enough to keep casual
+  visitors out before a real launch, not meant to protect anything
+  sensitive (same spirit as `TRADING_ENABLED`/`BREWING_ENABLED` just
+  above it in that file — a visible, trivially-reversible switch, not
+  a secret boundary).
+  - **Enforced in `src/proxy.ts`** (Next 16's rename of Middleware,
+    same mechanism, see its own file comment) — the one place in this
+    app that runs before every single request, including sign-in
+    itself. Every path except `/lockdown` redirects there when the
+    `furgarden_dev_access` cookie isn't present, so there's no page
+    (including `/login`/`/auth/callback`) a locked-out visitor can
+    reach around it.
+  - **The cookie isn't the code itself** — entering the right code sets
+    an unrelated opaque marker value (`src/lib/dev-lockdown.ts`), so
+    someone who saw the 4-digit code shared somewhere couldn't just
+    hand-craft a matching cookie from it alone. Still not real
+    security (anyone with repo access can read both values directly),
+    just a deliberate small step above the laziest version.
+  - **The redirect preserves where you were headed** — visiting
+    `/pets` while locked bounces to `/lockdown?next=%2Fpets`, and
+    entering the right code lands you back on `/pets`, not just the
+    homepage. The `next` value is validated to start with a single
+    `/` (and explicitly not `//`, a protocol-relative URL some browsers
+    would treat as off-site) before ever being used in a redirect, so
+    the query param itself can't be turned into an open redirect to
+    another domain.
+  - Verified end-to-end with Playwright against a local dev server:
+    visiting a deep path while locked correctly bounces to `/lockdown`
+    with that path preserved in `next`; an incorrect code shows "That
+    code isn't right." and stays locked; the correct code (checked via
+    `context.cookies()`, not just the resulting URL) sets the
+    `furgarden_dev_access` cookie `httpOnly` and lands back on the
+    originally-requested page; and revisiting the homepage afterward
+    in the same browser context stays unlocked, confirming the cookie
+    persists rather than only covering the one redirect. (First attempt
+    at this last check raced the real result — Turbopack's cold
+    compile of `/pets` took longer than the test script's wait, making
+    it look like the redirect silently failed — re-run with a proper
+    `waitForURL` instead of a fixed timeout, and an explicit cookie
+    inspection, confirmed the implementation was correct all along and
+    the first result was purely a test-script timing issue, not a bug.)
