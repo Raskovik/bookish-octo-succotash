@@ -69,7 +69,7 @@ export default async function ShopPage() {
                   alt={item.name}
                   width={80}
                   height={80}
-                  className="h-20 w-20 rounded border-2 border-green-600"
+                  className="h-20 w-20 rounded"
                 />
               ) : (
                 <div className="h-20 w-20 rounded bg-green-200 dark:bg-stone-800" />

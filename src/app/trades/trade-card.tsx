@@ -17,8 +17,8 @@ function OfferPreview({ trade, side }: { trade: TradeWithParticipants; side: "in
   const gems = side === "initiator" ? trade.initiator_gems : trade.recipient_gems;
 
   const thumbnails = [
-    ...pets.map((p) => ({ key: `pet-${p.petId}`, imageUrl: p.imageUrl, border: "border-blue-600" })),
-    ...items.map((i) => ({ key: `item-${i.itemId}`, imageUrl: i.imageUrl, border: "border-green-600" })),
+    ...pets.map((p) => ({ key: `pet-${p.petId}`, imageUrl: p.imageUrl })),
+    ...items.map((i) => ({ key: `item-${i.itemId}`, imageUrl: i.imageUrl })),
   ];
 
   if (thumbnails.length === 0 && coins === 0 && gems === 0) {
@@ -35,10 +35,10 @@ function OfferPreview({ trade, side }: { trade: TradeWithParticipants; side: "in
             alt=""
             width={32}
             height={32}
-            className={`h-8 w-8 rounded border-2 ${t.border}`}
+            className="h-8 w-8 rounded"
           />
         ) : (
-          <div key={t.key} className={`h-8 w-8 rounded border-2 bg-green-200 dark:bg-stone-800 ${t.border}`} />
+          <div key={t.key} className="h-8 w-8 rounded bg-green-200 dark:bg-stone-800" />
         ),
       )}
       {thumbnails.length > 4 ? (

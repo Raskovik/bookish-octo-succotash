@@ -38,7 +38,7 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
                   alt={petTypeName(pet)}
                   width={112}
                   height={112}
-                  className="h-28 w-28 rounded-lg border-2 border-blue-600 object-cover"
+                  className="h-28 w-28 rounded-lg object-cover"
                 />
               ) : (
                 <div className="h-28 w-28 rounded-lg bg-green-200 dark:bg-stone-800" />

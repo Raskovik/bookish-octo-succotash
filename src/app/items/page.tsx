@@ -102,9 +102,7 @@ export default async function ItemsPage(props: PageProps<"/items">) {
                     alt={entry.item.name}
                     width={96}
                     height={96}
-                    className={`h-24 w-24 rounded border-2 ${
-                      entry.item.type === "potion" ? "border-purple-600" : "border-green-600"
-                    }`}
+                    className="h-24 w-24 rounded"
                   />
                 ) : (
                   <div className="h-24 w-24 rounded bg-green-200 dark:bg-stone-800" />

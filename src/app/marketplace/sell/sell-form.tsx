@@ -133,7 +133,7 @@ export function SellForm({
         {selectedPet ? (
           <div className="flex items-center gap-3 rounded-lg border border-green-300 p-3 dark:border-stone-700">
             {selectedPet.imageUrl ? (
-              <Image src={selectedPet.imageUrl} alt="" width={48} height={48} className="h-12 w-12 rounded border-2 border-blue-600" />
+              <Image src={selectedPet.imageUrl} alt="" width={48} height={48} className="h-12 w-12 rounded" />
             ) : null}
             <span className="flex-1 text-sm">{selectedPet.name}</span>
             <button type="button" onClick={() => setSelectedPetId(null)} className="text-sm text-stone-500 hover:text-red-600">
@@ -143,7 +143,7 @@ export function SellForm({
         ) : selectedItem ? (
           <div className="flex items-center gap-3 rounded-lg border border-green-300 p-3 dark:border-stone-700">
             {selectedItem.imageUrl ? (
-              <Image src={selectedItem.imageUrl} alt="" width={48} height={48} className="h-12 w-12 rounded border-2 border-green-600" />
+              <Image src={selectedItem.imageUrl} alt="" width={48} height={48} className="h-12 w-12 rounded" />
             ) : null}
             <span className="flex-1 text-sm">
               {selectedItem.name} × {selectedItemQty}

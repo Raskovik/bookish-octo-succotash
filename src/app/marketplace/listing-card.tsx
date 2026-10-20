@@ -38,7 +38,7 @@ export function ListingCard({
           alt=""
           width={48}
           height={48}
-          className={`h-12 w-12 rounded border-2 ${isPet ? "border-blue-600" : "border-green-600"}`}
+          className="h-12 w-12 rounded"
         />
       ) : (
         <div className="h-12 w-12 rounded bg-green-200 dark:bg-stone-800" />

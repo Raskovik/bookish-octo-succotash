@@ -171,7 +171,7 @@ export function PetPickerModal({
                         alt={pet.name}
                         width={56}
                         height={56}
-                        className="h-14 w-14 rounded border-2 border-blue-600"
+                        className="h-14 w-14 rounded"
                       />
                     ) : (
                       <div className="h-14 w-14 rounded bg-green-200 dark:bg-stone-800" />
@@ -238,7 +238,7 @@ export function ItemPickerModal({
                     alt={item.name}
                     width={36}
                     height={36}
-                    className="h-9 w-9 rounded border-2 border-green-600"
+                    className="h-9 w-9 rounded"
                   />
                 ) : (
                   <div className="h-9 w-9 rounded bg-green-200 dark:bg-stone-800" />

@@ -100,7 +100,6 @@ export function ClaimRewardModal({
   }
 
   if (bonus?.bonus_kind) {
-    const borderColor = bonus.bonus_kind === "pet" ? "border-blue-600" : "border-green-600";
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -117,7 +116,7 @@ export function ClaimRewardModal({
               alt={bonus.bonus_name ?? ""}
               width={96}
               height={96}
-              className={`h-24 w-24 rounded border-2 ${borderColor}`}
+              className="h-24 w-24 rounded"
             />
           ) : (
             <div className="h-24 w-24 rounded bg-green-200 dark:bg-stone-800" />
@@ -158,7 +157,7 @@ export function ClaimRewardModal({
                 alt={reveal.species.name}
                 width={112}
                 height={112}
-                className="h-28 w-28 rounded border-2 border-blue-600"
+                className="h-28 w-28 rounded"
               />
             ) : (
               <div className="h-28 w-28 rounded bg-green-200 dark:bg-stone-800" />
@@ -175,7 +174,7 @@ export function ClaimRewardModal({
                 alt={reveal.items.name}
                 width={112}
                 height={112}
-                className="h-28 w-28 rounded border-2 border-green-600"
+                className="h-28 w-28 rounded"
               />
             ) : (
               <div className="h-28 w-28 rounded bg-green-200 dark:bg-stone-800" />

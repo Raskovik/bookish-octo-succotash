@@ -207,7 +207,7 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
                     alt={petTypeName(pet)}
                     width={64}
                     height={64}
-                    className="h-16 w-16 rounded border-2 border-blue-600"
+                    className="h-16 w-16 rounded"
                   />
                 ) : (
                   <div className="h-16 w-16 rounded bg-green-200 dark:bg-stone-800" />
@@ -241,7 +241,7 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
                   alt={row.items.name}
                   width={56}
                   height={56}
-                  className="h-14 w-14 rounded border-2 border-green-600"
+                  className="h-14 w-14 rounded"
                 />
               ) : (
                 <div className="h-14 w-14 rounded bg-green-200 dark:bg-stone-800" />

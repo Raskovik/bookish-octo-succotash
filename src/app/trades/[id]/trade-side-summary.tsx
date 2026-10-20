@@ -35,7 +35,7 @@ export function TradeSideSummary({
                       alt={pet.speciesName}
                       width={64}
                       height={64}
-                      className="h-16 w-16 rounded border-2 border-blue-600"
+                      className="h-16 w-16 rounded"
                     />
                   ) : (
                     <div className="h-16 w-16 rounded bg-green-200 dark:bg-stone-800" />
@@ -56,7 +56,7 @@ export function TradeSideSummary({
                       alt={item.name}
                       width={32}
                       height={32}
-                      className="h-8 w-8 rounded border-2 border-green-600"
+                      className="h-8 w-8 rounded"
                     />
                   ) : (
                     <div className="h-8 w-8 rounded bg-green-200 dark:bg-stone-800" />
