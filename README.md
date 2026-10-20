@@ -3889,10 +3889,21 @@ signs in.
   - **Enforced in `src/proxy.ts`** (Next 16's rename of Middleware,
     same mechanism, see its own file comment) — the one place in this
     app that runs before every single request, including sign-in
-    itself. Every path except `/lockdown` redirects there when the
-    `furgarden_dev_access` cookie isn't present, so there's no page
-    (including `/login`/`/auth/callback`) a locked-out visitor can
-    reach around it.
+    itself. Every path except `/lockdown` and `/auth/*` redirects there
+    when the `furgarden_dev_access` cookie isn't present, so there's no
+    page (including `/login`) a locked-out visitor can reach around it.
+    `/auth/*` — in particular `/auth/callback` — has to stay exempt
+    even though it's part of the sign-in flow: Google redirects back to
+    it carrying a one-time authorization code, and that request won't
+    have the dev cookie whenever the visitor's browser doesn't already
+    have dev access on that exact domain (e.g. testing sign-in on a
+    fresh domain, or in a browser that hasn't entered the code yet).
+    Gating it bounced that request to `/lockdown` instead of the real
+    route, silently discarding the one-time code and making sign-in
+    fail with no error — found and fixed after exactly that symptom
+    showed up on `furr.garden`. There's nothing to protect by gating
+    `/auth/*` anyway — it's plumbing with no content of its own, not a
+    page a locked-out visitor could read.
   - **The cookie isn't the code itself** — entering the right code sets
     an unrelated opaque marker value (`src/lib/dev-lockdown.ts`), so
     someone who saw the 4-digit code shared somewhere couldn't just
