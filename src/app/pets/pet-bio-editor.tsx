@@ -52,51 +52,57 @@ export function PetBioEditor({
     router.refresh();
   }
 
-  if (isEditing) {
-    return (
-      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <BBCodeEditor name="bio" defaultValue={bio ?? ""} rows={6} maxLength={MAX_BIO_LENGTH} />
-        {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="self-start rounded-md bg-green-800 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-          >
-            {isPending ? "Saving…" : "Save"}
-          </button>
+  return (
+    <div className="overflow-hidden rounded-lg border-2 border-green-200 dark:border-stone-800">
+      <div className="flex items-center justify-between border-b-2 border-green-200 bg-green-50/70 px-3 py-1.5 dark:border-stone-800 dark:bg-stone-900/50">
+        <p className="text-xs font-bold uppercase tracking-wide text-green-800 dark:text-green-300">Bio</p>
+        {isEditing ? (
+          <div className="flex items-center gap-3 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setError(null);
+              }}
+              className="text-stone-500 hover:underline"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="pet-bio-form"
+              disabled={isPending}
+              className="text-green-800 hover:underline disabled:opacity-60 dark:text-green-300"
+            >
+              {isPending ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
-            onClick={() => {
-              setIsEditing(false);
-              setError(null);
-            }}
-            className="self-start rounded-md border border-green-300 px-3 py-1.5 text-xs hover:bg-green-100 dark:border-stone-700 dark:hover:bg-stone-900"
+            onClick={() => setIsEditing(true)}
+            className="text-xs font-semibold text-green-800 hover:underline dark:text-green-300"
           >
-            Cancel
+            {bio ? "Edit" : "Add a bio"}
           </button>
-        </div>
-      </form>
-    );
-  }
+        )}
+      </div>
 
-  return (
-    <div className="flex flex-col gap-2">
-      {bio ? (
-        <div
-          className="forum-content text-sm text-stone-700 dark:text-stone-300"
-          dangerouslySetInnerHTML={{ __html: bbcodeToHtml(bio) }}
-        />
-      ) : (
-        <p className="text-sm italic text-stone-500">No bio yet.</p>
-      )}
-      <button
-        type="button"
-        onClick={() => setIsEditing(true)}
-        className="self-start text-xs text-green-800 underline hover:no-underline dark:text-green-400"
-      >
-        {bio ? "Edit bio" : "Add a bio"}
-      </button>
+      <div className="p-3">
+        {isEditing ? (
+          <form id="pet-bio-form" onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <BBCodeEditor name="bio" defaultValue={bio ?? ""} rows={6} maxLength={MAX_BIO_LENGTH} />
+            {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
+          </form>
+        ) : bio ? (
+          <div
+            className="forum-content text-sm text-stone-700 dark:text-stone-300"
+            dangerouslySetInnerHTML={{ __html: bbcodeToHtml(bio) }}
+          />
+        ) : (
+          <p className="text-sm italic text-stone-500">No bio yet.</p>
+        )}
+      </div>
     </div>
   );
 }
