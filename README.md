@@ -275,11 +275,6 @@ This project is being built one module at a time. Current state:
       backdrop (`globals.css`) is now a real illustrated forest-clearing
       scene, pinned to the browser window the same way the placeholder
       was so it never stretches on a long page. See Notes below
-- [x] Developer lockdown gate — every visitor sees "Sorry, this site can
-      only be accessed by developers. Enter developer code." until they
-      enter the code, enforced on every request via `src/proxy.ts`. Flip
-      `DEV_LOCKDOWN_ENABLED` to `false` in `src/config.ts` when ready for
-      a real public launch. See Notes below
 
 ---
 
@@ -626,17 +621,6 @@ need to repeat each time:
   Environment Variables**) do **not** apply retroactively — they only take
   effect on the *next* deploy, so either push a small change or click
   **Redeploy** on the latest deployment after changing one.
-
-**7h. Don't forget the developer lockdown gate**
-
-Every visitor — including you, on a fresh browser — currently sees "Sorry,
-this site can only be accessed by developers. Enter developer code." until
-they enter the code (see the checklist entry and Notes below). This is
-intentional and will also apply to your new live URL/domain the moment it
-deploys. Enter the code once in your own browser to get past it while you
-keep working. When you're actually ready for the public to get in freely,
-flip `DEV_LOCKDOWN_ENABLED` to `false` in `src/config.ts`, push, and it's
-gone for everyone on the next deploy — no other change needed.
 
 **One thing worth knowing before you get attached to the free plan**:
 Vercel's free "Hobby" tier is for personal, non-commercial projects. A
@@ -3880,56 +3864,13 @@ signs in.
     actually works rather than just trusting the CSS mechanism by
     inspection).
 
-- **Developer lockdown gate**: a pre-launch wall, not real security — a
-  plain value sitting in `src/config.ts`, good enough to keep casual
-  visitors out before a real launch, not meant to protect anything
-  sensitive (same spirit as `TRADING_ENABLED`/`BREWING_ENABLED` just
-  above it in that file — a visible, trivially-reversible switch, not
-  a secret boundary).
-  - **Enforced in `src/proxy.ts`** (Next 16's rename of Middleware,
-    same mechanism, see its own file comment) — the one place in this
-    app that runs before every single request, including sign-in
-    itself. Every path except `/lockdown` and `/auth/*` redirects there
-    when the `furgarden_dev_access` cookie isn't present, so there's no
-    page (including `/login`) a locked-out visitor can reach around it.
-    `/auth/*` — in particular `/auth/callback` — has to stay exempt
-    even though it's part of the sign-in flow: Google redirects back to
-    it carrying a one-time authorization code, and that request won't
-    have the dev cookie whenever the visitor's browser doesn't already
-    have dev access on that exact domain (e.g. testing sign-in on a
-    fresh domain, or in a browser that hasn't entered the code yet).
-    Gating it bounced that request to `/lockdown` instead of the real
-    route, silently discarding the one-time code and making sign-in
-    fail with no error — found and fixed after exactly that symptom
-    showed up on `furr.garden`. There's nothing to protect by gating
-    `/auth/*` anyway — it's plumbing with no content of its own, not a
-    page a locked-out visitor could read.
-  - **The cookie isn't the code itself** — entering the right code sets
-    an unrelated opaque marker value (`src/lib/dev-lockdown.ts`), so
-    someone who saw the 4-digit code shared somewhere couldn't just
-    hand-craft a matching cookie from it alone. Still not real
-    security (anyone with repo access can read both values directly),
-    just a deliberate small step above the laziest version.
-  - **The redirect preserves where you were headed** — visiting
-    `/pets` while locked bounces to `/lockdown?next=%2Fpets`, and
-    entering the right code lands you back on `/pets`, not just the
-    homepage. The `next` value is validated to start with a single
-    `/` (and explicitly not `//`, a protocol-relative URL some browsers
-    would treat as off-site) before ever being used in a redirect, so
-    the query param itself can't be turned into an open redirect to
-    another domain.
-  - Verified end-to-end with Playwright against a local dev server:
-    visiting a deep path while locked correctly bounces to `/lockdown`
-    with that path preserved in `next`; an incorrect code shows "That
-    code isn't right." and stays locked; the correct code (checked via
-    `context.cookies()`, not just the resulting URL) sets the
-    `furgarden_dev_access` cookie `httpOnly` and lands back on the
-    originally-requested page; and revisiting the homepage afterward
-    in the same browser context stays unlocked, confirming the cookie
-    persists rather than only covering the one redirect. (First attempt
-    at this last check raced the real result — Turbopack's cold
-    compile of `/pets` took longer than the test script's wait, making
-    it look like the redirect silently failed — re-run with a proper
-    `waitForURL` instead of a fixed timeout, and an explicit cookie
-    inspection, confirmed the implementation was correct all along and
-    the first result was purely a test-script timing issue, not a bug.)
+- **Developer lockdown gate (removed)**: a pre-launch "enter a code to get
+  in" wall briefly lived in `src/proxy.ts`/`src/app/lockdown/`. It was
+  removed after sign-in broke on the new `furr.garden` domain, to take it
+  out of the picture while debugging that — gating `/auth/callback`
+  whenever the dev-access cookie wasn't present on that exact domain was
+  one suspect (fixed once, by exempting `/auth/*`, but sign-in was still
+  broken afterward, so the whole gate came out rather than keep
+  half-trusting it as a variable). If a pre-launch wall is wanted again
+  later, it's straightforward to rebuild: a proxy check for a cookie, a
+  simple code-entry page/action that sets it, done.

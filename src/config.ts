@@ -56,18 +56,3 @@ export const TRADING_ENABLED = false;
 // /admin/recipes page 404 while this is false, and its nav links (player
 // "Play" menu, admin panel nav, admin dashboard card) disappear too.
 export const BREWING_ENABLED = false;
-
-
-// ─── 4. DEV LOCKDOWN ─────────────────────────────────────────────
-// A pre-launch gate — every visitor without the right code gets sent
-// to /lockdown instead of the real site (src/proxy.ts enforces this on
-// every request). For keeping the site private during development/
-// testing, NOT real security: the code is a plain value sitting in
-// this file, visible to anyone who looks at the repo. Good enough to
-// keep casual visitors out before a real launch; not meant to protect
-// anything sensitive.
-//
-// Flip DEV_LOCKDOWN_ENABLED to false when you're ready for the public
-// to get in freely — nothing else needs to change.
-export const DEV_LOCKDOWN_ENABLED = true;
-export const DEV_ACCESS_CODE = "7424";
