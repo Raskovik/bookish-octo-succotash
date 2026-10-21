@@ -114,26 +114,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   GAME CHROME — CSS-only stand-ins for the wood-frame/parchment
-   look (see src/components/game-ui.tsx, which is what actually
-   uses these two classes). Not real wood-grain/paper texture —
-   there's no art asset for that yet — just gradients faking the
-   same idea, so there's exactly one place to swap in a real
-   texture image later (add a background-image here) rather than
-   hunting through every component that uses .wood-frame/.parchment.
-   ═══════════════════════════════════════════════════════════════ */
-.wood-frame {
-  background-color: #6b4226;
-  background-image:
-    repeating-linear-gradient(95deg, rgba(0, 0, 0, 0.09) 0px, rgba(0, 0, 0, 0.09) 2px, transparent 2px, transparent 7px),
-    linear-gradient(160deg, #96622f 0%, #6b4226 55%, #47280f 100%);
-}
-.parchment {
-  background-color: #faf3e3;
-  background-image: radial-gradient(circle at 25% 15%, rgba(255, 255, 255, 0.5), transparent 55%);
-}
-
 /* Sitewide backdrop, behind the header/nav/white content box/footer (see
    layout.tsx) — TEMPORARY placeholder: a plain CSS diagonal stripe, sky
    blue with a slightly darker blue stripe, standing in for

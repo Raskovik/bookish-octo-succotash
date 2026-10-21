@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { GamePanel, GameButton } from "@/components/game-ui";
 import type { ClaimExpeditionResult, ExpeditionRewardReveal } from "@/lib/supabase/types";
 
 /**
@@ -108,7 +107,7 @@ export function ClaimRewardModal({
         aria-modal="true"
         aria-label="Bonus reward"
       >
-        <GamePanel className="w-full max-w-sm" contentClassName="items-center gap-4 p-6 text-center dark:bg-stone-900">
+        <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg bg-white p-6 text-center dark:bg-stone-900">
           <p className="text-lg font-semibold tracking-tight">🎉 Double reward!</p>
           <p className="text-sm text-stone-500">You also got a bonus:</p>
           {bonus.bonus_image_url ? (
@@ -123,10 +122,14 @@ export function ClaimRewardModal({
             <div className="h-24 w-24 rounded bg-green-200 dark:bg-stone-800" />
           )}
           <p className="font-medium">{bonus.bonus_name}</p>
-          <GameButton type="button" onClick={onClose} className="w-full justify-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
+          >
             Nice!
-          </GameButton>
-        </GamePanel>
+          </button>
+        </div>
       </div>
     );
   }
@@ -138,7 +141,7 @@ export function ClaimRewardModal({
       aria-modal="true"
       aria-label="Expedition reward"
     >
-      <GamePanel className="w-full max-w-sm" contentClassName="items-center gap-4 p-6 text-center dark:bg-stone-900">
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-lg bg-white p-6 text-center dark:bg-stone-900">
         <p className="text-sm text-stone-500">Your pet has returned from {zoneName}!</p>
 
         {loadError ? (
@@ -192,23 +195,32 @@ export function ClaimRewardModal({
         <div className="flex w-full gap-3">
           {reveal?.species || reveal?.items ? (
             <>
-              <GameButton type="button" onClick={() => handleChoice(true)} disabled={isSubmitting} className="flex-1 justify-center">
-                {isSubmitting ? "…" : "Keep it"}
-              </GameButton>
-              <GameButton
+              <button
                 type="button"
-                variant="danger"
+                onClick={() => handleChoice(true)}
+                disabled={isSubmitting}
+                className="flex-1 rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
+              >
+                {isSubmitting ? "…" : "Keep it"}
+              </button>
+              <button
+                type="button"
                 onClick={() => handleChoice(false)}
                 disabled={isSubmitting}
-                className="flex-1 justify-center"
+                className="flex-1 rounded-md border border-green-300 px-4 py-2 text-sm hover:bg-green-100 disabled:opacity-60 dark:border-stone-700 dark:hover:bg-stone-800"
               >
                 {isSubmitting ? "…" : "Send it away"}
-              </GameButton>
+              </button>
             </>
           ) : reveal ? (
-            <GameButton type="button" onClick={() => handleChoice(false)} disabled={isSubmitting} className="flex-1 justify-center">
+            <button
+              type="button"
+              onClick={() => handleChoice(false)}
+              disabled={isSubmitting}
+              className="flex-1 rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
+            >
               {isSubmitting ? "…" : "Continue"}
-            </GameButton>
+            </button>
           ) : null}
         </div>
 
@@ -220,7 +232,7 @@ export function ClaimRewardModal({
         >
           Close for now
         </button>
-      </GamePanel>
+      </div>
     </div>
   );
 }
