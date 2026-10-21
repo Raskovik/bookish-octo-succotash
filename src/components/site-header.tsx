@@ -6,6 +6,7 @@ import { isConversationUnread } from "@/lib/dm-unread";
 import { CURRENCY } from "@/config";
 import { CurrencyIcon } from "@/components/currency-icon";
 import { NotificationBell } from "@/components/notification-bell";
+import { iconButtonClassName, IconGloss } from "@/components/game-ui";
 import type { NotificationWithActor } from "@/lib/supabase/types";
 
 const NOTIFICATION_LIMIT = 20;
@@ -69,18 +70,21 @@ export async function SiteHeader() {
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4">
       {/* Logo placeholder — swap for real logo art later; the link-home
-          behavior underneath won't need to change. */}
+          behavior underneath won't need to change. Glossy wood-sign
+          treatment matches GameButton's bevel, hand-styled rather than
+          reused from there since GameButton only renders a <button>. */}
       <Link
         href="/"
-        className="flex min-w-40 flex-col items-center justify-center gap-0.5 rounded-md border-2 border-amber-900 bg-green-500 px-6 py-3 text-center text-white shadow-sm hover:bg-green-600"
+        className="relative flex min-w-40 flex-col items-center justify-center gap-0.5 overflow-hidden rounded-xl border-2 border-amber-950 bg-gradient-to-b from-green-500 to-green-700 px-6 py-3 text-center text-white shadow-md transition hover:brightness-105"
       >
-        <span className="text-sm font-bold uppercase tracking-wide">Logo image placeholder</span>
-        <span className="text-xs opacity-90">Clicking this returns player to home</span>
+        <span className="pointer-events-none absolute inset-x-1.5 top-1 h-1/4 rounded-full bg-white/25" />
+        <span className="relative text-sm font-bold uppercase tracking-wide">Logo image placeholder</span>
+        <span className="relative text-xs opacity-90">Clicking this returns player to home</span>
       </Link>
 
       {user ? (
-        <div className="flex items-center gap-3 rounded-md border-2 border-amber-900 bg-yellow-400 px-4 py-2 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-medium text-stone-900">
+        <div className="wood-frame flex items-center gap-3 rounded-xl border-2 border-amber-950 px-4 py-2 shadow-md">
+          <div className="flex items-center gap-2 rounded-full border border-amber-800 bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-900 shadow-inner">
             <span title={CURRENCY.coin.label}>
               <CurrencyIcon kind="coin" /> {coinBalance ?? 0}
             </span>
@@ -90,12 +94,14 @@ export async function SiteHeader() {
           </div>
           <Link
             href="/messages"
-            className="relative flex items-center border-l border-stone-900/20 pl-3 text-stone-900 hover:opacity-80"
+            className={iconButtonClassName("neutral", "relative")}
+            style={{ width: 34, height: 34 }}
             aria-label={unreadCount > 0 ? `Messages (${unreadCount} unread)` : "Messages"}
           >
-            <Mail size={18} />
+            <IconGloss />
+            <Mail size={17} className="relative" />
             {unreadCount > 0 ? (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-red-600 px-1 text-[10px] font-bold text-white">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             ) : null}
@@ -103,17 +109,23 @@ export async function SiteHeader() {
           <NotificationBell initialNotifications={notifications} />
           <Link
             href="/profile"
-            className="flex items-center gap-2 border-l border-stone-900/20 pl-3 text-sm font-medium text-stone-900 hover:underline"
+            className="flex items-center gap-2 text-sm font-semibold text-white hover:underline"
           >
             {avatarUrl ? (
-              <Image src={avatarUrl} alt="" width={24} height={24} className="h-6 w-6 rounded-full" />
+              <Image
+                src={avatarUrl}
+                alt=""
+                width={26}
+                height={26}
+                className="h-[26px] w-[26px] rounded-full border-2 border-amber-200"
+              />
             ) : null}
             {displayName ?? "Profile"}
           </Link>
           <form action="/auth/sign-out" method="post">
             <button
               type="submit"
-              className="rounded-md border border-stone-900/30 px-2.5 py-1 text-xs text-stone-900 hover:bg-yellow-300"
+              className="rounded-full border border-amber-200/40 px-2.5 py-1 text-xs font-medium text-amber-100 hover:bg-black/20"
             >
               Sign out
             </button>
@@ -122,9 +134,10 @@ export async function SiteHeader() {
       ) : (
         <Link
           href="/login"
-          className="rounded-md border-2 border-amber-900 bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-stone-900 shadow-sm hover:bg-yellow-300"
+          className="relative overflow-hidden rounded-full border-2 border-amber-950 bg-gradient-to-b from-yellow-300 to-yellow-500 px-5 py-2.5 text-sm font-bold text-amber-950 shadow-md transition hover:brightness-105"
         >
-          Sign in
+          <span className="pointer-events-none absolute inset-x-1.5 top-1 h-1/3 rounded-full bg-white/40" />
+          <span className="relative">Sign in</span>
         </Link>
       )}
     </header>

@@ -40,21 +40,21 @@ export function NavGroups({ groups }: { groups: NavGroup[] }) {
             <button
               type="button"
               onClick={() => setOpenLabel(isOpen ? null : group.label)}
-              className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-semibold text-stone-900 hover:bg-yellow-300 ${
-                isOpen ? "bg-yellow-300" : ""
+              className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold text-amber-50 transition hover:bg-black/20 ${
+                isOpen ? "bg-black/25 shadow-inner" : ""
               }`}
             >
               {group.label}
               <span className={`text-xs transition-transform ${isOpen ? "rotate-180" : ""}`}>▾</span>
             </button>
             {isOpen ? (
-              <div className="absolute left-0 top-full z-10 mt-1 flex min-w-40 flex-col gap-0.5 rounded-md border border-stone-900/10 bg-yellow-50 p-1.5 shadow-lg">
+              <div className="parchment absolute left-0 top-full z-10 mt-1 flex min-w-40 flex-col gap-0.5 rounded-lg border-2 border-amber-800 p-1.5 shadow-lg">
                 {group.links.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpenLabel(null)}
-                    className="rounded px-3 py-1.5 text-sm font-medium text-stone-900 hover:bg-yellow-200"
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-amber-950 hover:bg-amber-200/60"
                   >
                     {link.label}
                   </Link>

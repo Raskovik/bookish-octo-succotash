@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { X } from "lucide-react";
+import { GamePanel, GameButton, IconButton } from "@/components/game-ui";
 import type { PetRarity } from "@/lib/supabase/types";
 
 // Normalized shapes the modal renders — callers adapt whatever query
@@ -92,22 +94,17 @@ function ModalShell({
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col gap-3 rounded-lg bg-green-50 p-4 shadow-xl dark:bg-stone-900">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold">{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-sm text-stone-500 hover:underline"
-          >
-            Close
-          </button>
-        </div>
+      <GamePanel
+        className="max-h-[85vh] w-full max-w-2xl"
+        contentClassName="gap-3 p-4 overflow-hidden dark:bg-stone-900"
+        title={title}
+        right={<IconButton icon={X} label="Close" variant="danger" size={32} onClick={onClose} />}
+      >
         <div className="flex-1 overflow-y-auto">{children}</div>
-        <div className="flex items-center justify-between border-t border-green-200 pt-3 dark:border-stone-800">
+        <div className="flex items-center justify-between border-t-2 border-amber-200 pt-3 dark:border-stone-800">
           {footer}
         </div>
-      </div>
+      </GamePanel>
     </div>
   );
 }
@@ -136,13 +133,9 @@ export function PetPickerModal({
       footer={
         <>
           <span className="text-sm text-stone-500">{selectedIds.size} selected</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md bg-green-800 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-          >
+          <GameButton type="button" onClick={onClose}>
             Done
-          </button>
+          </GameButton>
         </>
       }
     >
@@ -214,13 +207,9 @@ export function ItemPickerModal({
       footer={
         <>
           <span className="text-sm text-stone-500">{selectedCount} item types selected</span>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md bg-green-800 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-          >
+          <GameButton type="button" onClick={onClose}>
             Done
-          </button>
+          </GameButton>
         </>
       }
     >

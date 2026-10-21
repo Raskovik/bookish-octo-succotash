@@ -64,7 +64,7 @@ export async function SiteNav() {
   ];
 
   return (
-    <nav className="mx-4 mt-3 rounded-md border-2 border-amber-900 bg-yellow-400 px-3 py-1.5 shadow-sm">
+    <nav className="wood-frame mx-4 mt-3 rounded-xl border-2 border-amber-950 px-3 py-1.5 shadow-md">
       <NavGroups groups={groups} />
     </nav>
   );
