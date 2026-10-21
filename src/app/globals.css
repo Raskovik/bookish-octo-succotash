@@ -27,12 +27,19 @@
      amber  — header/footer/nav trim (borders, wood-plank look)
 
    Each is Tailwind's full 50 (lightest) -> 950 (darkest) scale.
-   Left at Tailwind's own default values below, so this file is a
-   safe starting point — nothing changes until you edit a value.
    Paste a hex color from any picker/palette tool; keeping roughly
    the same lightness order (50 lightest -> 950 darkest) keeps
    existing hover/border contrast and dark:* variants looking right
    rather than inverted or flat.
+
+   "green" below is currently set to a TAN palette, not an actual
+   green — every `bg-green-800`/`border-green-200`/etc. class in the
+   app still literally says "green" (that's the Tailwind utility
+   name, baked into 100+ files), but renders tan because only the
+   values here changed, not the class names anywhere. That's the
+   whole point of this token layer: swap the look without touching
+   components. Revert to actual green by pasting back Tailwind's
+   stock green-50..950 values (shown in a comment below each line).
 
    NOT covered here on purpose, left as Tailwind's plain defaults —
    these are meaningful states, not brand colors, and changing them
@@ -43,17 +50,17 @@
      - purple — potion art accent
    ═══════════════════════════════════════════════════════════════ */
 @theme {
-  --color-green-50: #f0fdf4;
-  --color-green-100: #dcfce7;
-  --color-green-200: #b9f8cf;
-  --color-green-300: #7bf1a8;
-  --color-green-400: #05df72;
-  --color-green-500: #00c950;
-  --color-green-600: #00a63e;
-  --color-green-700: #008236;
-  --color-green-800: #016630;
-  --color-green-900: #0d542b;
-  --color-green-950: #032e15;
+  --color-green-50: #faf5ec; /* stock green-50: #f0fdf4 */
+  --color-green-100: #f2e6ce; /* stock green-100: #dcfce7 */
+  --color-green-200: #e6cfa3; /* stock green-200: #b9f8cf */
+  --color-green-300: #d7b378; /* stock green-300: #7bf1a8 */
+  --color-green-400: #c6934f; /* stock green-400: #05df72 */
+  --color-green-500: #b07a3a; /* stock green-500: #00c950 */
+  --color-green-600: #93622e; /* stock green-600: #00a63e */
+  --color-green-700: #764d26; /* stock green-700: #008236 */
+  --color-green-800: #5a3a1d; /* stock green-800: #016630 */
+  --color-green-900: #432b16; /* stock green-900: #0d542b */
+  --color-green-950: #2b1a0d; /* stock green-950: #032e15 */
 
   --color-stone-50: #fafaf9;
   --color-stone-100: #f5f5f4;
@@ -93,13 +100,10 @@
 }
 
 :root {
-  /* Matches the solid color the bottom edge of furgarden-background.webp
-     fades into (sampled directly from the file: RGB 8,62,76) — this is
-     what shows everywhere below the art on a page taller than one
-     viewport, so it has to match exactly or there'd be a visible seam
-     where the image ends. Re-sample the new file's bottom-edge pixel
-     color and update this if the art is ever replaced. */
-  --background: #083e4c;
+  /* The lighter of the two stripe colors in the body background below —
+     kept as its own variable only so there's a sane solid color behind
+     the page before the gradient paints. */
+  --background: #9ad4f5;
   --foreground: #1c1917;
 }
 
@@ -110,29 +114,30 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Sitewide backdrop, behind the header/nav/white content box/footer
-   (see layout.tsx) — a forest-clearing scene (public/ui/
-   furgarden-background.webp, converted from the source PNG dropped in
-   game-assets/other/ for ~92% smaller file size with no visible quality
-   loss, since this is a plain CSS background rather than a next/image
-   component and so never gets Next's own automatic image optimization).
-   `background-attachment: fixed` sizes/positions the image against the
-   VIEWPORT rather than the full page height — exactly like the gradient
-   placeholder this replaced — so a short page and a long, scrolling one
-   both show the same framed treetops-and-meadow scene pinned in the
-   window, never stretched or re-scaled based on page length. Because of
-   that same pinning, only roughly one viewport's height of the image is
-   ever visible, no matter how tall the art is: the image was drawn with
-   that in mind (real linework in the top ~90%, fading to the flat
-   --background color in the bottom ~10%), so anything a tall page needs
-   below that single pinned viewport is just --background picking up
-   seamlessly where the art's own fade already ends. */
+/* Sitewide backdrop, behind the header/nav/white content box/footer (see
+   layout.tsx) — TEMPORARY placeholder: a plain CSS diagonal stripe, sky
+   blue with a slightly darker blue stripe, standing in for
+   furgarden-background.webp's forest-clearing scene while that art gets
+   redrawn (it never read well pinned behind the page — see prior
+   discussion). Swap back to real art later by replacing this whole rule
+   with a `background-image: url(...)` the same way the old one worked;
+   nothing else on the page depends on which approach is used here.
+   `repeating-linear-gradient` tiles forever in every direction on its
+   own, so unlike the old single image there's no "only one viewport's
+   worth is visible" concern and no bottom-edge color to match — it
+   looks identical on a short page and a long scrolling one.
+   `background-attachment: fixed` is kept only so the pattern doesn't
+   repaint while scrolling; the stripes themselves look the same either
+   way since the pattern has no fixed start/end point. */
 body {
   background-color: var(--background);
-  background-image: url("/ui/furgarden-background.webp");
-  background-repeat: no-repeat;
-  background-position: top center;
-  background-size: cover;
+  background-image: repeating-linear-gradient(
+    45deg,
+    #9ad4f5 0px,
+    #9ad4f5 24px,
+    #74bce7 24px,
+    #74bce7 48px
+  );
   background-attachment: fixed;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
