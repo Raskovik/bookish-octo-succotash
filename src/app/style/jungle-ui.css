@@ -16,6 +16,7 @@
 /* ---------- 1. TOKENS ---------- */
 :root {
   --font-display: 'Lilita One', 'Fredoka', system-ui, sans-serif;
+  --font-header: 'Luckiest Guy', 'Fredoka', system-ui, sans-serif;
   --font-body: 'Fredoka', system-ui, sans-serif;
 
   /* bezel (the pale ring around every control) */
@@ -75,7 +76,7 @@
 }
 .paper-title {
   margin: 0 0 14px;
-  font-family: var(--font-display);
+  font-family: var(--font-header);
   font-size: 30px;
   color: var(--title-orange);
   letter-spacing: .5px;
@@ -629,7 +630,10 @@ select.field { appearance: none; padding-right: 44px;
 
 /* ===== Design changes from Jungle UI Editor ===== */
 :root {
-  --font-display: 'Luckiest Guy', 'Fredoka', system-ui, sans-serif;
+  /* Luckiest Guy stays only on headers (--font-header, used by
+     .paper-title) — everything else that was riding --font-display
+     (buttons, plaques, chips, tabs, etc.) switches to Paytone One. */
+  --font-display: 'Paytone One', 'Fredoka', system-ui, sans-serif;
 }
 
 .btn-green {
