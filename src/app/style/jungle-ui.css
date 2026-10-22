@@ -5,14 +5,9 @@
    Pure CSS (no images). Swap the fonts in :root to taste.
 
    Dropped into this app verbatim from a file the user supplied
-   (not design work done in this repo). Loaded sitewide from the
-   root layout (src/app/layout.tsx) — every page can use any class
-   in this file. Currently wired into actual site chrome in two
-   places: the body background (.bg-jungle) and the main content
-   box every page sits in (.paper), both in layout.tsx. Everything
-   else in this file (buttons, wood frames, chips, bars, etc.) is
-   available but not yet applied anywhere — see /style for a demo
-   of what's here to pull from next.
+   (not design work done in this repo) — only scoped here, to
+   /style, by living in this route's own CSS file rather than
+   globals.css. Not wired into the rest of the site.
    ========================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600;700&display=swap');
