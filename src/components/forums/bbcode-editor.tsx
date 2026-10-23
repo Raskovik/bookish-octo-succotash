@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Bold,
   Italic,
@@ -60,10 +61,18 @@ export function BBCodeEditor({
     if (!el) return;
     const { selectionStart, selectionEnd, value } = el;
     const selected = value.slice(selectionStart, selectionEnd);
-    el.value = value.slice(0, selectionStart) + open + selected + close + value.slice(selectionEnd);
+    el.value =
+      value.slice(0, selectionStart) +
+      open +
+      selected +
+      close +
+      value.slice(selectionEnd);
     el.focus();
     if (selected.length > 0) {
-      el.setSelectionRange(selectionStart + open.length, selectionStart + open.length + selected.length);
+      el.setSelectionRange(
+        selectionStart + open.length,
+        selectionStart + open.length + selected.length,
+      );
     } else {
       const cursor = selectionStart + open.length;
       el.setSelectionRange(cursor, cursor);
@@ -74,7 +83,8 @@ export function BBCodeEditor({
     const el = textareaRef.current;
     if (!el) return;
     const { selectionStart, selectionEnd, value } = el;
-    el.value = value.slice(0, selectionStart) + text + value.slice(selectionEnd);
+    el.value =
+      value.slice(0, selectionStart) + text + value.slice(selectionEnd);
     const cursor = selectionStart + text.length;
     el.focus();
     el.setSelectionRange(cursor, cursor);
@@ -93,10 +103,16 @@ export function BBCodeEditor({
     // in between).
     const body =
       selected.length > 0
-        ? "\n" + selected.split("\n").map((line) => `[*]${line}`).join("\n") + "\n"
+        ? "\n" +
+          selected
+            .split("\n")
+            .map((line) => `[*]${line}`)
+            .join("\n") +
+          "\n"
         : "\n[*]\n";
     const listMarkup = openTag + body + "[/list]";
-    el.value = value.slice(0, selectionStart) + listMarkup + value.slice(selectionEnd);
+    el.value =
+      value.slice(0, selectionStart) + listMarkup + value.slice(selectionEnd);
     const cursor = selectionStart + listMarkup.length;
     el.focus();
     el.setSelectionRange(cursor, cursor);
@@ -115,27 +131,50 @@ export function BBCodeEditor({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-stone-300 bg-stone-50 p-2">
-        <div className={`flex flex-wrap items-center gap-1 ${isPreviewing ? "pointer-events-none opacity-40" : ""}`}>
-          <ToolbarButton label="Bold" onClick={() => wrapSelection("[b]", "[/b]")}>
+        <div
+          className={`flex flex-wrap items-center gap-1 ${isPreviewing ? "pointer-events-none opacity-40" : ""}`}
+        >
+          <ToolbarButton
+            label="Bold"
+            onClick={() => wrapSelection("[b]", "[/b]")}
+          >
             <Bold size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Italic" onClick={() => wrapSelection("[i]", "[/i]")}>
+          <ToolbarButton
+            label="Italic"
+            onClick={() => wrapSelection("[i]", "[/i]")}
+          >
             <Italic size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Underline" onClick={() => wrapSelection("[u]", "[/u]")}>
+          <ToolbarButton
+            label="Underline"
+            onClick={() => wrapSelection("[u]", "[/u]")}
+          >
             <Underline size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Strikethrough" onClick={() => wrapSelection("[s]", "[/s]")}>
+          <ToolbarButton
+            label="Strikethrough"
+            onClick={() => wrapSelection("[s]", "[/s]")}
+          >
             <Strikethrough size={17} />
           </ToolbarButton>
           <Divider />
-          <ToolbarButton label="Quote" onClick={() => wrapSelection("[quote]", "[/quote]")}>
+          <ToolbarButton
+            label="Quote"
+            onClick={() => wrapSelection("[quote]", "[/quote]")}
+          >
             <Quote size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Code block" onClick={() => wrapSelection("[code]", "[/code]")}>
+          <ToolbarButton
+            label="Code block"
+            onClick={() => wrapSelection("[code]", "[/code]")}
+          >
             <Code size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Horizontal rule" onClick={() => insertAtCursor("\n[hr]\n")}>
+          <ToolbarButton
+            label="Horizontal rule"
+            onClick={() => insertAtCursor("\n[hr]\n")}
+          >
             <SeparatorHorizontal size={17} />
           </ToolbarButton>
           <Divider />
@@ -150,13 +189,22 @@ export function BBCodeEditor({
               adjacent [left]...[/left] blocks (say, an image then a
               paragraph) sit side by side instead of stacking, matching
               how Chicken Smoothie-style forums use them. See bbcode.ts. */}
-          <ToolbarButton label="Float left" onClick={() => wrapSelection("[left]", "[/left]")}>
+          <ToolbarButton
+            label="Float left"
+            onClick={() => wrapSelection("[left]", "[/left]")}
+          >
             <AlignLeft size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Center" onClick={() => wrapSelection("[center]", "[/center]")}>
+          <ToolbarButton
+            label="Center"
+            onClick={() => wrapSelection("[center]", "[/center]")}
+          >
             <AlignCenter size={17} />
           </ToolbarButton>
-          <ToolbarButton label="Float right" onClick={() => wrapSelection("[right]", "[/right]")}>
+          <ToolbarButton
+            label="Float right"
+            onClick={() => wrapSelection("[right]", "[/right]")}
+          >
             <AlignRight size={17} />
           </ToolbarButton>
           <Divider />
@@ -224,7 +272,10 @@ export function BBCodeEditor({
       {isPreviewing ? (
         <div className="min-h-[10rem] rounded-md border border-stone-300 bg-white px-4 py-3">
           {previewHtml.trim().length > 0 ? (
-            <div className="forum-content text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: previewHtml }} />
+            <div
+              className="forum-content text-base leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
           ) : (
             <p className="text-sm text-stone-400">Nothing to preview yet.</p>
           )}
@@ -266,6 +317,17 @@ function ToolbarButton({
 // number field) would otherwise fire its change handler many times
 // before the player has actually settled on a value. Click-outside-to-
 // close matches nav-groups.tsx's dropdown.
+//
+// The popover renders through a portal into document.body, positioned
+// via the trigger button's own getBoundingClientRect() rather than as a
+// normal absolutely-positioned child of this component. BBCodeEditor
+// gets used inside all sorts of rounded `overflow-hidden` boxes (pet
+// bio, forum panels, admin cards) that exist purely to clip their own
+// rounded corners — a plain `absolute` popover gets clipped by the
+// nearest such ancestor along with everything else, which is what cut
+// the color picker off. Escaping to document.body via a portal sidesteps
+// that regardless of which page/container this is used from, instead of
+// patching every overflow-hidden ancestor one at a time.
 function ToolbarPopover({
   label,
   icon,
@@ -278,24 +340,43 @@ function ToolbarPopover({
   children: (close: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  function openPopover() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      setPosition({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node;
+      if (
+        triggerRef.current?.contains(target) ||
+        popoverRef.current?.contains(target)
+      ) {
+        return;
       }
+      setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? setOpen(false) : openPopover())}
         disabled={disabled}
         aria-label={label}
         title={label}
@@ -303,16 +384,33 @@ function ToolbarPopover({
       >
         {icon}
       </button>
-      {open ? (
-        <div className="absolute left-0 top-full z-10 mt-1 flex items-center gap-2 rounded-md border border-stone-300 bg-white p-2 shadow-lg">
-          {children(() => setOpen(false))}
-        </div>
-      ) : null}
-    </div>
+      {open && position
+        ? createPortal(
+            <div
+              ref={popoverRef}
+              style={{
+                position: "fixed",
+                top: position.top,
+                left: position.left,
+              }}
+              className="z-50 flex items-center gap-2 rounded-md border border-stone-300 bg-white p-2 shadow-lg"
+            >
+              {children(() => setOpen(false))}
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
-function PopoverApplyButtons({ onApply, onCancel }: { onApply: () => void; onCancel: () => void }) {
+function PopoverApplyButtons({
+  onApply,
+  onCancel,
+}: {
+  onApply: () => void;
+  onCancel: () => void;
+}) {
   return (
     <>
       <button
@@ -349,7 +447,11 @@ function ColorPickerButton({
   const [draft, setDraft] = useState("#000000");
 
   return (
-    <ToolbarPopover label="Font color" icon={<Palette size={17} />} disabled={disabled}>
+    <ToolbarPopover
+      label="Font color"
+      icon={<Palette size={17} />}
+      disabled={disabled}
+    >
       {(close) => (
         <>
           <input
@@ -400,7 +502,11 @@ function FontFamilyButton({
   disabled?: boolean;
 }) {
   return (
-    <ToolbarPopover label="Font family" icon={<span className="text-sm font-semibold">Aa</span>} disabled={disabled}>
+    <ToolbarPopover
+      label="Font family"
+      icon={<span className="text-sm font-semibold">Aa</span>}
+      disabled={disabled}
+    >
       {(close) => (
         <div className="flex w-44 flex-col">
           {FONT_CHOICES.map((font) => (
