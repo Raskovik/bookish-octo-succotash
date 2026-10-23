@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, Utensils, Coins, LogOut, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { petImageUrl, petTypeName, petAgeLabel } from "@/lib/pet-display";
+import { calcPetStats, formatStat } from "@/lib/pet-combat";
 import { PetNameEditor } from "../pet-name-editor";
 import { PetBioEditor } from "../pet-bio-editor";
 import type { PetDetail } from "@/lib/supabase/types";
@@ -70,7 +71,9 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   const [{ data: petData }, { count: adventureCount }] = await Promise.all([
     supabase
       .from("pets")
-      .select("id, custom_name, bio, created_at, species(name, image_url)")
+      .select(
+        "id, custom_name, bio, level, roll_strength, roll_speed, roll_defence, created_at, species(name, image_url)",
+      )
       .eq("id", petId)
       .eq("owner_id", user.id)
       .maybeSingle(),
@@ -86,6 +89,7 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   }
 
   const pet = petData as unknown as PetDetail;
+  const stats = calcPetStats(pet);
 
   const facts = [
     { label: "Name", value: pet.custom_name ?? "Unnamed" },
@@ -104,11 +108,8 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
       <div className="overflow-hidden rounded-2xl border-2 border-green-300 bg-white/70 dark:border-stone-700 dark:bg-stone-950/40">
         {/* ── Level + name ─────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-green-200 bg-green-50/70 p-4 dark:border-stone-800 dark:bg-stone-900/50">
-          <span
-            title="Leveling isn't built yet"
-            className="rounded-full border-2 border-green-200 bg-white px-3 py-1 text-xs font-bold text-stone-400 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-600"
-          >
-            Lv. —
+          <span className="rounded-full border-2 border-green-300 bg-white px-3 py-1 text-xs font-bold text-green-800 dark:border-stone-700 dark:bg-stone-900 dark:text-green-300">
+            Lv. {pet.level}
           </span>
           <PetNameEditor userId={user.id} petId={pet.id} customName={pet.custom_name} />
         </div>
@@ -145,12 +146,16 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
               </div>
             </Box>
 
-            <Box title="Stats" right={<span className="text-[11px] italic text-stone-400 dark:text-stone-600">Coming soon</span>}>
+            <Box title="Stats">
               <div className="grid grid-cols-3 gap-2 p-3 text-center text-sm">
-                {["ATK", "DEF", "STR"].map((stat) => (
-                  <div key={stat}>
-                    <p className="text-xs text-stone-500">{stat}</p>
-                    <p className="font-bold text-stone-400 dark:text-stone-600">—</p>
+                {[
+                  { label: "STR", value: stats.strength },
+                  { label: "SPD", value: stats.speed },
+                  { label: "DEF", value: stats.defence },
+                ].map((stat) => (
+                  <div key={stat.label}>
+                    <p className="text-xs text-stone-500">{stat.label}</p>
+                    <p className="font-bold">{formatStat(stat.value)}</p>
                   </div>
                 ))}
               </div>

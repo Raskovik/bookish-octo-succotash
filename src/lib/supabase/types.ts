@@ -73,6 +73,14 @@ export type PetRow = {
   // only through set_pet_bio() (0034_pet_bio.sql), never a direct
   // client UPDATE (pets has never had one; see custom_name/folder_id).
   bio: string | null;
+  // Pet Stats and 1v1 Combat Spec (0045_pet_stats.sql) — level grows
+  // over time (no mechanic for that yet), the three rolls are permanent
+  // birth values set once by the column's own DEFAULT. Strength/Speed/
+  // Defence are never stored; see calcPetStats() in lib/pet-combat.ts.
+  level: number;
+  roll_strength: number;
+  roll_speed: number;
+  roll_defence: number;
   created_at: string;
 };
 
@@ -308,8 +316,10 @@ export type PetWithSpecies = Pick<
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
 };
 
-// Everything PetWithSpecies has, plus bio — shown on /pets/[petId].
-export type PetDetail = PetWithSpecies & Pick<PetRow, "bio">;
+// Everything PetWithSpecies has, plus bio and stats data — shown on
+// /pets/[petId]. See calcPetStats() in lib/pet-combat.ts for turning
+// level/roll_* into actual Strength/Speed/Defence numbers.
+export type PetDetail = PetWithSpecies & Pick<PetRow, "bio" | "level" | "roll_strength" | "roll_speed" | "roll_defence">;
 
 // A stack in the player's inventory, as shown on /items.
 export type ItemWithQuantity = {
