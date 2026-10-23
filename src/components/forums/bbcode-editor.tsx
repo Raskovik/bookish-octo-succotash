@@ -60,18 +60,10 @@ export function BBCodeEditor({
     if (!el) return;
     const { selectionStart, selectionEnd, value } = el;
     const selected = value.slice(selectionStart, selectionEnd);
-    el.value =
-      value.slice(0, selectionStart) +
-      open +
-      selected +
-      close +
-      value.slice(selectionEnd);
+    el.value = value.slice(0, selectionStart) + open + selected + close + value.slice(selectionEnd);
     el.focus();
     if (selected.length > 0) {
-      el.setSelectionRange(
-        selectionStart + open.length,
-        selectionStart + open.length + selected.length,
-      );
+      el.setSelectionRange(selectionStart + open.length, selectionStart + open.length + selected.length);
     } else {
       const cursor = selectionStart + open.length;
       el.setSelectionRange(cursor, cursor);
@@ -82,8 +74,7 @@ export function BBCodeEditor({
     const el = textareaRef.current;
     if (!el) return;
     const { selectionStart, selectionEnd, value } = el;
-    el.value =
-      value.slice(0, selectionStart) + text + value.slice(selectionEnd);
+    el.value = value.slice(0, selectionStart) + text + value.slice(selectionEnd);
     const cursor = selectionStart + text.length;
     el.focus();
     el.setSelectionRange(cursor, cursor);
@@ -102,16 +93,10 @@ export function BBCodeEditor({
     // in between).
     const body =
       selected.length > 0
-        ? "\n" +
-          selected
-            .split("\n")
-            .map((line) => `[*]${line}`)
-            .join("\n") +
-          "\n"
+        ? "\n" + selected.split("\n").map((line) => `[*]${line}`).join("\n") + "\n"
         : "\n[*]\n";
     const listMarkup = openTag + body + "[/list]";
-    el.value =
-      value.slice(0, selectionStart) + listMarkup + value.slice(selectionEnd);
+    el.value = value.slice(0, selectionStart) + listMarkup + value.slice(selectionEnd);
     const cursor = selectionStart + listMarkup.length;
     el.focus();
     el.setSelectionRange(cursor, cursor);
@@ -129,51 +114,28 @@ export function BBCodeEditor({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div
-          className={`flex flex-wrap items-center gap-1.5 ${isPreviewing ? "pointer-events-none opacity-40" : ""}`}
-        >
-          <ToolbarButton
-            label="Bold"
-            onClick={() => wrapSelection("[b]", "[/b]")}
-          >
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-stone-300 bg-stone-50 p-2">
+        <div className={`flex flex-wrap items-center gap-1 ${isPreviewing ? "pointer-events-none opacity-40" : ""}`}>
+          <ToolbarButton label="Bold" onClick={() => wrapSelection("[b]", "[/b]")}>
             <Bold size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Italic"
-            onClick={() => wrapSelection("[i]", "[/i]")}
-          >
+          <ToolbarButton label="Italic" onClick={() => wrapSelection("[i]", "[/i]")}>
             <Italic size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Underline"
-            onClick={() => wrapSelection("[u]", "[/u]")}
-          >
+          <ToolbarButton label="Underline" onClick={() => wrapSelection("[u]", "[/u]")}>
             <Underline size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Strikethrough"
-            onClick={() => wrapSelection("[s]", "[/s]")}
-          >
+          <ToolbarButton label="Strikethrough" onClick={() => wrapSelection("[s]", "[/s]")}>
             <Strikethrough size={17} />
           </ToolbarButton>
           <Divider />
-          <ToolbarButton
-            label="Quote"
-            onClick={() => wrapSelection("[quote]", "[/quote]")}
-          >
+          <ToolbarButton label="Quote" onClick={() => wrapSelection("[quote]", "[/quote]")}>
             <Quote size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Code block"
-            onClick={() => wrapSelection("[code]", "[/code]")}
-          >
+          <ToolbarButton label="Code block" onClick={() => wrapSelection("[code]", "[/code]")}>
             <Code size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Horizontal rule"
-            onClick={() => insertAtCursor("\n[hr]\n")}
-          >
+          <ToolbarButton label="Horizontal rule" onClick={() => insertAtCursor("\n[hr]\n")}>
             <SeparatorHorizontal size={17} />
           </ToolbarButton>
           <Divider />
@@ -188,22 +150,13 @@ export function BBCodeEditor({
               adjacent [left]...[/left] blocks (say, an image then a
               paragraph) sit side by side instead of stacking, matching
               how Chicken Smoothie-style forums use them. See bbcode.ts. */}
-          <ToolbarButton
-            label="Float left"
-            onClick={() => wrapSelection("[left]", "[/left]")}
-          >
+          <ToolbarButton label="Float left" onClick={() => wrapSelection("[left]", "[/left]")}>
             <AlignLeft size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Center"
-            onClick={() => wrapSelection("[center]", "[/center]")}
-          >
+          <ToolbarButton label="Center" onClick={() => wrapSelection("[center]", "[/center]")}>
             <AlignCenter size={17} />
           </ToolbarButton>
-          <ToolbarButton
-            label="Float right"
-            onClick={() => wrapSelection("[right]", "[/right]")}
-          >
+          <ToolbarButton label="Float right" onClick={() => wrapSelection("[right]", "[/right]")}>
             <AlignRight size={17} />
           </ToolbarButton>
           <Divider />
@@ -211,9 +164,8 @@ export function BBCodeEditor({
             disabled={isPreviewing}
             onApply={(font) => wrapSelection(`[font="${font}"]`, "[/font]")}
           />
-          <label className="relative flex items-center gap-1.5 rounded-full border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50 has-[select:disabled]:opacity-40">
-            <ALargeSmall size={16} />
-            Font Size
+          <label className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-200">
+            <ALargeSmall size={17} />
             <select
               aria-label="Font size"
               value=""
@@ -223,7 +175,7 @@ export function BBCodeEditor({
                 e.target.value = "";
                 if (percent) wrapSelection(`[size=${percent}]`, "[/size]");
               }}
-              className="absolute inset-0 cursor-pointer opacity-0"
+              className="rounded border border-stone-300 bg-white text-xs"
             >
               <option value="" disabled />
               <option value="50">Tiny</option>
@@ -242,7 +194,7 @@ export function BBCodeEditor({
         <button
           type="button"
           onClick={togglePreview}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50"
+          className="flex shrink-0 items-center gap-1.5 rounded-md border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-700 hover:bg-stone-100"
         >
           {isPreviewing ? (
             <>
@@ -266,16 +218,13 @@ export function BBCodeEditor({
         maxLength={maxLength}
         placeholder="Write something..."
         hidden={isPreviewing}
-        className="w-full rounded-md border border-sky-300 px-4 py-3 text-base leading-relaxed focus:border-sky-500 focus:outline-none"
+        className="w-full rounded-md border border-stone-300 px-4 py-3 text-base leading-relaxed focus:outline-none"
       />
 
       {isPreviewing ? (
-        <div className="min-h-[10rem] rounded-md border border-sky-300 bg-white px-4 py-3">
+        <div className="min-h-[10rem] rounded-md border border-stone-300 bg-white px-4 py-3">
           {previewHtml.trim().length > 0 ? (
-            <div
-              className="forum-content text-base leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: previewHtml }}
-            />
+            <div className="forum-content text-base leading-relaxed" dangerouslySetInnerHTML={{ __html: previewHtml }} />
           ) : (
             <p className="text-sm text-stone-400">Nothing to preview yet.</p>
           )}
@@ -286,7 +235,7 @@ export function BBCodeEditor({
 }
 
 function Divider() {
-  return <span className="mx-0.5 h-5 w-px bg-sky-200" />;
+  return <span className="mx-1 h-5 w-px bg-stone-300" />;
 }
 
 function ToolbarButton({
@@ -304,7 +253,7 @@ function ToolbarButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="rounded-md border border-sky-300 bg-white px-2.5 py-1.5 text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50"
+      className="rounded-md px-2.5 py-1.5 text-stone-700 hover:bg-stone-200"
     >
       {children}
     </button>
@@ -321,13 +270,11 @@ function ToolbarPopover({
   label,
   icon,
   disabled,
-  pill = false,
   children,
 }: {
   label: string;
   icon: React.ReactNode;
   disabled?: boolean;
-  pill?: boolean;
   children: (close: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -336,10 +283,7 @@ function ToolbarPopover({
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     }
@@ -355,12 +299,12 @@ function ToolbarPopover({
         disabled={disabled}
         aria-label={label}
         title={label}
-        className={`flex items-center gap-1.5 border border-sky-300 bg-white px-2.5 py-1.5 text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50 disabled:opacity-40 ${pill ? "rounded-full px-3" : "rounded-md"}`}
+        className="rounded-md px-2.5 py-1.5 text-stone-700 hover:bg-stone-200 disabled:opacity-40"
       >
         {icon}
       </button>
       {open ? (
-        <div className="absolute left-0 top-full z-10 mt-1 flex items-center gap-2 rounded-md border border-sky-300 bg-white p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-10 mt-1 flex items-center gap-2 rounded-md border border-stone-300 bg-white p-2 shadow-lg">
           {children(() => setOpen(false))}
         </div>
       ) : null}
@@ -368,26 +312,20 @@ function ToolbarPopover({
   );
 }
 
-function PopoverApplyButtons({
-  onApply,
-  onCancel,
-}: {
-  onApply: () => void;
-  onCancel: () => void;
-}) {
+function PopoverApplyButtons({ onApply, onCancel }: { onApply: () => void; onCancel: () => void }) {
   return (
     <>
       <button
         type="button"
         onClick={onApply}
-        className="rounded-full bg-green-700 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-600"
+        className="rounded-md bg-green-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-green-600"
       >
         Apply
       </button>
       <button
         type="button"
         onClick={onCancel}
-        className="rounded-full border border-sky-300 px-3 py-1 text-xs text-sky-700 hover:bg-sky-50"
+        className="rounded-md border border-stone-300 px-2.5 py-1 text-xs text-stone-600 hover:bg-stone-100"
       >
         Cancel
       </button>
@@ -411,17 +349,7 @@ function ColorPickerButton({
   const [draft, setDraft] = useState("#000000");
 
   return (
-    <ToolbarPopover
-      label="Font color"
-      pill
-      icon={
-        <>
-          <Palette size={16} />
-          Font Color
-        </>
-      }
-      disabled={disabled}
-    >
+    <ToolbarPopover label="Font color" icon={<Palette size={17} />} disabled={disabled}>
       {(close) => (
         <>
           <input
@@ -429,7 +357,7 @@ function ColorPickerButton({
             type="color"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className="h-8 w-10 cursor-pointer rounded border border-sky-300 p-0"
+            className="h-8 w-10 cursor-pointer rounded border border-stone-300 p-0"
           />
           <span className="font-mono text-xs text-stone-600">{draft}</span>
           <PopoverApplyButtons
@@ -472,11 +400,7 @@ function FontFamilyButton({
   disabled?: boolean;
 }) {
   return (
-    <ToolbarPopover
-      label="Font family"
-      icon={<span className="text-sm font-semibold">Aa</span>}
-      disabled={disabled}
-    >
+    <ToolbarPopover label="Font family" icon={<span className="text-sm font-semibold">Aa</span>} disabled={disabled}>
       {(close) => (
         <div className="flex w-44 flex-col">
           {FONT_CHOICES.map((font) => (
@@ -488,7 +412,7 @@ function FontFamilyButton({
                 close();
               }}
               style={{ fontFamily: font }}
-              className="rounded px-2.5 py-1.5 text-left text-sm text-stone-700 hover:bg-sky-50"
+              className="rounded px-2.5 py-1.5 text-left text-sm text-stone-700 hover:bg-stone-100"
             >
               {font}
             </button>

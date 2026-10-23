@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { BBCodeEditor } from "@/components/forums/bbcode-editor";
 import { bbcodeToHtml } from "@/lib/bbcode";
-import "@/app/style/jungle-ui.css";
 
 const MAX_BIO_LENGTH = 2000;
 
@@ -56,10 +55,29 @@ export function PetBioEditor({
   return (
     <div className="overflow-hidden rounded-lg border-2 border-green-200 dark:border-stone-800">
       <div className="flex items-center justify-between border-b-2 border-green-200 bg-green-50/70 px-3 py-1.5 dark:border-stone-800 dark:bg-stone-900/50">
-        <p className="text-xs font-bold uppercase tracking-wide text-green-800 dark:text-green-300">
-          Bio
-        </p>
-        {!isEditing ? (
+        <p className="text-xs font-bold uppercase tracking-wide text-green-800 dark:text-green-300">Bio</p>
+        {isEditing ? (
+          <div className="flex items-center gap-3 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setError(null);
+              }}
+              className="text-stone-500 hover:underline"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="pet-bio-form"
+              disabled={isPending}
+              className="text-green-800 hover:underline disabled:opacity-60 dark:text-green-300"
+            >
+              {isPending ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
             onClick={() => setIsEditing(true)}
@@ -67,44 +85,14 @@ export function PetBioEditor({
           >
             {bio ? "Edit" : "Add a bio"}
           </button>
-        ) : null}
+        )}
       </div>
 
       <div className="p-3">
         {isEditing ? (
-          <form
-            id="pet-bio-form"
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-2"
-          >
-            <BBCodeEditor
-              name="bio"
-              defaultValue={bio ?? ""}
-              rows={6}
-              maxLength={MAX_BIO_LENGTH}
-            />
-            {error ? (
-              <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-            ) : null}
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditing(false);
-                  setError(null);
-                }}
-                className="btn btn-sky btn-sm"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isPending}
-                className="btn btn-green btn-sm"
-              >
-                {isPending ? "Saving…" : "Post"}
-              </button>
-            </div>
+          <form id="pet-bio-form" onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <BBCodeEditor name="bio" defaultValue={bio ?? ""} rows={6} maxLength={MAX_BIO_LENGTH} />
+            {error ? <p className="text-xs text-red-600 dark:text-red-400">{error}</p> : null}
           </form>
         ) : bio ? (
           <div
