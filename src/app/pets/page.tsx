@@ -36,12 +36,12 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
                 <Image
                   src={petImageUrl(pet)!}
                   alt={petTypeName(pet)}
-                  width={144}
-                  height={144}
-                  className="h-36 w-36 rounded-lg object-cover"
+                  width={176}
+                  height={176}
+                  className="h-44 w-44 rounded-lg object-cover"
                 />
               ) : (
-                <div className="h-36 w-36 rounded-lg bg-green-200 dark:bg-stone-800" />
+                <div className="h-44 w-44 rounded-lg bg-green-200 dark:bg-stone-800" />
               )}
               {TRADING_ENABLED && pet.is_for_trade ? (
                 <span className="absolute -right-2 -top-2 flex items-center gap-1 rounded-full bg-green-800 px-2 py-0.5 text-[10px] font-semibold text-white shadow dark:bg-green-200 dark:text-green-950">
@@ -53,7 +53,6 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
             <p className={`text-sm font-semibold ${pet.custom_name ? "" : "italic text-stone-500"}`}>
               {pet.custom_name ?? "Unnamed"}
             </p>
-            <p className="text-xs capitalize text-stone-500">{petTypeName(pet)}</p>
           </Link>
         </li>
       ))}
