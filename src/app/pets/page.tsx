@@ -29,19 +29,19 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
         <li key={pet.id}>
           <Link
             href={`/pets/${pet.id}`}
-            className="flex flex-col items-center gap-2 rounded-xl border border-green-200 bg-white/60 p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-stone-800 dark:bg-stone-950/40"
+            className="flex flex-col items-center gap-2 text-center transition hover:-translate-y-0.5"
           >
             <div className="relative">
               {petImageUrl(pet) ? (
                 <Image
                   src={petImageUrl(pet)!}
                   alt={petTypeName(pet)}
-                  width={112}
-                  height={112}
-                  className="h-28 w-28 rounded-lg object-cover"
+                  width={144}
+                  height={144}
+                  className="h-36 w-36 rounded-lg object-cover"
                 />
               ) : (
-                <div className="h-28 w-28 rounded-lg bg-green-200 dark:bg-stone-800" />
+                <div className="h-36 w-36 rounded-lg bg-green-200 dark:bg-stone-800" />
               )}
               {TRADING_ENABLED && pet.is_for_trade ? (
                 <span className="absolute -right-2 -top-2 flex items-center gap-1 rounded-full bg-green-800 px-2 py-0.5 text-[10px] font-semibold text-white shadow dark:bg-green-200 dark:text-green-950">
@@ -53,9 +53,7 @@ function PetGrid({ list }: { list: PetWithSpecies[] }) {
             <p className={`text-sm font-semibold ${pet.custom_name ? "" : "italic text-stone-500"}`}>
               {pet.custom_name ?? "Unnamed"}
             </p>
-            <p className="text-xs capitalize text-stone-500">
-              {petTypeName(pet)} · {pet.rarity}
-            </p>
+            <p className="text-xs capitalize text-stone-500">{petTypeName(pet)}</p>
           </Link>
         </li>
       ))}
