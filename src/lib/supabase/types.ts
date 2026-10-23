@@ -81,6 +81,9 @@ export type PetRow = {
   roll_strength: number;
   roll_speed: number;
   roll_defence: number;
+  // Energy decay clock (0046_pet_energy.sql) — see calcPetEnergy() in
+  // lib/pet-energy.ts. Reset to now() only by feed_pet().
+  last_fed_at: string;
   created_at: string;
 };
 
@@ -319,7 +322,8 @@ export type PetWithSpecies = Pick<
 // Everything PetWithSpecies has, plus bio and stats data — shown on
 // /pets/[petId]. See calcPetStats() in lib/pet-combat.ts for turning
 // level/roll_* into actual Strength/Speed/Defence numbers.
-export type PetDetail = PetWithSpecies & Pick<PetRow, "bio" | "level" | "roll_strength" | "roll_speed" | "roll_defence">;
+export type PetDetail = PetWithSpecies &
+  Pick<PetRow, "bio" | "level" | "roll_strength" | "roll_speed" | "roll_defence" | "last_fed_at">;
 
 // A stack in the player's inventory, as shown on /items.
 export type ItemWithQuantity = {
@@ -1154,6 +1158,10 @@ export type Database = {
           p_pet_id: string;
           p_bio: string;
         };
+        Returns: null;
+      };
+      feed_pet: {
+        Args: { p_user_id: string; p_pet_id: string };
         Returns: null;
       };
       change_display_name: {

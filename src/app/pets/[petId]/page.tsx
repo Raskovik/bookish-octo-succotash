@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { ArrowLeft, Utensils, Coins, LogOut, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Coins, LogOut, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { petImageUrl, petTypeName, petAgeLabel } from "@/lib/pet-display";
+import { calcPetEnergy, MIN_ENERGY_TO_ADVENTURE } from "@/lib/pet-energy";
 import { PetNameEditor } from "../pet-name-editor";
 import { PetBioEditor } from "../pet-bio-editor";
+import { FeedButton } from "../feed-button";
 import type { PetDetail } from "@/lib/supabase/types";
 
 // A labeled box with a colored header bar — the shared shell for every
@@ -34,9 +36,9 @@ function FactRow({ label, value, striped }: { label: string; value: React.ReactN
   );
 }
 
-// Buttons for systems that don't exist yet (stats/leveling, feeding, a
-// quick-sell path). Shown so the layout reads complete rather than
-// missing pieces, but disabled rather than silently doing nothing.
+// Buttons for systems that don't exist yet (leveling, a quick-sell
+// path). Shown so the layout reads complete rather than missing
+// pieces, but disabled rather than silently doing nothing.
 function ComingSoonButton({ label, icon: Icon }: { label: string; icon: LucideIcon }) {
   return (
     <button
@@ -71,7 +73,7 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
     supabase
       .from("pets")
       .select(
-        "id, custom_name, bio, level, roll_strength, roll_speed, roll_defence, created_at, species(name, image_url)",
+        "id, custom_name, bio, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
       )
       .eq("id", petId)
       .eq("owner_id", user.id)
@@ -88,6 +90,8 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   }
 
   const pet = petData as unknown as PetDetail;
+  const energy = calcPetEnergy(pet.last_fed_at);
+  const canAdventure = energy >= MIN_ENERGY_TO_ADVENTURE;
 
   const facts = [
     { label: "Name", value: pet.custom_name ?? "Unnamed" },
@@ -136,11 +140,19 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
           </Box>
 
           <div className="flex flex-col gap-4">
-            <Box title="Energy" right={<span className="text-[11px] italic text-stone-400 dark:text-stone-600">Coming soon</span>}>
+            <Box title="Energy" right={<span className="text-[11px] font-semibold text-stone-500">{Math.round(energy)}%</span>}>
               <div className="p-3">
                 <div className="h-3 w-full overflow-hidden rounded-full bg-green-100 dark:bg-stone-800">
-                  <div className="h-full w-full bg-green-300 dark:bg-stone-700" />
+                  <div
+                    className={`h-full transition-all ${canAdventure ? "bg-green-500" : "bg-amber-500"}`}
+                    style={{ width: `${energy}%` }}
+                  />
                 </div>
+                {!canAdventure ? (
+                  <p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+                    Too tired to adventure — needs {MIN_ENERGY_TO_ADVENTURE}% energy or more.
+                  </p>
+                ) : null}
               </div>
             </Box>
 
@@ -168,7 +180,7 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
           </div>
 
           <div className="flex flex-row flex-wrap gap-2 sm:flex-col">
-            <ComingSoonButton label="Feed" icon={Utensils} />
+            <FeedButton userId={user.id} petId={pet.id} />
             <ComingSoonButton label="Sell" icon={Coins} />
             <ComingSoonButton label="Release" icon={LogOut} />
           </div>
