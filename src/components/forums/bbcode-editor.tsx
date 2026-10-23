@@ -21,6 +21,17 @@ import {
 } from "lucide-react";
 import { bbcodeToHtml } from "@/lib/bbcode";
 
+// Shared look for every small toolbar control — a soft glass-like
+// gradient (same spirit as jungle-ui.css's .btn-glass variant, without
+// pulling that whole stylesheet in here) that flips top-to-bottom on
+// hover. The from/via/to stops stay the same in both states; only the
+// gradient's direction utility (bg-gradient-to-b → hover:bg-gradient-to-t)
+// changes, which is what produces the flip rather than a brightness/tint
+// shift. Border radius is left out so each call site can be rounded-md
+// (square icon buttons) or rounded-full (text-label pills) as needed.
+const TOOLBAR_BTN =
+  "border border-[#2b8cb5] bg-gradient-to-b from-[#e9faff] via-[#b3ecff] to-[#3fb7ee] text-[#0b5f8a] shadow-sm transition hover:bg-gradient-to-t";
+
 /**
  * A classic forum-style BBCode editor: a plain textarea plus a toolbar
  * that wraps the current selection in BBCode tags. There's no WYSIWYG
@@ -211,7 +222,9 @@ export function BBCodeEditor({
             disabled={isPreviewing}
             onApply={(font) => wrapSelection(`[font="${font}"]`, "[/font]")}
           />
-          <label className="relative flex items-center gap-1.5 rounded-full border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50 has-[select:disabled]:opacity-40">
+          <label
+            className={`relative flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium has-[select:disabled]:opacity-40 ${TOOLBAR_BTN}`}
+          >
             <ALargeSmall size={16} />
             Font Size
             <select
@@ -242,7 +255,7 @@ export function BBCodeEditor({
         <button
           type="button"
           onClick={togglePreview}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-sky-300 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50"
+          className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${TOOLBAR_BTN}`}
         >
           {isPreviewing ? (
             <>
@@ -304,7 +317,7 @@ function ToolbarButton({
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="rounded-md border border-sky-300 bg-white px-2.5 py-1.5 text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50"
+      className={`rounded-md px-2.5 py-1.5 ${TOOLBAR_BTN}`}
     >
       {children}
     </button>
@@ -355,7 +368,7 @@ function ToolbarPopover({
         disabled={disabled}
         aria-label={label}
         title={label}
-        className={`flex items-center gap-1.5 border border-sky-300 bg-white px-2.5 py-1.5 text-sky-700 shadow-sm transition hover:border-sky-400 hover:bg-sky-50 disabled:opacity-40 ${pill ? "rounded-full px-3" : "rounded-md"}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 disabled:opacity-40 ${pill ? "rounded-full px-3" : "rounded-md"} ${TOOLBAR_BTN}`}
       >
         {icon}
       </button>
