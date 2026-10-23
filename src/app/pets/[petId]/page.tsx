@@ -4,7 +4,6 @@ import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, Utensils, Coins, LogOut, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { petImageUrl, petTypeName, petAgeLabel } from "@/lib/pet-display";
-import { calcPetStats, formatStat } from "@/lib/pet-combat";
 import { PetNameEditor } from "../pet-name-editor";
 import { PetBioEditor } from "../pet-bio-editor";
 import type { PetDetail } from "@/lib/supabase/types";
@@ -89,7 +88,6 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   }
 
   const pet = petData as unknown as PetDetail;
-  const stats = calcPetStats(pet);
 
   const facts = [
     { label: "Name", value: pet.custom_name ?? "Unnamed" },
@@ -147,15 +145,22 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
             </Box>
 
             <Box title="Stats">
+              {/* Shows the raw birth roll (1-10), not the computed
+                  Level x Rate x (Roll / 10) stat from lib/pet-combat.ts
+                  — every pet is Level 1 with no leveling mechanic yet,
+                  so the computed number is always a confusing fraction
+                  (a roll of 8 reads as "1.6"). The roll is itself the
+                  pet's real "how good is it" signal until leveling
+                  exists to make the computed stat mean anything. */}
               <div className="grid grid-cols-3 gap-2 p-3 text-center text-sm">
                 {[
-                  { label: "STR", value: stats.strength },
-                  { label: "SPD", value: stats.speed },
-                  { label: "DEF", value: stats.defence },
+                  { label: "STR", value: pet.roll_strength },
+                  { label: "SPD", value: pet.roll_speed },
+                  { label: "DEF", value: pet.roll_defence },
                 ].map((stat) => (
                   <div key={stat.label}>
                     <p className="text-xs text-stone-500">{stat.label}</p>
-                    <p className="font-bold">{formatStat(stat.value)}</p>
+                    <p className="font-bold">{stat.value}</p>
                   </div>
                 ))}
               </div>
