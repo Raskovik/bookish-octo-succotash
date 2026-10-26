@@ -50,7 +50,7 @@ export default async function Home(props: PageProps<"/">) {
 
   if (banned === "account") {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
+      <main id="main" className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
         <h1 className="max-w-xl text-3xl font-semibold tracking-tight text-red-700 dark:text-red-400">
           Your account is banned
         </h1>
@@ -113,10 +113,12 @@ export default async function Home(props: PageProps<"/">) {
   }));
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-6 py-12">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
-        <SiteNewsPanel posts={newsPosts} />
-        <ForumActivityPanel threads={recentThreads} />
+    <main id="main" className="flex-1">
+      <div className="sheet">
+        <div className="panel shell">
+          <SiteNewsPanel posts={newsPosts} />
+          <ForumActivityPanel threads={recentThreads} />
+        </div>
       </div>
     </main>
   );
