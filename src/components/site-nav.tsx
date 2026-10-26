@@ -1,23 +1,29 @@
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { TRADING_ENABLED, BREWING_ENABLED } from "@/lib/feature-flags";
 import { NavGroups, type NavGroup } from "@/components/nav-groups";
+import { NotificationBell } from "@/components/notification-bell";
+import type { NotificationWithActor } from "@/lib/supabase/types";
 
-export async function SiteNav() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return null;
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("is_admin, is_moderator")
-    .eq("id", user.id)
-    .single();
-  const isAdmin = profile?.is_admin ?? false;
-  const isModerator = profile?.is_moderator ?? false;
-
+/**
+ * Matches furgarden-design/partials/site-header.html's <nav class="cnav">
+ * (nested inside SiteHeader's <header class="hero">, per the partial).
+ * Purely presentational — SiteHeader does the one data fetch for the
+ * whole header and passes down what this needs. Drops {{online_count}}
+ * (no such data exists) and keeps just the live clock in .stats; its
+ * ticking is handled entirely by public/js/furgarden.js (any #clock
+ * element), not React.
+ */
+export function SiteNav({
+  isAdmin,
+  isModerator,
+  unreadDmCount,
+  notifications,
+}: {
+  isAdmin: boolean;
+  isModerator: boolean;
+  unreadDmCount: number;
+  notifications: NotificationWithActor[];
+}) {
   const groups: NavGroup[] = [
     {
       label: "Play",
@@ -64,8 +70,30 @@ export async function SiteNav() {
   ];
 
   return (
-    <nav className="mx-4 mt-3 rounded-md border-2 border-amber-900 bg-yellow-400 px-3 py-1.5 shadow-sm">
+    <nav className="cnav" aria-label="Main">
+      <div className="stats">
+        <span>
+          <i className="ic i-clock" aria-hidden="true" />
+          <time id="clock" />
+        </span>
+      </div>
       <NavGroups groups={groups} />
+      <div className="tools">
+        <Link
+          className="btn btn-round"
+          href="/messages"
+          aria-label={unreadDmCount > 0 ? `Messages, ${unreadDmCount} unread` : "Messages"}
+        >
+          <i className="ic i-mail" aria-hidden="true" />
+          {unreadDmCount > 0 ? <span className="pip">{unreadDmCount > 9 ? "9+" : unreadDmCount}</span> : null}
+        </Link>
+        <NotificationBell initialNotifications={notifications} />
+        <form action="/auth/sign-out" method="post">
+          <button className="btn btn-sm btn-cream" type="submit">
+            Sign out
+          </button>
+        </form>
+      </div>
     </nav>
   );
 }

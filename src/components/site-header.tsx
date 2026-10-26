@@ -1,132 +1,130 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isConversationUnread } from "@/lib/dm-unread";
-import { CURRENCY } from "@/config";
-import { CurrencyIcon } from "@/components/currency-icon";
-import { NotificationBell } from "@/components/notification-bell";
+import { SiteNav } from "@/components/site-nav";
 import type { NotificationWithActor } from "@/lib/supabase/types";
 
 const NOTIFICATION_LIMIT = 20;
 
+/**
+ * Matches furgarden-design/partials/site-header.html: a single
+ * <header class="hero"> containing the .scene player/wallet card and
+ * the <nav class="cnav"> (rendered here by SiteNav, nested inside this
+ * header — not a sibling — exactly like the partial). This is the sole
+ * data fetch for the whole header; SiteNav is purely presentational.
+ *
+ * Left out for lack of real data (see the README's "Known placeholders"
+ * section, which already anticipates some of this not being finished):
+ * the .hangtab announcement banner, the .meter level-progress bar (no
+ * player-level/XP system exists), and {{online_count}} (dropped in
+ * SiteNav, not here).
+ */
 export async function SiteHeader() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let displayName: string | null = null;
-  let avatarUrl: string | null = null;
-  let coinBalance: number | null = null;
-  let gemBalance: number | null = null;
-  let unreadCount = 0;
-  let notifications: NotificationWithActor[] = [];
-
-  if (user) {
-    const [{ data: profile }, { data: conversationsData }, { data: notificationRows }] = await Promise.all([
-      supabase
-        .from("users")
-        .select("display_name, avatar_url, coin_balance, gem_balance")
-        .eq("id", user.id)
-        .single(),
-      supabase
-        .from("dm_conversations")
-        .select("user_one_id, last_message_at, last_message_sender_id, user_one_last_read_at, user_two_last_read_at")
-        .or(`user_one_id.eq.${user.id},user_two_id.eq.${user.id}`),
-      supabase
-        .from("notifications")
-        .select("id, user_id, type, actor_id, target_label, link, is_read, created_at")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(NOTIFICATION_LIMIT),
-    ]);
-    displayName = profile?.display_name ?? null;
-    avatarUrl = profile?.avatar_url ?? null;
-    coinBalance = profile?.coin_balance ?? null;
-    gemBalance = profile?.gem_balance ?? null;
-    unreadCount = (conversationsData ?? []).filter((c) => isConversationUnread(c, user.id)).length;
-
-    const rows = notificationRows ?? [];
-    const actorIds = [...new Set(rows.map((n) => n.actor_id).filter((id): id is string => id !== null))];
-    const { data: actors } =
-      actorIds.length > 0
-        ? await supabase.from("user_profiles").select("id, display_name, is_admin, is_moderator").in("id", actorIds)
-        : { data: [] };
-    const actorById = new Map((actors ?? []).map((a) => [a.id, a]));
-
-    notifications = rows.map((n) => {
-      const actor = n.actor_id ? actorById.get(n.actor_id) : undefined;
-      return {
-        ...n,
-        actorName: actor?.display_name ?? null,
-        actorIsAdmin: actor?.is_admin ?? false,
-        actorIsModerator: actor?.is_moderator ?? false,
-      };
-    });
+  if (!user) {
+    return (
+      <header className="hero">
+        <div className="scene">
+          <div />
+          <Link className="wordmark" href="/" title="Clicking this returns player to home">
+            Furgarden
+          </Link>
+          <div className="walletcard" style={{ display: "grid", placeItems: "center" }}>
+            <Link className="btn" href="/login">
+              Sign in
+            </Link>
+          </div>
+        </div>
+      </header>
+    );
   }
 
-  return (
-    <header className="flex flex-wrap items-center justify-between gap-3 px-4 pt-4">
-      {/* Logo placeholder — swap for real logo art later; the link-home
-          behavior underneath won't need to change. */}
-      <Link
-        href="/"
-        className="flex min-w-40 flex-col items-center justify-center gap-0.5 rounded-md border-2 border-amber-900 bg-green-500 px-6 py-3 text-center text-white shadow-sm hover:bg-green-600"
-      >
-        <span className="text-sm font-bold uppercase tracking-wide">Logo image placeholder</span>
-        <span className="text-xs opacity-90">Clicking this returns player to home</span>
-      </Link>
+  const [{ data: profile }, { data: conversationsData }, { data: notificationRows }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("display_name, avatar_url, coin_balance, gem_balance, is_admin, is_moderator")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("dm_conversations")
+      .select("user_one_id, last_message_at, last_message_sender_id, user_one_last_read_at, user_two_last_read_at")
+      .or(`user_one_id.eq.${user.id},user_two_id.eq.${user.id}`),
+    supabase
+      .from("notifications")
+      .select("id, user_id, type, actor_id, target_label, link, is_read, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(NOTIFICATION_LIMIT),
+  ]);
 
-      {user ? (
-        <div className="flex items-center gap-3 rounded-md border-2 border-amber-900 bg-yellow-400 px-4 py-2 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-medium text-stone-900">
-            <span title={CURRENCY.coin.label}>
-              <CurrencyIcon kind="coin" /> {coinBalance ?? 0}
-            </span>
-            <span title={CURRENCY.gem.label}>
-              <CurrencyIcon kind="gem" /> {gemBalance ?? 0}
-            </span>
+  const unreadDmCount = (conversationsData ?? []).filter((c) => isConversationUnread(c, user.id)).length;
+
+  const rows = notificationRows ?? [];
+  const actorIds = [...new Set(rows.map((n) => n.actor_id).filter((id): id is string => id !== null))];
+  const { data: actors } =
+    actorIds.length > 0
+      ? await supabase.from("user_profiles").select("id, display_name, is_admin, is_moderator").in("id", actorIds)
+      : { data: [] };
+  const actorById = new Map((actors ?? []).map((a) => [a.id, a]));
+
+  const notifications: NotificationWithActor[] = rows.map((n) => {
+    const actor = n.actor_id ? actorById.get(n.actor_id) : undefined;
+    return {
+      ...n,
+      actorName: actor?.display_name ?? null,
+      actorIsAdmin: actor?.is_admin ?? false,
+      actorIsModerator: actor?.is_moderator ?? false,
+    };
+  });
+
+  return (
+    <header className="hero">
+      <div className="scene">
+        <div className="player">
+          <Link href={`/u/${user.id}`}>
+            <div
+              className="av"
+              role="img"
+              aria-label="Your avatar"
+              style={profile?.avatar_url ? { backgroundImage: `url(${profile.avatar_url})` } : undefined}
+            />
+          </Link>
+          <div>
+            <p className="pname">
+              <Link href={`/u/${user.id}`}>{profile?.display_name ?? "Player"}</Link>
+              <small>Welcome back!</small>
+            </p>
           </div>
-          <Link
-            href="/messages"
-            className="relative flex items-center border-l border-stone-900/20 pl-3 text-stone-900 hover:opacity-80"
-            aria-label={unreadCount > 0 ? `Messages (${unreadCount} unread)` : "Messages"}
-          >
-            <Mail size={18} />
-            {unreadCount > 0 ? (
-              <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            ) : null}
-          </Link>
-          <NotificationBell initialNotifications={notifications} />
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 border-l border-stone-900/20 pl-3 text-sm font-medium text-stone-900 hover:underline"
-          >
-            {avatarUrl ? (
-              <Image src={avatarUrl} alt="" width={24} height={24} className="h-6 w-6 rounded-full" />
-            ) : null}
-            {displayName ?? "Profile"}
-          </Link>
-          <form action="/auth/sign-out" method="post">
-            <button
-              type="submit"
-              className="rounded-md border border-stone-900/30 px-2.5 py-1 text-xs text-stone-900 hover:bg-yellow-300"
-            >
-              Sign out
-            </button>
-          </form>
         </div>
-      ) : (
-        <Link
-          href="/login"
-          className="rounded-md border-2 border-amber-900 bg-yellow-400 px-5 py-2.5 text-sm font-semibold text-stone-900 shadow-sm hover:bg-yellow-300"
-        >
-          Sign in
+
+        <Link className="wordmark" href="/" title="Clicking this returns player to home">
+          Furgarden
         </Link>
-      )}
+
+        <ul className="walletcard" aria-label="Your balances">
+          <li>
+            <span className="coin" />
+            Coins
+            <b>{profile?.coin_balance ?? 0}</b>
+          </li>
+          <li>
+            <span className="coin gem" />
+            Gems
+            <b>{profile?.gem_balance ?? 0}</b>
+          </li>
+        </ul>
+      </div>
+
+      <SiteNav
+        isAdmin={profile?.is_admin ?? false}
+        isModerator={profile?.is_moderator ?? false}
+        unreadDmCount={unreadDmCount}
+        notifications={notifications}
+      />
     </header>
   );
 }

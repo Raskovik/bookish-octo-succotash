@@ -1,20 +1,46 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Bell } from "lucide-react";
 import { describeNotification } from "@/lib/notification-message";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/notification-actions";
-import type { NotificationWithActor } from "@/lib/supabase/types";
+import type { NotificationType, NotificationWithActor } from "@/lib/supabase/types";
+
+// Maps each real notification type to one of furgarden.css's tile
+// color/icon combos (see its README: "Icon tiles ... t-orange | t-leaf
+// | t-gold | blank = blue"). No type falls through to a made-up icon —
+// anything not listed below gets the plain default tile.
+const NOTIFICATION_TILE: Record<NotificationType, string> = {
+  dm: "i-mail",
+  forum_reply: "t-leaf i-chat",
+  trade_offer: "t-orange i-swap",
+  trade_response: "t-orange i-swap",
+  marketplace_sold: "t-gold i-diamond",
+  marketplace_expired: "t-gold i-diamond",
+  ban_issued: "t-gold i-megaphone",
+  report_filed: "t-gold i-megaphone",
+};
 
 /**
  * The header's notification bell — separate from (not a replacement
- * for) the existing unread-DM badge next to it; this is a broader
- * activity feed (forum replies, trades, marketplace sales, bans, staff
- * reports) that happens to include DMs too. Page-load data only, no
- * realtime — the header already re-fetches on every navigation, same as
- * the DM badge. Click-outside-to-close dropdown, same pattern as
- * ThreadAdminControls.
+ * for) the unread-DM badge next to it; this is a broader activity feed
+ * (forum replies, trades, marketplace sales, bans, staff reports) that
+ * happens to include DMs too. Page-load data only, no realtime — the
+ * header already re-fetches on every navigation, same as the DM badge.
+ *
+ * Matches furgarden-design/partials/site-header.html's notifications
+ * tray. Unlike NavGroups, this can't be fully static: "mark as read"
+ * has to persist to the database, not just toggle a CSS class. So this
+ * stays a client component, but only for that — opening/closing the
+ * tray itself is left to public/js/furgarden.js's global .has-menu
+ * handling (no open/useState, no outside-click listener here). The
+ * real mark-all-read button deliberately has no id="tray"/id="npip" or
+ * data-markread — those hooks are what the script's own cosmetic-only
+ * mark-read path keys off, which would race with React removing the
+ * same badge node from the DOM a moment later; using plain onClick +
+ * the existing server actions avoids that fight entirely, and the
+ * .tray.all-read CSS (built for that script path) simply goes unused,
+ * since the conditional rendering below does the same job.
  */
 export function NotificationBell({
   initialNotifications,
@@ -22,22 +48,9 @@ export function NotificationBell({
   initialNotifications: NotificationWithActor[];
 }) {
   const [notifications, setNotifications] = useState(initialNotifications);
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [, startTransition] = useTransition();
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
 
   function handleMarkAllRead() {
     setNotifications((list) => list.map((n) => ({ ...n, is_read: true })));
@@ -51,73 +64,54 @@ export function NotificationBell({
     startTransition(() => {
       markNotificationRead(id);
     });
-    setOpen(false);
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div className="has-menu">
       <button
+        className="btn btn-round"
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
-        className="relative flex items-center border-l border-stone-900/20 pl-3 text-stone-900 hover:opacity-80"
+        aria-haspopup="true"
+        aria-expanded="false"
+        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} new` : "Notifications, none new"}
       >
-        <Bell size={18} />
-        {unreadCount > 0 ? (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        ) : null}
+        <i className="ic i-bell" aria-hidden="true" />
+        {unreadCount > 0 ? <span className="pip">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
       </button>
-      {open ? (
-        <div className="absolute right-0 top-full z-10 mt-2 w-80 rounded-md border border-green-300 bg-white text-left shadow-lg dark:border-stone-700 dark:bg-stone-950">
-          <div className="flex items-center justify-between border-b border-green-100 px-3 py-2 dark:border-stone-800">
-            <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-              Notifications
-            </span>
-            {unreadCount > 0 ? (
-              <button
-                type="button"
-                onClick={handleMarkAllRead}
-                className="text-xs font-medium text-green-800 hover:underline dark:text-green-300"
-              >
-                Mark all as read
-              </button>
-            ) : null}
-          </div>
-          {notifications.length === 0 ? (
-            <p className="p-4 text-sm italic text-stone-500">No notifications yet.</p>
-          ) : (
-            <ul className="max-h-96 divide-y divide-green-100 overflow-y-auto dark:divide-stone-800">
-              {notifications.map((notification) => (
-                <li key={notification.id}>
-                  <Link
-                    href={notification.link}
-                    onClick={() => handleItemClick(notification.id)}
-                    className={`flex items-start gap-2 px-3 py-2.5 text-sm hover:bg-green-50 dark:hover:bg-stone-900 ${
-                      notification.is_read
-                        ? "text-stone-600 dark:text-stone-400"
-                        : "font-medium text-stone-900 dark:text-stone-100"
-                    }`}
-                  >
-                    <span
-                      className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${
-                        notification.is_read ? "" : "bg-green-700"
-                      }`}
-                    />
-                    <span className="flex flex-col gap-0.5">
-                      <span>{describeNotification(notification)}</span>
-                      <span className="text-xs text-stone-400">
-                        {new Date(notification.created_at).toLocaleString()}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+
+      <div className="tray" role="region" aria-label="Notifications">
+        <div className="tray-head">
+          Notifications
+          {unreadCount > 0 ? <span className="count">{unreadCount} new</span> : null}
         </div>
-      ) : null}
+        {notifications.length === 0 ? (
+          <p className="tray-empty">No notifications yet.</p>
+        ) : (
+          <div className="notes">
+            {notifications.map((notification) => (
+              <Link
+                key={notification.id}
+                href={notification.link}
+                onClick={() => handleItemClick(notification.id)}
+                className={notification.is_read ? "note" : "note unread"}
+              >
+                <span className={`tile ${NOTIFICATION_TILE[notification.type]}`} />
+                <div>
+                  <p>{describeNotification(notification)}</p>
+                  <time>{new Date(notification.created_at).toLocaleString()}</time>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+        {unreadCount > 0 ? (
+          <div className="tray-foot">
+            <button className="btn btn-sm btn-cream" type="button" onClick={handleMarkAllRead}>
+              Mark all read
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
