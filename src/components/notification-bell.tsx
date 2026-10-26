@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { Bell } from "lucide-react";
 import { describeNotification } from "@/lib/notification-message";
 import { markAllNotificationsRead, markNotificationRead } from "@/lib/notification-actions";
 import type { NotificationWithActor } from "@/lib/supabase/types";
@@ -12,16 +13,8 @@ import type { NotificationWithActor } from "@/lib/supabase/types";
  * activity feed (forum replies, trades, marketplace sales, bans, staff
  * reports) that happens to include DMs too. Page-load data only, no
  * realtime — the header already re-fetches on every navigation, same as
- * the DM badge.
- *
- * Markup matches furgarden-theme.css's .tray (a wood-framed dropdown
- * off a .has-menu trigger) — same open/close-on-outside-click logic as
- * before, just restyled. Unlike the reference, every notification uses
- * one plain tile/icon rather than a type-to-color/icon mapping (swap
- * orange, chat leaf, star gold, etc.) — simpler, no per-type lookup
- * table to maintain. "See all" is dropped too: there's no standalone
- * all-notifications page to link it to yet, just this dropdown's own
- * list (capped at 20, same as before).
+ * the DM badge. Click-outside-to-close dropdown, same pattern as
+ * ThreadAdminControls.
  */
 export function NotificationBell({
   initialNotifications,
@@ -62,54 +55,69 @@ export function NotificationBell({
   }
 
   return (
-    <div ref={containerRef} className={`has-menu${open ? " is-open" : ""}`}>
+    <div ref={containerRef} className="relative">
       <button
-        className="btn btn-round"
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} new` : "Notifications, none new"}
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
+        className="relative flex items-center border-l border-stone-900/20 pl-3 text-stone-900 hover:opacity-80"
       >
-        <i className="ic i-bell" aria-hidden="true" />
-        {unreadCount > 0 ? <span className="pip">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
-      </button>
-
-      <div className="tray" role="region" aria-label="Notifications">
-        <div className="tray-head">
-          Notifications
-          {unreadCount > 0 ? <span className="count">{unreadCount} new</span> : null}
-        </div>
-        {notifications.length === 0 ? (
-          <p className="tray-empty">No notifications yet.</p>
-        ) : (
-          <div className="notes">
-            {notifications.map((notification) => (
-              <Link
-                key={notification.id}
-                href={notification.link}
-                onClick={() => handleItemClick(notification.id)}
-                className={notification.is_read ? "note" : "note unread"}
-              >
-                <span className="tile">
-                  <i className="ic i-bell" aria-hidden="true" />
-                </span>
-                <div>
-                  <p>{describeNotification(notification)}</p>
-                  <time>{new Date(notification.created_at).toLocaleString()}</time>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        <Bell size={18} />
         {unreadCount > 0 ? (
-          <div className="tray-foot">
-            <button className="btn btn-sm btn-cream" type="button" onClick={handleMarkAllRead}>
-              Mark all read
-            </button>
-          </div>
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         ) : null}
-      </div>
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-full z-10 mt-2 w-80 rounded-md border border-green-300 bg-white text-left shadow-lg dark:border-stone-700 dark:bg-stone-950">
+          <div className="flex items-center justify-between border-b border-green-100 px-3 py-2 dark:border-stone-800">
+            <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
+              Notifications
+            </span>
+            {unreadCount > 0 ? (
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="text-xs font-medium text-green-800 hover:underline dark:text-green-300"
+              >
+                Mark all as read
+              </button>
+            ) : null}
+          </div>
+          {notifications.length === 0 ? (
+            <p className="p-4 text-sm italic text-stone-500">No notifications yet.</p>
+          ) : (
+            <ul className="max-h-96 divide-y divide-green-100 overflow-y-auto dark:divide-stone-800">
+              {notifications.map((notification) => (
+                <li key={notification.id}>
+                  <Link
+                    href={notification.link}
+                    onClick={() => handleItemClick(notification.id)}
+                    className={`flex items-start gap-2 px-3 py-2.5 text-sm hover:bg-green-50 dark:hover:bg-stone-900 ${
+                      notification.is_read
+                        ? "text-stone-600 dark:text-stone-400"
+                        : "font-medium text-stone-900 dark:text-stone-100"
+                    }`}
+                  >
+                    <span
+                      className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${
+                        notification.is_read ? "" : "bg-green-700"
+                      }`}
+                    />
+                    <span className="flex flex-col gap-0.5">
+                      <span>{describeNotification(notification)}</span>
+                      <span className="text-xs text-stone-400">
+                        {new Date(notification.created_at).toLocaleString()}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

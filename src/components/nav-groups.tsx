@@ -12,14 +12,11 @@ export type NavGroup = {
  * The "sections are grouped together and fold into a dropdown when
  * clicked" nav bar. One group open at a time — clicking the open
  * group's own button closes it, clicking another switches to it,
- * clicking anywhere outside closes whichever is open. Classes match
- * furgarden-theme.css's .has-menu/.navlink/.menu — that CSS doesn't
- * care how .is-open gets toggled, so this keeps its own React state
- * instead of the reference file's vanilla-JS click delegation.
+ * clicking anywhere outside closes whichever is open.
  */
 export function NavGroups({ groups }: { groups: NavGroup[] }) {
   const [openLabel, setOpenLabel] = useState<string | null>(null);
-  const containerRef = useRef<HTMLUListElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!openLabel) return;
@@ -35,32 +32,38 @@ export function NavGroups({ groups }: { groups: NavGroup[] }) {
   }, [openLabel]);
 
   return (
-    <ul ref={containerRef} className="navlinks">
+    <div ref={containerRef} className="flex flex-wrap items-center gap-1">
       {groups.map((group) => {
         const isOpen = openLabel === group.label;
         return (
-          <li key={group.label} className={`has-menu${isOpen ? " is-open" : ""}`}>
+          <div key={group.label} className="relative">
             <button
-              className="navlink"
               type="button"
-              aria-haspopup="true"
-              aria-expanded={isOpen}
               onClick={() => setOpenLabel(isOpen ? null : group.label)}
+              className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-semibold text-stone-900 hover:bg-yellow-300 ${
+                isOpen ? "bg-yellow-300" : ""
+              }`}
             >
-              {group.label} ▾
+              {group.label}
+              <span className={`text-xs transition-transform ${isOpen ? "rotate-180" : ""}`}>▾</span>
             </button>
-            <ul className="menu">
-              {group.links.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} onClick={() => setOpenLabel(null)}>
+            {isOpen ? (
+              <div className="absolute left-0 top-full z-10 mt-1 flex min-w-40 flex-col gap-0.5 rounded-md border border-stone-900/10 bg-yellow-50 p-1.5 shadow-lg">
+                {group.links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpenLabel(null)}
+                    className="rounded px-3 py-1.5 text-sm font-medium text-stone-900 hover:bg-yellow-200"
+                  >
                     {link.label}
                   </Link>
-                </li>
-              ))}
-            </ul>
-          </li>
+                ))}
+              </div>
+            ) : null}
+          </div>
         );
       })}
-    </ul>
+    </div>
   );
 }

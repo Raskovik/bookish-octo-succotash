@@ -114,12 +114,34 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Sitewide backdrop/body typography — no longer set here. The sky/
-   jungle background, body font, and text color are now set by
-   furgarden-theme.css's own `body {}` rule (loaded after this file in
-   layout.tsx), which fully supersedes the sky-stripe placeholder this
-   used to hold — not worth fighting over two declarations in two files
-   when one is strictly newer and better than the other. */
+/* Sitewide backdrop, behind the header/nav/white content box/footer (see
+   layout.tsx) — TEMPORARY placeholder: a plain CSS diagonal stripe, sky
+   blue with a slightly darker blue stripe, standing in for
+   furgarden-background.webp's forest-clearing scene while that art gets
+   redrawn (it never read well pinned behind the page — see prior
+   discussion). Swap back to real art later by replacing this whole rule
+   with a `background-image: url(...)` the same way the old one worked;
+   nothing else on the page depends on which approach is used here.
+   `repeating-linear-gradient` tiles forever in every direction on its
+   own, so unlike the old single image there's no "only one viewport's
+   worth is visible" concern and no bottom-edge color to match — it
+   looks identical on a short page and a long scrolling one.
+   `background-attachment: fixed` is kept only so the pattern doesn't
+   repaint while scrolling; the stripes themselves look the same either
+   way since the pattern has no fixed start/end point. */
+body {
+  background-color: var(--background);
+  background-image: repeating-linear-gradient(
+    45deg,
+    #9ad4f5 0px,
+    #9ad4f5 24px,
+    #74bce7 24px,
+    #74bce7 48px
+  );
+  background-attachment: fixed;
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
 
 /* Minimal styling for rendered forum post HTML — the output of
    bbcodeToHtml() (src/lib/bbcode.ts), which only ever produces this
