@@ -18,10 +18,22 @@ export type UserRow = {
 
 // is_admin/is_moderator are public here on purpose — see user_profiles in
 // 0028_moderation_round_two.sql — so a colored staff name (PlayerLink)
-// can render for anyone viewing it, not just staff.
+// can render for anyone viewing it, not just staff. coin_balance/
+// gem_balance/den_size were added later, in 0047_public_player_stats.sql,
+// for the unified player-profile page — every profile shows the same
+// wallet/pet-slot stats to any viewer now, not just the owner.
 export type PublicUserProfile = Pick<
   UserRow,
-  "id" | "display_name" | "avatar_url" | "bio" | "created_at" | "is_admin" | "is_moderator"
+  | "id"
+  | "display_name"
+  | "avatar_url"
+  | "bio"
+  | "created_at"
+  | "is_admin"
+  | "is_moderator"
+  | "coin_balance"
+  | "gem_balance"
+  | "den_size"
 >;
 
 // Named rarity_tier in Postgres (renamed from pet_rarity once items also

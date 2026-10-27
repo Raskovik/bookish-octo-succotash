@@ -58,6 +58,7 @@ export function SiteNav({
     {
       label: "Account",
       links: [
+        { href: "/profile", label: "Profile" },
         { href: "/settings", label: "Settings" },
         // Separate links, not one merged entry — a moderator who isn't
         // also an admin gets Mod Tools but must never see (or be able to

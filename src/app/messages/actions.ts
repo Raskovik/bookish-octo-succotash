@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 async function requireUser() {
@@ -46,6 +47,61 @@ export async function startConversationWithUserId(formData: FormData) {
   if (otherUserId.length === 0) return;
 
   await startConversationAndRedirect(supabase, user.id, otherUserId);
+}
+
+export type SendMessageToUserState = { error: string } | { success: true } | null;
+
+// Used by the profile page's Message dialog, which composes the text
+// right there rather than redirecting to the conversation thread first
+// (unlike startConversationWithUserId above) — same bans/validation
+// checks as the thread page's own sendMessage (actions.ts under
+// messages/[conversationId]/), just without the redirect at the end.
+export async function sendMessageToUser(
+  _prevState: SendMessageToUserState,
+  formData: FormData,
+): Promise<SendMessageToUserState> {
+  const { supabase, user } = await requireUser();
+
+  const otherUserId = String(formData.get("user_id") ?? "");
+  const body = String(formData.get("text") ?? "").trim();
+
+  if (otherUserId.length === 0) {
+    return { error: "Could not send that message." };
+  }
+  if (body.length === 0) {
+    return { error: "Type a message first." };
+  }
+  if (body.length > 500) {
+    return { error: "Messages must be 500 characters or fewer." };
+  }
+
+  const { data: isDmBanned } = await supabase.rpc("user_has_active_ban", {
+    p_user_id: user.id,
+    p_ban_type: "dm",
+  });
+  if (isDmBanned) {
+    return { error: "You're currently banned from sending direct messages." };
+  }
+
+  const { data: conversationId, error: conversationError } = await supabase.rpc(
+    "get_or_create_dm_conversation",
+    { p_user_id: user.id, p_other_user_id: otherUserId },
+  );
+
+  if (conversationError || !conversationId) {
+    return { error: conversationError?.message ?? "Could not start that conversation." };
+  }
+
+  const { error } = await supabase
+    .from("dm_messages")
+    .insert({ conversation_id: conversationId, sender_id: user.id, body });
+
+  if (error) {
+    return { error: "Could not send that message — the other player may be unable to receive DMs right now." };
+  }
+
+  revalidatePath("/messages");
+  return { success: true };
 }
 
 export type StartConversationState = { error: string } | null;

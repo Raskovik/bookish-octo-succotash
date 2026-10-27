@@ -108,3 +108,36 @@ export async function blockPlayer(
 
   return { success: true };
 }
+
+export type UnblockPlayerState = { error: string } | { success: true } | null;
+
+export async function unblockPlayer(
+  _prevState: UnblockPlayerState,
+  formData: FormData,
+): Promise<UnblockPlayerState> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const blockedId = String(formData.get("blocked_id") ?? "");
+  if (blockedId.length === 0) {
+    return { error: "Could not unblock that player." };
+  }
+
+  const { error } = await supabase
+    .from("blocks")
+    .delete()
+    .eq("blocker_id", user.id)
+    .eq("blocked_id", blockedId);
+
+  if (error) {
+    return { error: "Could not unblock that player. Please try again." };
+  }
+
+  return { success: true };
+}

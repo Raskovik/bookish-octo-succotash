@@ -260,3 +260,113 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .foot { margin-top: 130px; }
 }
 @media (prefers-reduced-motion: reduce) { .btn, .navlink { transition: none; } }
+
+/* ===== Profile page (pages/profile.html) =====
+   Cream info cards with yellow label tabs, social actions, and the message / block / report dialogs.
+   .panel#profile carries data-view="owner|visitor|friend|pending|blocked"; CSS shows only the matching action group. */
+:root {
+  --ic-paw: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='black'%3E%3Cellipse cx='12' cy='16' rx='5' ry='4.2'/%3E%3Ccircle cx='5.2' cy='11.5' r='2.2'/%3E%3Ccircle cx='9.4' cy='6.6' r='2.3'/%3E%3Ccircle cx='14.6' cy='6.6' r='2.3'/%3E%3Ccircle cx='18.8' cy='11.5' r='2.2'/%3E%3C/g%3E%3C/svg%3E");
+  --ic-bag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' stroke='black' stroke-width='1.4' stroke-linejoin='round' d='M5.4 8.5h13.2l1 12.2H4.4z'/%3E%3Cpath d='M8.8 9.5V7.6a3.2 3.2 0 0 1 6.4 0v1.9' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+.i-paw { --ic: var(--ic-paw); }
+.i-bag { --ic: var(--ic-bag); }
+.panel.profile { padding: 38px 26px 40px; }
+.btn-big { width: 100%; padding: 11px 16px 12px; font-size: 21px; }
+.av { background: var(--avatar) center / cover; }
+.bio-title { margin: 0px; font: var(--fw) 22px/1.1 var(--font-display); letter-spacing: 0.6px; color: var(--link); }
+.bio-rule { width: 70%; height: 3px; margin: 8px auto; border-radius: 3px; background: linear-gradient(90deg, transparent, rgb(236, 127, 187), transparent); }
+.bio { text-align: center; }
+.bio p { margin: 0px 0px 6px; font: 700 14.5px/1.4 var(--font-body); }
+.bio-links { font-size: 12.5px !important; }
+.bio-links a { color: var(--brown); font-weight: 800; }
+.tile.sm { width: 26px; height: 26px; border-radius: 9px; }
+.tile.sm::after { inset: 4px; }
+.btn-leaf { --c: var(--leaf-1); --shade: var(--leaf-2); --edge: var(--leaf-edge); }
+.btn-red { --c: #ff8470; --shade: #e8452f; --edge: #8f2018; }
+.btn[disabled] { cursor: default; filter: saturate(0.7); opacity: 0.85; transform: none; box-shadow: 0 var(--lift) 0 var(--edge); }
+.acts { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 6px; }
+.acts .g { display: none; align-items: center; flex-wrap: wrap; justify-content: center; gap: 2px 6px; }
+.panel[data-view="owner"] .g-owner, .panel[data-view="visitor"] .g-visitor, .panel[data-view="friend"] .g-friend, .panel[data-view="pending"] .g-pending, .panel[data-view="blocked"] .g-blocked { display: inline-flex; }
+.panel[data-view="owner"] .vis-only { display: none !important; }
+.panel[data-view="blocked"] .dimmable { filter: grayscale(1); opacity: 0.55; pointer-events: none; }
+.blockednote { font: 800 13px var(--font-body); color: var(--ink-soft); padding: 0px 6px; }
+.toast { position: fixed; left: 50%; bottom: 22px; z-index: 100; max-width: calc(-28px + 100vw); padding: 10px 20px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: linear-gradient(rgb(255, 249, 224) 0px, rgb(255, 249, 224) 58%, rgb(246, 230, 180) 58%); border: 2px solid rgb(168, 121, 58); border-radius: 12px; box-shadow: rgb(168, 121, 58) 0px 3px 0px, rgba(0, 0, 0, 0.25) 0px 10px 20px; font: 800 14px var(--font-body); color: var(--brown); transition: opacity 0.2s, transform 0.2s; }
+/* .show was referenced by the handoff's own profile.js (toast.classList.add('show'))
+   but never defined — without it the toast's opacity never leaves 0. */
+.toast.show { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+/* Native <dialog>'s centering is `margin: auto` on the UA's own
+   dialog:modal rule — Tailwind's preflight resets every element's
+   margin to 0 first, which silently kills that trick (the dialog was
+   landing pinned to the top-left corner instead of centered). Centered
+   explicitly here instead of relying on the browser default. */
+dialog.fg { --fr: var(--wood-1); --fr-shade: var(--wood-2); --fr-edge: var(--wood-edge); position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; width: min(440px, -28px + 100vw); padding: 0px; overflow: hidden; background: var(--paper-2); color: var(--ink); border: 3px solid var(--wood-edge); border-radius: 18px; box-shadow: 0 var(--lift) 0 var(--wood-edge), 0 24px 50px rgba(0, 0, 0, .4); font-family: var(--font-body); }
+dialog.fg.danger { --fr: #ff8470; --fr-shade: #e8452f; --fr-edge: #8f2018; border-color: rgb(143, 32, 24); box-shadow: 0 var(--lift) 0 #8f2018, 0 24px 50px rgba(0, 0, 0, .4); }
+dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
+.fg-body { padding: 16px 18px 6px; font: 700 14.5px/1.45 var(--font-body); }
+.fg-body label { display: block; margin-bottom: 6px; font-weight: 800; }
+.fg-body textarea { width: 100%; min-height: 110px; padding: 10px 12px; resize: vertical; font: 600 15px/1.45 var(--font-body); color: var(--ink); background: rgb(255, 253, 243); border: 2px solid rgb(168, 121, 58); border-radius: 12px; }
+.fg-body textarea:focus-visible { outline: 3px solid var(--orange-1); outline-offset: 1px; }
+.fg-body ul { margin: 8px 0px 0px; padding-left: 20px; list-style: disc; }
+.fg-body li { margin-bottom: 4px; }
+.fg-hint { margin: 6px 0px 0px; font: 700 12px var(--font-body); color: var(--ink-soft); }
+.fg-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px 12px; }
+.bio-wrap .bio p { margin: 0px 0px 4px; }
+.pf-grid { display: grid; grid-template-columns: minmax(0px, 0.64fr) minmax(0px, 1fr); gap: 16px; align-items: start; padding: 2px 0px; }
+.pf-col { display: grid; gap: 14px; align-content: start; }
+.pc { background: linear-gradient(rgb(255, 253, 240), rgb(251, 240, 207)); border: 2px solid rgb(227, 194, 127); border-radius: 14px; padding: 14px 16px; box-shadow: rgb(227, 194, 127) 0px 3px 0px; }
+.idc-top { display: flex; align-items: center; gap: 14px; }
+.av-sq { width: 88px; aspect-ratio: 1 / 1; flex: 0 0 auto; background: var(--avatar) center / cover; border: 3px solid var(--wood-edge); border-radius: 18px; box-shadow: 0 3px 0 var(--wood-edge); }
+.idc-top h1 { margin: 0px; font: 900 32px/1 var(--font-display); letter-spacing: 1px; color: var(--brown); }
+.idc-top p { margin: 4px 0px 2px; font: 800 12.5px var(--font-body); color: var(--ink-soft); }
+.idc-act { margin-top: 12px; }
+.idc-act .acts { justify-content: flex-start; }
+.st-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; font: 800 14px var(--font-body); color: var(--ink); }
+.st { display: inline-flex; align-items: center; gap: 7px; }
+.st b { font: var(--fw) 22px/1 var(--font-display); letter-spacing: 0.4px; color: var(--brown); }
+.stuff { display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); gap: 10px; }
+.stuff .btn { width: 100%; }
+.bflank { display: grid; grid-template-columns: 92px minmax(0px, 1fr) 92px; gap: 14px; align-items: center; }
+.bimg { aspect-ratio: 1 / 1; background: center center / contain no-repeat; }
+.bflank .bio { text-align: center; }
+.bflank .bio p { margin: 0px 0px 4px; }
+@media (max-width: 860px) {
+  .pf-grid, .pf-grid.wood, .rt-row { grid-template-columns: minmax(0px, 1fr); }
+  .bflank { grid-template-columns: minmax(0px, 1fr); }
+  .bflank .bimg { width: 90px; justify-self: center; }
+}
+.pf-grid.stretch { align-items: stretch; }
+.pf-col.fill { display: grid; align-content: stretch; grid-template-rows: 1fr; }
+.bio-card { display: grid; align-content: start; }
+.bio-card .bflank { min-height: 100%; align-items: center; align-self: center; }
+.bio-card { grid-template-rows: auto 1fr; }
+.bio-card .bflank { grid-template-columns: 120px minmax(0px, 1fr) 120px; }
+.tabs-l .pc.lt, .pc.lt { position: relative; padding-top: 24px; margin-top: 10px; }
+.ltab { position: absolute; top: -13px; left: 14px; padding: 3px 14px 5px; background: linear-gradient(rgb(255, 243, 168), rgb(255, 229, 128)); border: 2px solid rgb(224, 185, 58); border-radius: 6px; box-shadow: rgb(224, 185, 58) 0px 2px 0px; font: var(--fw) 17px/1 var(--font-display); letter-spacing: 0.6px; color: var(--brown); transform: rotate(-1.5deg); }
+@media (max-width: 860px) {
+  .bio-card .bflank, .pf-grid.low .bflank { grid-template-columns: minmax(0px, 1fr); }
+}
+.idc-act .acts { margin-bottom: 4px; }
+.fbadge { display: none; align-items: center; gap: 5px; margin: 5px 0px 1px; padding: 2px 10px 3px 7px; width: max-content; background: linear-gradient(rgb(181, 232, 106) 0px, rgb(181, 232, 106) 55%, rgb(139, 208, 74) 55%); border: 2px solid var(--leaf-edge); border-radius: 999px; box-shadow: 0 2px 0 var(--leaf-edge); font: var(--fw) 14px/1 var(--font-display); letter-spacing: 0.5px; color: rgb(255, 255, 255); -webkit-text-stroke: 3px var(--leaf-edge); paint-order: stroke; }
+.fbadge .ic { width: 13px; height: 13px; -webkit-text-stroke: 0px; }
+.panel[data-view="friend"] .fbadge { display: inline-flex; }
+.av-sq { position: relative; }
+.btn-round { min-width: 0px; }
+.panel[data-view="blocked"] .noblk { display: none !important; }
+.mlink { color: var(--ink-soft); text-decoration: underline; }
+.mlink.red { color: rgb(163, 40, 26); }
+.mlinks .sflink, .foot-strip .sflink { display: none; }
+.panel[data-view="friend"] .mlinks a.g-friend, .panel[data-view="pending"] .mlinks a.g-pending, .panel[data-view="friend"] .foot-strip a.g-friend, .panel[data-view="pending"] .foot-strip a.g-pending { display: inline; }
+.foot-strip { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 4px 10px; margin: 12px -16px -14px; padding: 7px 16px; background: rgba(217, 184, 119, 0.22); border-top: 2px dotted rgb(217, 184, 119); border-radius: 0px 0px 12px 12px; font: 800 12.5px var(--font-body); }
+.foot-strip .fs-r { display: inline-flex; gap: 8px; margin-left: auto; align-items: center; }
+.pc.lt { position: relative; }
+.reasons { margin: 0px 0px 12px; padding: 0px; border: 0px; }
+.reasons legend { padding: 0px; margin-bottom: 8px; font-weight: 800; }
+.reasons label { display: flex; align-items: center; gap: 10px; margin: 0px 0px 4px; padding: 7px 10px; font-weight: 700; background: rgb(255, 253, 243); border: 2px solid rgb(227, 194, 127); border-radius: 10px; cursor: pointer; }
+.reasons label:has(input:checked) { background: rgb(255, 243, 168); border-color: rgb(224, 185, 58); }
+.reasons input { accent-color: var(--orange-2); width: 17px; height: 17px; flex: 0 0 auto; }
+.reasons label:has(input:focus-visible) { outline: 3px dashed var(--orange-1); outline-offset: 1px; }
+.fg-body .opt { font-weight: 700; color: var(--ink-soft); }
+.fg-body textarea#report-details { min-height: 76px; }
+/* markup fixes: the label tab is an <h2>, and bio art is an <img> */
+.ltab { margin: 0; }
+.bimg { display: block; width: 100%; height: auto; max-width: 120px; justify-self: center; object-fit: contain; }
