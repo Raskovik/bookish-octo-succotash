@@ -331,11 +331,13 @@ export type PetWithSpecies = Pick<
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
 };
 
-// Everything PetWithSpecies has, plus bio and stats data — shown on
-// /pets/[petId]. See calcPetStats() in lib/pet-combat.ts for turning
-// level/roll_* into actual Strength/Speed/Defence numbers.
+// Everything PetWithSpecies has, plus bio, stats data, and owner_id
+// (needed to tell an owner viewing their own pet from anyone else
+// viewing it read-only — see 0048_public_pet_and_item_viewing.sql) —
+// shown on /pets/[petId]. See calcPetStats() in lib/pet-combat.ts for
+// turning level/roll_* into actual Strength/Speed/Defence numbers.
 export type PetDetail = PetWithSpecies &
-  Pick<PetRow, "bio" | "level" | "roll_strength" | "roll_speed" | "roll_defence" | "last_fed_at">;
+  Pick<PetRow, "owner_id" | "bio" | "level" | "roll_strength" | "roll_speed" | "roll_defence" | "last_fed_at">;
 
 // A stack in the player's inventory, as shown on /items.
 export type ItemWithQuantity = {

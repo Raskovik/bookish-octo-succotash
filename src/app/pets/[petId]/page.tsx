@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { ArrowLeft, Coins, LogOut, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { bbcodeToHtml } from "@/lib/bbcode";
 import { petImageUrl, petTypeName, petAgeLabel } from "@/lib/pet-display";
 import { calcPetEnergy, MIN_ENERGY_TO_ADVENTURE } from "@/lib/pet-energy";
 import { PetNameEditor } from "../pet-name-editor";
@@ -53,11 +54,11 @@ function ComingSoonButton({ label, icon: Icon }: { label: string; icon: LucideIc
   );
 }
 
-// Owner-only, same as the /pets grid itself — pets has no public-viewing
-// story yet (see /u/[id]'s "Browsing another player's pets isn't
-// available yet"), so a pet that exists but belongs to someone else 404s
-// exactly like one that doesn't exist at all, rather than leaking which
-// case it is.
+// 0048_public_pet_and_item_viewing.sql opened pets up to read-only
+// viewing by anyone signed in — this page now serves both the owner
+// (full controls) and any other viewer (everything below Information/
+// Stats, read-only, same as a stranger's /u/[id] profile). Still
+// requires sign-in to view at all, same as before.
 export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   const { petId } = await props.params;
   const supabase = await createClient();
@@ -69,27 +70,27 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
     redirect("/login");
   }
 
-  const [{ data: petData }, { count: adventureCount }] = await Promise.all([
-    supabase
-      .from("pets")
-      .select(
-        "id, custom_name, bio, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
-      )
-      .eq("id", petId)
-      .eq("owner_id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("expeditions")
-      .select("*", { count: "exact", head: true })
-      .eq("pet_id", petId)
-      .eq("user_id", user.id),
-  ]);
+  const { data: petData } = await supabase
+    .from("pets")
+    .select(
+      "id, owner_id, custom_name, bio, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
+    )
+    .eq("id", petId)
+    .maybeSingle();
 
   if (!petData) {
     notFound();
   }
 
   const pet = petData as unknown as PetDetail;
+  const isOwner = pet.owner_id === user.id;
+
+  const { count: adventureCount } = await supabase
+    .from("expeditions")
+    .select("*", { count: "exact", head: true })
+    .eq("pet_id", petId)
+    .eq("user_id", pet.owner_id);
+
   const energy = calcPetEnergy(pet.last_fed_at);
   const canAdventure = energy >= MIN_ENERGY_TO_ADVENTURE;
 
@@ -104,7 +105,10 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
     <main id="main">
       <div className="sheet">
         <div className="panel flex flex-col gap-6">
-      <Link href="/pets" className="flex w-fit items-center gap-1.5 text-sm text-stone-500 hover:underline">
+      <Link
+        href={isOwner ? "/pets" : `/u/${pet.owner_id}/pets`}
+        className="flex w-fit items-center gap-1.5 text-sm text-stone-500 hover:underline"
+      >
         <ArrowLeft size={14} />
         Back to pets
       </Link>
@@ -115,7 +119,13 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
           <span className="rounded-full border-2 border-green-300 bg-white px-3 py-1 text-xs font-bold text-green-800 dark:border-stone-700 dark:bg-stone-900 dark:text-green-300">
             Lv. {pet.level}
           </span>
-          <PetNameEditor userId={user.id} petId={pet.id} customName={pet.custom_name} />
+          {isOwner ? (
+            <PetNameEditor userId={user.id} petId={pet.id} customName={pet.custom_name} />
+          ) : (
+            <p className={`text-lg font-semibold ${pet.custom_name ? "" : "italic text-stone-500"}`}>
+              {pet.custom_name ?? "Unnamed"}
+            </p>
+          )}
         </div>
 
         {/* ── Portrait ─────────────────────────────────────────────────── */}
@@ -181,16 +191,36 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
             </Box>
           </div>
 
-          <div className="flex flex-row flex-wrap gap-2 sm:flex-col">
-            <FeedButton userId={user.id} petId={pet.id} />
-            <ComingSoonButton label="Sell" icon={Coins} />
-            <ComingSoonButton label="Release" icon={LogOut} />
-          </div>
+          {isOwner ? (
+            <div className="flex flex-row flex-wrap gap-2 sm:flex-col">
+              <FeedButton userId={user.id} petId={pet.id} />
+              <ComingSoonButton label="Sell" icon={Coins} />
+              <ComingSoonButton label="Release" icon={LogOut} />
+            </div>
+          ) : null}
         </div>
 
         {/* ── Bio ──────────────────────────────────────────────────────── */}
         <div className="p-5 pt-0">
-          <PetBioEditor userId={user.id} petId={pet.id} bio={pet.bio} />
+          {isOwner ? (
+            <PetBioEditor userId={user.id} petId={pet.id} bio={pet.bio} />
+          ) : (
+            <div className="overflow-hidden rounded-lg border-2 border-green-200 dark:border-stone-800">
+              <div className="border-b-2 border-green-200 bg-green-50/70 px-3 py-1.5 dark:border-stone-800 dark:bg-stone-900/50">
+                <p className="text-xs font-bold uppercase tracking-wide text-green-800 dark:text-green-300">Bio</p>
+              </div>
+              <div className="p-3">
+                {pet.bio ? (
+                  <div
+                    className="forum-content text-sm text-stone-700 dark:text-stone-300"
+                    dangerouslySetInnerHTML={{ __html: bbcodeToHtml(pet.bio) }}
+                  />
+                ) : (
+                  <p className="text-sm italic text-stone-500">No bio yet.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
         </div>

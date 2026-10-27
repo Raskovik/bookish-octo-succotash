@@ -97,39 +97,14 @@ export function ProfilePanel({
               My stuff
             </h2>
             <div className="stuff">
-              {view === "owner" ? (
-                <>
-                  <Link className="btn btn-big" href="/pets">
-                    <i className="ic i-paw" aria-hidden="true" />
-                    Pets
-                  </Link>
-                  <Link className="btn btn-big" href="/items">
-                    <i className="ic i-bag" aria-hidden="true" />
-                    Items
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="btn btn-big"
-                    type="button"
-                    disabled
-                    title="Browsing another player's pets isn't available yet"
-                  >
-                    <i className="ic i-paw" aria-hidden="true" />
-                    Pets
-                  </button>
-                  <button
-                    className="btn btn-big"
-                    type="button"
-                    disabled
-                    title="Browsing another player's items isn't available yet"
-                  >
-                    <i className="ic i-bag" aria-hidden="true" />
-                    Items
-                  </button>
-                </>
-              )}
+              <Link className="btn btn-big" href={view === "owner" ? "/pets" : `/u/${profile.id}/pets`}>
+                <i className="ic i-paw" aria-hidden="true" />
+                Pets
+              </Link>
+              <Link className="btn btn-big" href={view === "owner" ? "/items" : `/u/${profile.id}/items`}>
+                <i className="ic i-bag" aria-hidden="true" />
+                Items
+              </Link>
             </div>
           </section>
         </div>
