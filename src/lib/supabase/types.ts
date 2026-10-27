@@ -1,3 +1,5 @@
+export type WhoCanMessage = "everyone" | "nobody";
+
 export type UserRow = {
   id: string;
   google_sub: string | null;
@@ -13,6 +15,7 @@ export type UserRow = {
   is_admin: boolean;
   is_moderator: boolean;
   starter_granted: boolean;
+  who_can_message: WhoCanMessage;
   created_at: string;
 };
 
@@ -22,6 +25,9 @@ export type UserRow = {
 // gem_balance/den_size were added later, in 0047_public_player_stats.sql,
 // for the unified player-profile page — every profile shows the same
 // wallet/pet-slot stats to any viewer now, not just the owner.
+// who_can_message (0050_who_can_message.sql) is public too, so a
+// visitor's profile page can grey out the Message button up front
+// instead of only finding out from a rejected send.
 export type PublicUserProfile = Pick<
   UserRow,
   | "id"
@@ -34,6 +40,7 @@ export type PublicUserProfile = Pick<
   | "coin_balance"
   | "gem_balance"
   | "den_size"
+  | "who_can_message"
 >;
 
 // Named rarity_tier in Postgres (renamed from pet_rarity once items also
