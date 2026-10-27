@@ -64,7 +64,9 @@ export default async function ActiveTradesPage() {
   const outgoing = trades.filter((t) => t.initiatorId === user.id);
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Active trades</h1>
@@ -98,6 +100,8 @@ export default async function ActiveTradesPage() {
         trades={outgoing}
         viewerId={user.id}
       />
+        </div>
+      </div>
     </main>
   );
 }

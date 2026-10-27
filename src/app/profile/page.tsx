@@ -60,7 +60,9 @@ export default async function ProfilePage() {
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Left column — narrower than the right, since the bio/BBCode
             side benefits from the extra room much more than a picture
@@ -215,6 +217,8 @@ export default async function ProfilePage() {
       >
         View public profile
       </Link>
+        </div>
+      </div>
     </main>
   );
 }

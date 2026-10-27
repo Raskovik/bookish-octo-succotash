@@ -173,7 +173,9 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Marketplace</h1>
@@ -376,6 +378,8 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
           </Link>
         </div>
       ) : null}
+        </div>
+      </div>
     </main>
   );
 }

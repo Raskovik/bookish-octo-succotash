@@ -121,7 +121,9 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-5">
       <div className="text-sm text-stone-500">
         <Link href="/forums" className="hover:underline">
           Forums
@@ -187,6 +189,8 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
           </ForumPanel>
         </>
       )}
+        </div>
+      </div>
     </main>
   );
 }

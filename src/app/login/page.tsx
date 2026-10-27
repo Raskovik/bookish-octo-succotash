@@ -13,7 +13,9 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col items-center justify-center gap-6 text-center">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
         <p className="max-w-sm text-stone-600 dark:text-stone-400">
@@ -22,6 +24,8 @@ export default async function LoginPage() {
         </p>
       </div>
       <GoogleSignInButton />
+        </div>
+      </div>
     </main>
   );
 }

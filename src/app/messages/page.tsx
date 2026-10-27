@@ -63,7 +63,9 @@ export default async function MessagesPage() {
   });
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-5 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Messages</h1>
@@ -123,6 +125,8 @@ export default async function MessagesPage() {
           </table>
         )}
       </ForumPanel>
+        </div>
+      </div>
     </main>
   );
 }

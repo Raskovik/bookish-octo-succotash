@@ -30,7 +30,9 @@ export default async function MyListingsPage() {
   const purchases = listings.filter((l) => l.buyerId === user.id);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">My listings</h1>
@@ -73,6 +75,8 @@ export default async function MyListingsPage() {
           </div>
         )}
       </section>
+        </div>
+      </div>
     </main>
   );
 }

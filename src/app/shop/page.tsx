@@ -43,7 +43,9 @@ export default async function ShopPage() {
   }));
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Shop</h1>
@@ -91,6 +93,8 @@ export default async function ShopPage() {
           ))}
         </ul>
       )}
+        </div>
+      </div>
     </main>
   );
 }

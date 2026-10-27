@@ -74,7 +74,9 @@ export default async function TradingCenterPage() {
   );
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-8 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Trading Center</h1>
         <p className="text-sm text-stone-500">
@@ -118,6 +120,8 @@ export default async function TradingCenterPage() {
           </div>
         )}
       </section>
+        </div>
+      </div>
     </main>
   );
 }

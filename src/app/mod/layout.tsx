@@ -12,7 +12,9 @@ export default async function ModLayout({
   await requireModerator();
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Mod tools</h1>
         <nav className="mt-3 flex flex-wrap gap-4 text-sm">
@@ -25,6 +27,8 @@ export default async function ModLayout({
         </nav>
       </div>
       {children}
+        </div>
+      </div>
     </main>
   );
 }

@@ -111,7 +111,9 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-5">
       <ForumPanel
         icon={thread.is_locked ? <Lock size={18} /> : <MessageSquare size={18} />}
         title={category ? `${category.name} > ${thread.title}` : thread.title}
@@ -164,6 +166,8 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
           to reply.
         </p>
       )}
+        </div>
+      </div>
     </main>
   );
 }

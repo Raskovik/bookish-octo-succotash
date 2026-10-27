@@ -78,7 +78,9 @@ export default async function TradeDetailPage(props: PageProps<"/trades/[id]">) 
       : `${trade.recipientName} gave`;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           Trade with {counterpartName}
@@ -129,6 +131,8 @@ export default async function TradeDetailPage(props: PageProps<"/trades/[id]">) 
           <CancelTradeButton userId={user.id} tradeId={trade.id} />
         </div>
       ) : null}
+        </div>
+      </div>
     </main>
   );
 }

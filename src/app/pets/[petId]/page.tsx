@@ -101,7 +101,9 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <Link href="/pets" className="flex w-fit items-center gap-1.5 text-sm text-stone-500 hover:underline">
         <ArrowLeft size={14} />
         Back to pets
@@ -189,6 +191,8 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
         {/* ── Bio ──────────────────────────────────────────────────────── */}
         <div className="p-5 pt-0">
           <PetBioEditor userId={user.id} petId={pet.id} bio={pet.bio} />
+        </div>
+      </div>
         </div>
       </div>
     </main>

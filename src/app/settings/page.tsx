@@ -31,7 +31,9 @@ export default async function SettingsPage() {
   ).toISOString();
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-8 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-8">
       <h1 className="text-2xl font-semibold tracking-tight">Account settings</h1>
 
       <div className="flex flex-col gap-1.5">
@@ -45,6 +47,8 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsForm bio={profile.bio ?? ""} avatarUrl={profile.avatar_url} />
+        </div>
+      </div>
     </main>
   );
 }

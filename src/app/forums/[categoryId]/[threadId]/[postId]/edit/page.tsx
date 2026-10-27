@@ -34,7 +34,9 @@ export default async function EditForumPostPage(
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Edit post</h1>
         <Link href={`/forums/${categoryId}/${threadId}`} className="text-sm text-stone-500 hover:underline">
@@ -42,6 +44,8 @@ export default async function EditForumPostPage(
         </Link>
       </div>
       <EditPostForm categoryId={categoryId} threadId={threadId} postId={post.id} defaultBody={post.body_raw} />
+        </div>
+      </div>
     </main>
   );
 }

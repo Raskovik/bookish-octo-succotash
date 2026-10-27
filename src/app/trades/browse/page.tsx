@@ -123,7 +123,9 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Browse trades</h1>
         <p className="text-sm text-stone-500">
@@ -286,6 +288,8 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
           </Link>
         </div>
       ) : null}
+        </div>
+      </div>
     </main>
   );
 }

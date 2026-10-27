@@ -53,7 +53,9 @@ export default async function GardenPage() {
   const fertilizerOptions = inventory.filter((row) => row.item?.type === "fertilizer").map(toOption);
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Garden</h1>
         <p className="text-sm text-stone-500">
@@ -71,6 +73,8 @@ export default async function GardenPage() {
         coinBalance={coinBalance}
         expansionCost={expansionCost}
       />
+        </div>
+      </div>
     </main>
   );
 }

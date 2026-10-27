@@ -154,7 +154,9 @@ export default async function PetsPage(props: PageProps<"/pets">) {
   ];
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
+    <main id="main">
+      <div className="sheet">
+        <div className="panel flex flex-col gap-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -252,6 +254,8 @@ export default async function PetsPage(props: PageProps<"/pets">) {
           </Link>
         </div>
       ) : null}
+        </div>
+      </div>
     </main>
   );
 }
