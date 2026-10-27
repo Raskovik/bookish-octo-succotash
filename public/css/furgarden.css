@@ -240,6 +240,9 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .foot-links a { display: inline-block; padding: 4px 12px; border-radius: 10px; font: 800 14px var(--font-body); color: #fff3d0; text-decoration: none; }
 .foot-links a:hover, .foot-links a:focus-visible { background: rgba(255, 243, 208, .16); color: #ffe27a; outline: none; }
 .foot-links a:focus-visible { outline: 2px dashed #ffe27a; outline-offset: 1px; }
+/* A footer link whose page doesn't exist yet — same spot in the row,
+   but red and not clickable, instead of a live link to nowhere. */
+.foot-links .tbd { display: inline-block; padding: 4px 12px; font: 800 14px var(--font-body); color: #ff8a75; cursor: default; }
 .copy { margin: 0; font: 700 12.5px var(--font-body); color: #b9d9a0; }
 
 /* ---------- small screens ---------- */

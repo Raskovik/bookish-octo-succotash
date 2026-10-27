@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isConversationUnread } from "@/lib/dm-unread";
 import { SiteNav } from "@/components/site-nav";
+import { SITE_NAME } from "@/config";
 import type { NotificationWithActor } from "@/lib/supabase/types";
 
 const NOTIFICATION_LIMIT = 20;
@@ -31,7 +32,7 @@ export async function SiteHeader() {
         <div className="scene">
           <div />
           <Link className="wordmark" href="/" title="Clicking this returns player to home">
-            Furgarden
+            {SITE_NAME}
           </Link>
           <div className="walletcard" style={{ display: "grid", placeItems: "center" }}>
             <Link className="btn" href="/login">
@@ -102,7 +103,7 @@ export async function SiteHeader() {
         </div>
 
         <Link className="wordmark" href="/" title="Clicking this returns player to home">
-          Furgarden
+          {SITE_NAME}
         </Link>
 
         <ul className="walletcard" aria-label="Your balances">

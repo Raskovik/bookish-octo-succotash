@@ -17,11 +17,11 @@
 
 
 // ─── 1. BASICS ───────────────────────────────────────────────────
-export const SITE_NAME = "Furgarden";
+export const SITE_NAME = "Furrgarden";
 export const SITE_TAGLINE = "Adopt, hatch, and trade virtual pets.";
 
-// Text in the bar at the bottom of every page.
-export const FOOTER_TEXT = `${SITE_NAME} — a hobby project, not affiliated with any real pet.`;
+// The copyright line at the bottom of the footer.
+export const FOOTER_TEXT = `© ${new Date().getFullYear()} ${SITE_NAME}. All rights reserved.`;
 
 
 // ─── 2. CURRENCY ─────────────────────────────────────────────────

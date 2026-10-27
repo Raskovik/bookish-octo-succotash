@@ -1,18 +1,33 @@
 import Link from "next/link";
-import { FOOTER_TEXT } from "@/config";
+import { FOOTER_TEXT, SITE_NAME } from "@/config";
 
 // Matches furgarden-design/partials/site-footer.html's .foot — the dark
-// jungle band the page trails off into. Drops the partial's .foot-links
-// list (About/Rules/Help/Contact/Terms/Privacy): its own README calls
-// it "Static; edit the link list as the site grows", and none of those
-// pages exist in this app yet, so linking them would just be dead ends.
+// jungle band the page trails off into, including the .foot-links list
+// (About/Rules/Help/Contact/Terms of Service/Privacy Policy) its own
+// README calls "Static; edit the link list as the site grows". None of
+// those pages exist in this app yet, so each renders as plain red text
+// (.tbd) instead of a real link — swap an entry to a <Link> once its
+// page exists.
+const FOOTER_LINKS = ["About", "Rules", "Help", "Contact", "Terms of Service", "Privacy Policy"];
+
 export function SiteFooter() {
   return (
     <footer className="foot">
       <div className="foot-in">
         <Link className="foot-logo" href="/">
-          Furgarden
+          {SITE_NAME}
         </Link>
+        <nav aria-label="Footer">
+          <ul className="foot-links">
+            {FOOTER_LINKS.map((label) => (
+              <li key={label}>
+                <span className="tbd" title="This page doesn't exist yet">
+                  {label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </nav>
         <p className="copy">{FOOTER_TEXT}</p>
       </div>
     </footer>
