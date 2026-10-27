@@ -174,7 +174,12 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .note p b { font-weight: 800; color: var(--brown); }
 .note time { display: block; margin-top: 2px; font: 700 11.5px var(--font-body); color: var(--ink-soft); }
 .tray-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px 4px; background: var(--paper); border-top: var(--bw) solid var(--tan-line); border-radius: 0 0 14px 14px; }
-.tray-empty { display: none; padding: 18px 14px; text-align: center; font: 700 14px var(--font-body); color: var(--ink-soft); }
+/* display: none in the original handoff file assumed a JS class toggle
+   (.tray.all-read) this app doesn't use — NotificationBell already only
+   renders this element when there are zero notifications, so it needs
+   to actually show up when it's rendered. One-line deviation from the
+   verbatim copy; everything else in this file is untouched. */
+.tray-empty { display: block; padding: 18px 14px; text-align: center; font: 700 14px var(--font-body); color: var(--ink-soft); }
 .tray.all-read .note.unread { background: none; }
 .tray.all-read .tray-head .count { display: none; }
 
