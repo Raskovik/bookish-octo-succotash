@@ -63,7 +63,9 @@ body {
 }
 a { color: var(--link); }
 ul, ol { margin: 0; padding: 0; list-style: none; }
-.page { max-width: 1100px; margin: 0 auto; padding: 16px 20px 0; }
+/* Widened from the handoff file's 1100px per request: smaller side
+   margins, a bit more room for the nav bar and content. */
+.page { max-width: 1200px; margin: 0 auto; padding: 16px 20px 0; }
 .skip { position: absolute; left: -999px; top: 8px; z-index: 60; } .skip:focus { left: 12px; }
 
 /* ---------- parts ---------- */
