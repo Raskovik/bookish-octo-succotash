@@ -488,8 +488,8 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .hp.mid i { background: linear-gradient(rgb(255, 227, 107), rgb(240, 163, 18)); }
 .hp.low i { background: linear-gradient(rgb(255, 154, 134), rgb(232, 69, 47)); }
 .pet { position: relative; background: linear-gradient(rgb(255, 253, 240), rgb(251, 240, 207)); border: 2px solid rgb(227, 194, 127); border-radius: 14px; box-shadow: rgb(227, 194, 127) 0px 3px 0px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0px; font: inherit; color: inherit; text-align: center; cursor: grab; }
-.pet .img { height: 146px; display: flex; align-items: flex-end; justify-content: center; border-radius: 10px; }
-.pet .img img { max-height: 136px; max-width: 94%; object-fit: contain; pointer-events: none; }
+.pet .img { height: 190px; display: flex; align-items: flex-end; justify-content: center; border-radius: 10px; }
+.pet .img img { max-height: 180px; max-width: 96%; object-fit: contain; pointer-events: none; }
 .pet .lv { position: absolute; top: 8px; left: 8px; }
 .pet .nm { font: 400 20px/1.05 var(--font-display); color: var(--brown); letter-spacing: 0.3px; text-decoration: none; }
 .selmode .pet { cursor: pointer; }
@@ -550,8 +550,8 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .seg button[aria-pressed="true"] { background: linear-gradient(rgb(255, 243, 168), rgb(255, 229, 128)); color: var(--brown); }
 .pgrid.dense { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
 .pet.dense { padding: 7px 8px 9px; gap: 5px; border-radius: 12px; }
-.pet.dense .img { height: 86px; }
-.pet.dense .img img { max-height: 80px; }
+.pet.dense .img { height: 104px; }
+.pet.dense .img img { max-height: 98px; }
 .pet.dense .nm { font-size: 16px; }
 .pet.dense .lv { font-size: 11.5px; padding: 1px 7px 2px; top: 6px; left: 6px; }
 .pet.dense .hp { height: 10px; }
