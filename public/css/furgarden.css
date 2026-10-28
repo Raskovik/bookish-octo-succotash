@@ -542,10 +542,6 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 }
 .pets-toast[hidden] { display: none; }
 .btn-feed { white-space: nowrap; }
-/* A bare number inside an otherwise display-font button label (the
-   Feed button's "· 308") — plain body font, same rule as every other
-   number on this page. */
-.btn-feed .num { font-family: var(--font-body); }
 .gedit { max-width: 760px; margin: 8px 0px 14px; }
 .tools { margin-bottom: 12px; }
 .tools .sp { gap: 8px; }
