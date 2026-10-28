@@ -593,14 +593,3 @@ body.dragon .pb-tabs.wood::after { content: "Drop on a group"; text-align: cente
 .pb-tab.drop { outline: 3px dashed var(--leaf-2); outline-offset: 1px; }
 .lnk { color: var(--link); font-weight: 700; background: none; border: 0; padding: 0; font-family: inherit; font-size: inherit; cursor: pointer; text-decoration: underline; }
 .fg-body .hintbar { margin: 12px 0 8px; }
-
-/* Generic "not wired up yet" flag — red, non-interactive. Same idea as
-   .foot-links .tbd, generalized for use outside the footer: the pets
-   page's HP bars, food-points counter, and group/bulk Feed button are
-   built to the new design visually, but there's no HP/food-points data
-   or feed endpoint behind them yet (a second pass adds that, see
-   /pets README) — this flags them red instead of pretending they work. */
-.tbd { color: #c23b2e !important; }
-button.tbd, .btn.tbd { cursor: not-allowed !important; opacity: .75; }
-.hp.tbd { border-color: #c23b2e; }
-.hp.tbd i { background: repeating-linear-gradient(135deg, #c23b2e, #c23b2e 6px, #e8766a 6px, #e8766a 12px); }

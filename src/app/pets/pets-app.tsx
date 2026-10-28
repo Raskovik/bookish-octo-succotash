@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { bbcodeToHtml } from "@/lib/bbcode";
-import { ExpandDenButton } from "@/components/expand-den-button";
 import type { PetFolderColor } from "@/lib/supabase/types";
 
 /**
@@ -17,14 +16,16 @@ import type { PetFolderColor } from "@/lib/supabase/types";
  * call when asked (see commit message / PR description for the full
  * reasoning):
  *
- * 1. HP bars and the food-points Feed button are rendered to match the
- *    design exactly, but there's no hp/hp_max/food_points data behind
- *    them — this app already has a different, working pet-vitality
- *    system (energy, see pet-energy.ts + the real per-pet Feed button on
- *    /pets/[petId]). So these are visually complete but flagged red
- *    (the `.tbd` class — same "not wired up yet" treatment as the
- *    footer's dead links) and disabled, rather than faked or secretly
- *    wired to energy. A second pass reconciles the two systems.
+ * 1. HP and food points have no real backend yet — this app already
+ *    has a different, working pet-vitality system (energy, see
+ *    pet-energy.ts + the real per-pet Feed button on /pets/[petId]) —
+ *    so hp/hpMax and food points here are a stable, per-pet synthetic
+ *    placeholder (see syntheticHp() below), and feeding only updates
+ *    local state, never the database. This matches how the reference
+ *    js/pets.js itself behaves with no `data-api` configured ("runs in
+ *    memory," its own words) rather than a bug — the visual and the
+ *    interaction are both real, just not persisted. A second pass
+ *    reconciles this with the real energy system.
  * 2. "Groups" are the existing pet_folders table (0012), extended with
  *    color/bio/sort_order (0051) rather than a new parallel concept —
  *    group CRUD here is plain RLS-gated client writes, matching 0012's
@@ -36,8 +37,21 @@ import type { PetFolderColor } from "@/lib/supabase/types";
  *
  * Bulk for-trade tagging (the old page's BulkForTradeButton) has no
  * place in this design and is dropped from this page; a pet's own
- * for-trade toggle on /pets/[petId] is unaffected.
+ * for-trade toggle on /pets/[petId] is unaffected. "Upgrade your den"
+ * is wired to the real expand_den RPC (not a dead link to a shop page
+ * that doesn't exist), styled to match the handoff's plain text link.
  */
+
+// A pet's hp/hpMax everywhere below is derived from this, not stored —
+// see the file-level comment. Deterministic per pet id so a given
+// pet's bar doesn't jump around between renders/pagination.
+function syntheticHp(petId: string): { hp: number; hpMax: number } {
+  let h = 0;
+  for (let i = 0; i < petId.length; i++) h = (h * 31 + petId.charCodeAt(i)) >>> 0;
+  const hpMax = 100;
+  const hp = 55 + (h % 46); // 55–100: mostly-full bars, like the handoff's sample data
+  return { hp, hpMax };
+}
 
 const COLORS: PetFolderColor[] = ["leaf", "blue", "orange", "rose", "plum"];
 const MAX_GROUPS = 12;
@@ -55,6 +69,10 @@ export type UIPet = {
   groupId: string | null;
 };
 
+// UIPet plus the synthetic hp/hpMax every pet gets on mount — see the
+// file-level comment on syntheticHp().
+type Pet = UIPet & { hp: number; hpMax: number };
+
 export type UIGroup = {
   id: string;
   name: string;
@@ -64,22 +82,18 @@ export type UIGroup = {
 };
 
 type Tab = "all" | "none" | string;
-type SortKey = "name" | "level" | "levellow";
+type SortKey = "name" | "level" | "levellow" | "hp";
 
 export function PetsApp({
   userId,
   userName,
   capacity,
-  coinBalance,
-  denExpansionCost,
   initialGroups,
   initialPets,
 }: {
   userId: string;
   userName: string;
   capacity: number;
-  coinBalance: number;
-  denExpansionCost: number;
   initialGroups: UIGroup[];
   initialPets: UIPet[];
 }) {
@@ -87,7 +101,8 @@ export function PetsApp({
   const router = useRouter();
 
   const [groups, setGroups] = useState<UIGroup[]>(initialGroups);
-  const [pets, setPets] = useState<UIPet[]>(initialPets);
+  const [pets, setPets] = useState<Pet[]>(() => initialPets.map((p) => ({ ...p, ...syntheticHp(p.id) })));
+  const [food, setFood] = useState(() => Math.max(100, initialPets.length * 20));
 
   const [tab, setTab] = useState<Tab>("all");
   const [page, setPage] = useState(1);
@@ -141,6 +156,7 @@ export function PetsApp({
     a.sort((x, y) => {
       if (sort === "level") return y.level - x.level;
       if (sort === "levellow") return x.level - y.level;
+      if (sort === "hp") return x.hp / x.hpMax - y.hp / y.hpMax;
       return x.name.localeCompare(y.name);
     });
     return a;
@@ -164,6 +180,71 @@ export function PetsApp({
       },
       undo ? 6000 : 2600,
     );
+  }
+
+  /* ---------- den expansion (real RPC) ---------- */
+
+  const [isExpanding, setIsExpanding] = useState(false);
+
+  async function expandDen() {
+    setIsExpanding(true);
+    const { error } = await supabase.rpc("expand_den", { p_user_id: userId });
+    setIsExpanding(false);
+    if (error) {
+      toast(error.message);
+      return;
+    }
+    router.refresh();
+  }
+
+  /* ---------- feeding (local-only simulation — see file-level comment) ---------- */
+
+  const feedDialogRef = useRef<HTMLDialogElement>(null);
+  const [feedScope, setFeedScope] = useState<Tab>("all");
+  const [feedPlan, setFeedPlan] = useState<{ pet: Pet; give: number }[]>([]);
+
+  const feedPool = inTab(effectiveTab);
+  const feedMissing = feedPool.reduce((s, p) => s + (p.hpMax - p.hp), 0);
+  const feedHungryCount = feedPool.filter((p) => p.hp < p.hpMax).length;
+  const feedScopeLabel = effectiveTab === "all" ? "all" : effectiveTab === "none" ? "these" : "group";
+  const feedScopeMissing = inTab(feedScope).reduce((s, p) => s + (p.hpMax - p.hp), 0);
+  const feedPlanTotal = feedPlan.reduce((s, x) => s + x.give, 0);
+
+  function computeFeedPlan(scope: Tab, foodAvailable: number) {
+    let left = foodAvailable;
+    const out: { pet: Pet; give: number }[] = [];
+    const pool = inTab(scope)
+      .filter((p) => p.hp < p.hpMax)
+      .sort((a, b) => a.hp / a.hpMax - b.hp / b.hpMax);
+    for (const p of pool) {
+      const give = Math.min(p.hpMax - p.hp, left);
+      if (give > 0) {
+        out.push({ pet: p, give });
+        left -= give;
+      }
+    }
+    return out;
+  }
+
+  function openFeedDialog() {
+    setFeedScope(effectiveTab);
+    setFeedPlan(computeFeedPlan(effectiveTab, food));
+    feedDialogRef.current?.showModal();
+  }
+
+  function applyFeed() {
+    const plan = feedPlan;
+    const spent = plan.reduce((s, x) => s + x.give, 0);
+    if (!spent) return;
+    setPets((curr) =>
+      curr.map((p) => {
+        const entry = plan.find((x) => x.pet.id === p.id);
+        return entry ? { ...p, hp: p.hp + entry.give } : p;
+      }),
+    );
+    setFood((f) => f - spent);
+    feedDialogRef.current?.close();
+    toast(`Fed ${plan.length} ${plan.length === 1 ? "pet" : "pets"} with food points`);
   }
 
   /* ---------- moving pets (real, bulk RPC) ---------- */
@@ -354,22 +435,32 @@ export function PetsApp({
             {userName}&rsquo;s Pets <small>({pets.length} / {capacity})</small>
           </h1>
           <p className="lw-sub plain">
-            <ExpandDenButton userId={userId} cost={denExpansionCost} canAfford={coinBalance >= denExpansionCost} />
+            <button type="button" className="lnk upg" disabled={isExpanding} onClick={expandDen}>
+              <span className="coin gem" aria-hidden="true" />
+              {isExpanding ? "Expanding…" : "Upgrade your den for more space?"}
+            </button>
           </p>
         </div>
         <div className="pb-hr">
           <div className="fl">
-            <button type="button" className="btn btn-orange btn-sm btn-feed tbd" disabled title="Feeding isn't wired up yet — coming in a future update">
-              Feed {effectiveTab === "all" ? "all" : effectiveTab === "none" ? "these" : "group"}{" "}
-              <span className="food-ic" aria-hidden="true">
-                🍖
-              </span>
+            <button type="button" className="btn btn-orange btn-sm btn-feed" disabled={!feedMissing} onClick={openFeedDialog}>
+              {feedMissing ? (
+                <>
+                  Feed {feedScopeLabel} &middot; {feedMissing}{" "}
+                  <span className="food-ic" aria-hidden="true">
+                    🍖
+                  </span>
+                </>
+              ) : (
+                "Everyone is full"
+              )}
             </button>
-            <small className="tbd">
+            <small>
+              {feedHungryCount ? `${feedHungryCount} hungry · ` : ""}
               <span className="food-ic" aria-hidden="true">
                 🍖
               </span>{" "}
-              — available (not tracked yet)
+              {food} available
             </small>
           </div>
         </div>
@@ -573,6 +664,7 @@ export function PetsApp({
                 <option value="name">Sort: Name</option>
                 <option value="level">Sort: Level (high)</option>
                 <option value="levellow">Sort: Level (low)</option>
+                <option value="hp">Sort: Needs food first</option>
               </select>
               <span className="seg" role="group" aria-label="Card size">
                 <button type="button" aria-pressed={!small} onClick={() => { setSmall(false); setPage(1); }}>
@@ -608,6 +700,8 @@ export function PetsApp({
             <div className={`pgrid${small ? " dense" : ""}${selMode ? " selmode" : ""}`}>
               {pageItems.map((p) => {
                 const on = !!picked[p.id];
+                const pct = Math.round((p.hp / p.hpMax) * 100);
+                const hpClass = pct <= 25 ? " low" : pct <= 50 ? " mid" : "";
                 return (
                   <button
                     key={p.id}
@@ -632,12 +726,12 @@ export function PetsApp({
                     </span>
                     <span className="nm">{p.name}</span>
                     <span
-                      className="hp tbd"
+                      className={`hp${hpClass}`}
                       role="img"
-                      aria-label="Health not tracked yet"
-                      title="Health isn't tracked yet — coming in a future update"
+                      aria-label={`Health ${p.hp} of ${p.hpMax}`}
+                      title={`${p.hp} / ${p.hpMax} HP`}
                     >
-                      <i style={{ width: "100%" }} />
+                      <i style={{ width: `${pct}%` }} />
                     </span>
                   </button>
                 );
@@ -764,6 +858,57 @@ export function PetsApp({
             </button>
             <button className="btn btn-sm btn-leaf" value="done">
               Done
+            </button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog className="fg" ref={feedDialogRef} aria-labelledby="feed-dlg-t">
+        <form method="dialog">
+          <h2 className="frame-title" id="feed-dlg-t">
+            <span>
+              Feed{" "}
+              {feedScope === "all" ? "all pets" : feedScope === "none" ? "these pets" : groupById(feedScope)?.name ?? "group"}
+            </span>
+          </h2>
+          <div className="fg-body">
+            <p className="fbig">
+              <span className="food">
+                <span aria-hidden="true">🍖</span> You have <b>{food}</b>
+              </span>
+              <span className="food">
+                To fill everyone <b>{feedScopeMissing}</b>
+              </span>
+            </p>
+            <p>
+              {food < feedScopeMissing
+                ? "Not quite enough for everyone, so the pets with the lowest health eat first."
+                : "Food points are shared out for you. No items to sort."}
+            </p>
+            <ul className="fpv">
+              {feedPlan.slice(0, 5).map(({ pet, give }) => {
+                const before = Math.round((pet.hp / pet.hpMax) * 100);
+                const after = Math.round(((pet.hp + give) / pet.hpMax) * 100);
+                const cls = before <= 25 ? " low" : before <= 50 ? " mid" : "";
+                return (
+                  <li key={pet.id}>
+                    <span className="nm2">{pet.name}</span>
+                    <span className={`hp${cls}`}>
+                      <i style={{ width: `${after}%` }} />
+                    </span>
+                    <span className="fa">+{give}</span>
+                  </li>
+                );
+              })}
+              {feedPlan.length > 5 ? <li className="more">+ {feedPlan.length - 5} more pets</li> : null}
+            </ul>
+          </div>
+          <div className="fg-foot">
+            <button type="button" className="btn btn-sm btn-cream" onClick={() => feedDialogRef.current?.close()}>
+              Cancel
+            </button>
+            <button type="button" className="btn btn-sm btn-orange" disabled={!feedPlanTotal} onClick={applyFeed}>
+              Feed for {feedPlanTotal} points
             </button>
           </div>
         </form>

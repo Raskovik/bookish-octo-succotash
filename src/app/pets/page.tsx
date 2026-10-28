@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { nextDenExpansionCost } from "@/lib/den-expansion";
 import { petImageUrl, petTypeName } from "@/lib/pet-display";
 import { PetsApp, type UIGroup, type UIPet } from "./pets-app";
 import type { PetFolderRow, PetWithSpecies } from "@/lib/supabase/types";
@@ -23,7 +22,7 @@ export default async function PetsPage() {
   const userId = user.id;
 
   const [{ data: userRow }, { data: foldersData }, { data: petsData }] = await Promise.all([
-    supabase.from("users").select("display_name, coin_balance, den_size").eq("id", userId).single(),
+    supabase.from("users").select("display_name, den_size").eq("id", userId).single(),
     supabase
       .from("pet_folders")
       .select("id, owner_id, name, color, bio, sort_order, created_at")
@@ -37,7 +36,6 @@ export default async function PetsPage() {
   ]);
 
   const denSize = userRow?.den_size ?? 0;
-  const denExpansionCost = nextDenExpansionCost(denSize);
 
   const groups: UIGroup[] = ((foldersData ?? []) as PetFolderRow[]).map((f) => ({
     id: f.id,
@@ -63,8 +61,6 @@ export default async function PetsPage() {
           userId={userId}
           userName={userRow?.display_name ?? "Your"}
           capacity={denSize}
-          coinBalance={userRow?.coin_balance ?? 0}
-          denExpansionCost={denExpansionCost}
           initialGroups={groups}
           initialPets={pets}
         />
