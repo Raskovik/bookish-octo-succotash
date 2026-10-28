@@ -456,11 +456,15 @@ export function PetsApp({
               )}
             </button>
             <small>
-              {feedHungryCount ? `${feedHungryCount} hungry · ` : ""}
+              {feedHungryCount ? (
+                <>
+                  <b>{feedHungryCount}</b> hungry &middot;{" "}
+                </>
+              ) : null}
               <span className="food-ic" aria-hidden="true">
                 🍖
               </span>{" "}
-              {food} available
+              <b>{food}</b> available
             </small>
           </div>
         </div>

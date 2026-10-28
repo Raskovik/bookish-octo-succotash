@@ -437,8 +437,8 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .hp.mid i { background: linear-gradient(rgb(255, 227, 107), rgb(240, 163, 18)); }
 .hp.low i { background: linear-gradient(rgb(255, 154, 134), rgb(232, 69, 47)); }
 .pet { position: relative; background: linear-gradient(rgb(255, 253, 240), rgb(251, 240, 207)); border: 2px solid rgb(227, 194, 127); border-radius: 14px; box-shadow: rgb(227, 194, 127) 0px 3px 0px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0px; font: inherit; color: inherit; text-align: center; cursor: grab; }
-.pet .img { height: 118px; display: flex; align-items: flex-end; justify-content: center; border-radius: 10px; }
-.pet .img img { max-height: 108px; max-width: 90%; object-fit: contain; pointer-events: none; }
+.pet .img { height: 146px; display: flex; align-items: flex-end; justify-content: center; border-radius: 10px; }
+.pet .img img { max-height: 136px; max-width: 94%; object-fit: contain; pointer-events: none; }
 .pet .lv { position: absolute; top: 8px; left: 8px; }
 .pet .nm { font: 400 20px/1.05 var(--font-display); color: var(--brown); letter-spacing: 0.3px; text-decoration: none; }
 .selmode .pet { cursor: pointer; }
@@ -465,7 +465,7 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .abar select { font: 700 14px var(--font-body); padding: 6px 9px; border-radius: 9px; border: 2px solid var(--wood-edge); background: rgb(255, 248, 220); color: var(--ink); }
 .empty { padding: 40px 10px; text-align: center; font-weight: 700; color: var(--ink-soft); }
 .hintbar { font-weight: 700; font-size: 13px; color: var(--ink-soft); margin: -6px 0px 14px; }
-.rail { display: grid; grid-template-columns: 200px minmax(0px, 1fr); gap: 20px; align-items: start; }
+.rail { display: grid; grid-template-columns: 260px minmax(0px, 1fr); gap: 20px; align-items: start; }
 .mrow { display: flex; gap: 8px; align-items: center; padding: 6px 0px; border-bottom: 1px dotted rgb(217, 181, 106); }
 .mrow .fi { flex: 1 1 0%; }
 .sw { display: flex; gap: 4px; }
@@ -499,8 +499,8 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .seg button[aria-pressed="true"] { background: linear-gradient(rgb(255, 243, 168), rgb(255, 229, 128)); color: var(--brown); }
 .pgrid.dense { grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
 .pet.dense { padding: 7px 8px 9px; gap: 5px; border-radius: 12px; }
-.pet.dense .img { height: 70px; }
-.pet.dense .img img { max-height: 66px; }
+.pet.dense .img { height: 86px; }
+.pet.dense .img img { max-height: 80px; }
 .pet.dense .nm { font-size: 16px; }
 .pet.dense .lv { font-size: 11.5px; padding: 1px 7px 2px; top: 6px; left: 6px; }
 .pet.dense .hp { height: 10px; }
@@ -519,6 +519,12 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .pb-hr { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .pb-hr .fl { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .pb-hr small { font-weight: 800; font-size: 12px; color: var(--ink-soft); }
+/* The counts inside this small text (hungry/available) are wrapped in
+   <b> so they use the same display font as every other count on this
+   page (group-bar badges, the den-size header, the Feed button) —
+   matching the site's existing convention for a number inside
+   otherwise-body-font text (see .walletcard li b in the header). */
+.pb-hr small b { font: var(--fw) 15px var(--font-display); color: var(--brown); letter-spacing: .3px; }
 .pb-tabs { display: grid; gap: 6px; align-content: start; max-height: 268px; overflow: auto; padding: 6px; }
 .pb-tab { display: flex; align-items: center; gap: 8px; text-align: left; font: 400 17px/1 var(--font-display); letter-spacing: 0.3px; cursor: pointer; padding: 9px 10px; border-radius: 10px; border: 2px solid transparent; color: var(--ink); background: transparent; min-width: 0px; }
 .pb-tab span.n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0px; }
@@ -548,7 +554,7 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
   .pb-hr { width: 100%; }
   .pb-hr .fl { flex: 1 1 0%; align-items: stretch; }
 }
-.rail.wr { display: grid; grid-template-columns: 200px minmax(0px, 1fr); gap: 20px; align-items: start; }
+.rail.wr { display: grid; grid-template-columns: 260px minmax(0px, 1fr); gap: 20px; align-items: start; }
 .wr .pb-tabs { max-height: none; overflow: visible; }
 .wr .tools { margin-bottom: 14px; }
 @media (max-width: 760px) {
