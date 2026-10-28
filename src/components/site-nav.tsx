@@ -78,7 +78,16 @@ export function SiteNav({
           <time id="clock" />
         </span>
       </div>
-      <NavGroups groups={groups} />
+      <NavGroups
+        leading={
+          <li>
+            <Link className="navlink" href="/">
+              Home
+            </Link>
+          </li>
+        }
+        groups={groups}
+      />
       <div className="tools">
         <Link
           className="btn btn-round"

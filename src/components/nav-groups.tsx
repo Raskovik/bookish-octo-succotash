@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 export type NavGroup = {
   label: string;
@@ -13,9 +14,19 @@ export type NavGroup = {
  * (any .has-menu > button). This only has to render the static markup
  * that script expects.
  */
-export function NavGroups({ groups }: { groups: NavGroup[] }) {
+export function NavGroups({
+  groups,
+  leading,
+}: {
+  groups: NavGroup[];
+  // A plain (non-dropdown) item rendered before the mapped groups,
+  // inside the same <ul> — e.g. SiteNav's Home link. Optional so this
+  // component stays usable without one.
+  leading?: ReactNode;
+}) {
   return (
     <ul className="navlinks">
+      {leading}
       {groups.map((group) => (
         <li className="has-menu" key={group.label}>
           <button className="navlink" type="button" aria-haspopup="true" aria-expanded="false">

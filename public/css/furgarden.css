@@ -487,12 +487,7 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .hp i { display: block; height: 100%; border-radius: 5px; background: linear-gradient(rgb(182, 238, 106), rgb(95, 163, 44)); box-shadow: rgba(255, 255, 255, 0.45) 0px 3px 0px inset; }
 .hp.mid i { background: linear-gradient(rgb(255, 227, 107), rgb(240, 163, 18)); }
 .hp.low i { background: linear-gradient(rgb(255, 154, 134), rgb(232, 69, 47)); }
-.pet { position: relative; background: linear-gradient(rgb(255, 253, 240), rgb(251, 240, 207)); border: 2px solid rgb(227, 194, 127); border-radius: 14px; box-shadow: rgb(227, 194, 127) 0px 3px 0px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0px; font: inherit; color: inherit; text-align: center; cursor: pointer; }
-/* Dragging a pet onto a group now requires holding Shift (see
-   pets-app.tsx's onCardDragStart) — only show the "grab" cursor while
-   Shift is actually held, so the default pointer cursor matches the
-   default behavior (a plain click navigates to the pet). */
-.pet.shift-drag { cursor: grab; }
+.pet { position: relative; background: linear-gradient(rgb(255, 253, 240), rgb(251, 240, 207)); border: 2px solid rgb(227, 194, 127); border-radius: 14px; box-shadow: rgb(227, 194, 127) 0px 3px 0px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 7px; min-width: 0px; font: inherit; color: inherit; text-align: center; cursor: grab; }
 .pet .img { height: 190px; display: flex; align-items: flex-end; justify-content: center; border-radius: 10px; }
 .pet .img img { max-height: 180px; max-width: 96%; object-fit: contain; pointer-events: none; }
 .pet .lv { position: absolute; top: 8px; left: 8px; }
