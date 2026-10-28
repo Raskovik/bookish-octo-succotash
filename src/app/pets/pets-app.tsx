@@ -446,7 +446,7 @@ export function PetsApp({
             <button type="button" className="btn btn-orange btn-sm btn-feed" disabled={!feedMissing} onClick={openFeedDialog}>
               {feedMissing ? (
                 <>
-                  Feed {feedScopeLabel} &middot; {feedMissing}{" "}
+                  Feed {feedScopeLabel} &middot; <span className="num">{feedMissing}</span>{" "}
                   <span className="food-ic" aria-hidden="true">
                     🍖
                   </span>

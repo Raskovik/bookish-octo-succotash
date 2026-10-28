@@ -511,7 +511,7 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .tools input[type="search"] { flex: 1 1 0%; min-width: 130px; max-width: 260px; }
 .tools .sp { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 .abar { position: sticky; bottom: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; padding: 10px 14px; border-radius: 14px; background: linear-gradient(var(--wood-1),var(--wood-2)); border: 2px solid var(--wood-edge); box-shadow: 0 4px 0 var(--wood-edge); color: rgb(255, 255, 255); font-weight: 800; }
-.abar b { font: 400 19px/1 var(--font-display); letter-spacing: 0.4px; -webkit-text-stroke: 3px var(--wood-edge); paint-order: stroke; }
+.abar b { font: 800 16px/1 var(--font-body); letter-spacing: 0.2px; }
 .abar .sp { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .abar select { font: 700 14px var(--font-body); padding: 6px 9px; border-radius: 9px; border: 2px solid var(--wood-edge); background: rgb(255, 248, 220); color: var(--ink); }
 .empty { padding: 40px 10px; text-align: center; font-weight: 700; color: var(--ink-soft); }
@@ -525,7 +525,7 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .ib { font: 800 14px var(--font-body); width: 28px; height: 28px; border-radius: 8px; border: 2px solid rgb(217, 181, 106); background: rgb(255, 248, 220); cursor: pointer; padding: 0px; }
 .ib:disabled { opacity: 0.35; cursor: default; }
 .food { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 6px; border-radius: 999px; background: rgb(255, 248, 220); border: 2px solid rgb(217, 181, 106); font: 800 13px var(--font-body); color: var(--ink); }
-.food b { font: 400 18px/1 var(--font-display); color: var(--orange-text); }
+.food b { font: 800 16px/1 var(--font-body); color: var(--orange-text); }
 .gedit { margin-top: 6px; }
 .gedit textarea { width: 100%; min-height: 76px; resize: vertical; font: 600 14.5px/1.45 var(--font-body); color: var(--ink); padding: 8px 10px; border: 2px solid rgb(217, 181, 106); border-radius: 10px; background: rgb(255, 253, 243); box-sizing: border-box; }
 .gedit .row2 { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
@@ -542,6 +542,10 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 }
 .pets-toast[hidden] { display: none; }
 .btn-feed { white-space: nowrap; }
+/* A bare number inside an otherwise display-font button label (the
+   Feed button's "· 308") — plain body font, same rule as every other
+   number on this page. */
+.btn-feed .num { font-family: var(--font-body); }
 .gedit { max-width: 760px; margin: 8px 0px 14px; }
 .tools { margin-bottom: 12px; }
 .tools .sp { gap: 8px; }
@@ -570,17 +574,16 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .pb-hr { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .pb-hr .fl { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .pb-hr small { font-weight: 800; font-size: 12px; color: var(--ink-soft); }
-/* The counts inside this small text (hungry/available) are wrapped in
-   <b> so they use the same display font as every other count on this
-   page (group-bar badges, the den-size header, the Feed button) —
-   matching the site's existing convention for a number inside
-   otherwise-body-font text (see .walletcard li b in the header). */
-.pb-hr small b { font: var(--fw) 15px var(--font-display); color: var(--brown); letter-spacing: .3px; }
+.pb-hr small b { color: var(--brown); }
 .pb-tabs { display: grid; gap: 6px; align-content: start; max-height: 268px; overflow: auto; padding: 6px; }
 .pb-tab { display: flex; align-items: center; gap: 8px; text-align: left; font: 400 17px/1 var(--font-display); letter-spacing: 0.3px; cursor: pointer; padding: 9px 10px; border-radius: 10px; border: 2px solid transparent; color: var(--ink); background: transparent; min-width: 0px; }
 .pb-tab span.n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0px; }
 .pb-tab i { width: 12px; height: 12px; border-radius: 50%; background: var(--ed,#c9a55e); flex: 0 0 auto; }
-.pb-tab em { margin-left: auto; font-weight: 800; background: rgba(255, 255, 255, 0.75); color: var(--ink); border-radius: 999px; padding: 1px 7px; flex: 0 0 auto; }
+/* The count pill is a number, not a name — plain body font, same rule
+   as the den-count/select-count/feed-count numbers elsewhere on this
+   page, even though it sits inside a .pb-tab that's otherwise display
+   font for the group/tab name next to it. */
+.pb-tab em { margin-left: auto; font: 800 13px var(--font-body); background: rgba(255, 255, 255, 0.75); color: var(--ink); border-radius: 999px; padding: 1px 7px; flex: 0 0 auto; }
 .pb-tab.mng { color: var(--link); font-size: 15px; }
 .pb-tabs.wood { background: linear-gradient(var(--wood-1),var(--wood-2)); border: 2px solid var(--wood-edge); border-radius: 14px; box-shadow: 0 4px 0 var(--wood-edge); }
 .wood .pb-tab { color: rgb(255, 255, 255); -webkit-text-stroke: 3px var(--wood-edge); paint-order: stroke; background: rgba(0, 0, 0, 0.12); }
@@ -591,13 +594,15 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .lw-hdr { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
 .lw-t { min-width: 0px; flex: 1 1 0%; }
 .lw-t h1 { display: inline; margin: 0px; font: 400 34px/1 var(--font-display); color: var(--orange-text); letter-spacing: 0.5px; }
-.lw-t h1 small { font: 400 24px var(--font-display); color: var(--brown); }
+/* The den count ("(12 / 50)") is a plain number, not a name — body
+   font, not the display font the heading itself uses. */
+.lw-t h1 small { font: 800 19px var(--font-body); color: var(--brown); }
 .lw-sub { margin: 4px 0px 0px; font-weight: 700; font-size: 14.5px; line-height: 1.45; color: var(--ink); max-width: 720px; }
 .lw-sub.plain { font-weight: 700; font-size: 13.5px; color: var(--ink-soft); }
 .lw-pager { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .lw-pager .pg { display: flex; align-items: center; gap: 10px; }
 .lw-pager .nums { display: flex; gap: 4px; }
-.lw-pager .nums button { font: 400 16px/1 var(--font-display); min-width: 30px; padding: 6px 8px; border-radius: 8px; border: 2px solid transparent; background: transparent; color: var(--link); cursor: pointer; }
+.lw-pager .nums button { font: 800 14px/1 var(--font-body); min-width: 30px; padding: 6px 8px; border-radius: 8px; border: 2px solid transparent; background: transparent; color: var(--link); cursor: pointer; }
 .lw-pager .nums button[aria-current="true"] { background: rgb(255, 248, 220); border-color: rgb(217, 181, 106); color: var(--ink); }
 .lw-pager .big { width: 64px; height: 34px; border-radius: 10px; border: 2px solid var(--wood-edge); background: linear-gradient(var(--wood-1),var(--wood-2)); color: rgb(255, 255, 255); font-size: 15px; cursor: pointer; box-shadow: 0 3px 0 var(--wood-edge); }
 .lw-pager .big:disabled { opacity: 0.45; cursor: default; }
