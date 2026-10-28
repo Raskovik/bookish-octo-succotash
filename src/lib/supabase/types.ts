@@ -106,10 +106,17 @@ export type PetRow = {
   created_at: string;
 };
 
+export type PetFolderColor = "leaf" | "blue" | "orange" | "rose" | "plum";
+
+// "Groups" in the UI (0051_pet_groups.sql extends the original "folders"
+// naming with color + bio + sort_order rather than renaming the table).
 export type PetFolderRow = {
   id: string;
   owner_id: string;
   name: string;
+  color: PetFolderColor;
+  bio: string;
+  sort_order: number;
   created_at: string;
 };
 
@@ -333,7 +340,14 @@ export type ExpeditionRow = {
 // reading species directly at a display call site.
 export type PetWithSpecies = Pick<
   PetRow,
-  "id" | "rarity" | "color_variant" | "folder_id" | "custom_name" | "is_for_trade" | "created_at"
+  | "id"
+  | "rarity"
+  | "color_variant"
+  | "folder_id"
+  | "custom_name"
+  | "is_for_trade"
+  | "level"
+  | "created_at"
 > & {
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
 };
@@ -1161,6 +1175,14 @@ export type Database = {
         Args: {
           p_user_id: string;
           p_pet_id: string;
+          p_folder_id: string | null;
+        };
+        Returns: null;
+      };
+      move_pets_to_folder: {
+        Args: {
+          p_user_id: string;
+          p_pet_ids: string[];
           p_folder_id: string | null;
         };
         Returns: null;
