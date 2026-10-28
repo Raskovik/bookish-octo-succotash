@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -120,6 +120,32 @@ export function PetsApp({
 
   const [draggingPetId, setDraggingPetId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null); // "" = No group
+
+  // Dragging a pet onto a group now requires holding Shift (plain
+  // dragstart still fires without it — HTML5 drag-and-drop has no
+  // modifier-key gate of its own — so onCardDragStart cancels it via
+  // e.preventDefault() unless e.shiftKey is set). This just drives the
+  // "grab" cursor hint; the actual gate is in onCardDragStart.
+  const [shiftHeld, setShiftHeld] = useState(false);
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Shift") setShiftHeld(true);
+    }
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === "Shift") setShiftHeld(false);
+    }
+    function onBlur() {
+      setShiftHeld(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, []);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [hasUndo, setHasUndo] = useState(false);
@@ -310,7 +336,11 @@ export function PetsApp({
 
   /* ---------- drag and drop ---------- */
 
-  function onCardDragStart(id: string) {
+  function onCardDragStart(e: React.DragEvent, id: string) {
+    if (!e.shiftKey) {
+      e.preventDefault();
+      return;
+    }
     setDraggingPetId(id);
   }
   function onCardDragEnd() {
@@ -710,10 +740,11 @@ export function PetsApp({
                   <button
                     key={p.id}
                     type="button"
-                    className={`pet${small ? " dense" : ""}${on ? " on" : ""}${draggingPetId === p.id ? " dragging" : ""}`}
+                    className={`pet${small ? " dense" : ""}${on ? " on" : ""}${draggingPetId === p.id ? " dragging" : ""}${shiftHeld && !selMode ? " shift-drag" : ""}`}
                     draggable={!selMode}
                     aria-pressed={on}
-                    onDragStart={() => onCardDragStart(p.id)}
+                    title={selMode ? undefined : "Shift+drag to move to a group"}
+                    onDragStart={(e) => onCardDragStart(e, p.id)}
                     onDragEnd={onCardDragEnd}
                     onClick={() => {
                       if (selMode) {
