@@ -119,6 +119,13 @@ export function PetsApp({
   const bioTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [draggingPetId, setDraggingPetId] = useState<string | null>(null);
+  // dragover/drop need the current value synchronously, within the
+  // same native-event dispatch chain that dragstart's setState is
+  // still batched in — a ref reads correctly immediately, where state
+  // can still be stale across those events. draggingPetId (state)
+  // stays for anything that renders from it (the "dragging" class,
+  // noGroupVisible); this ref exists only for the drag handlers below.
+  const draggingPetIdRef = useRef<string | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null); // "" = No group
 
   // Dragging a pet onto a group now requires holding Shift (plain
@@ -341,14 +348,16 @@ export function PetsApp({
       e.preventDefault();
       return;
     }
+    draggingPetIdRef.current = id;
     setDraggingPetId(id);
   }
   function onCardDragEnd() {
+    draggingPetIdRef.current = null;
     setDraggingPetId(null);
     setDropTarget(null);
   }
   function onDropTargetOver(e: React.DragEvent, key: string) {
-    if (!draggingPetId) return;
+    if (!draggingPetIdRef.current) return;
     e.preventDefault();
     setDropTarget(key);
   }
@@ -357,7 +366,8 @@ export function PetsApp({
   }
   function onDropTargetDrop(e: React.DragEvent, key: string) {
     e.preventDefault();
-    const id = draggingPetId;
+    const id = draggingPetIdRef.current;
+    draggingPetIdRef.current = null;
     setDraggingPetId(null);
     setDropTarget(null);
     if (!id) return;
