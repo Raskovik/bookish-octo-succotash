@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const buildSha = process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev";
+
   return (
     <html
       lang="en"
@@ -52,10 +54,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             and public/js/furgarden.js. Loaded on every page per its own
             README. A plain <link>, not a CSS import, since this is a
             static file served from public/, not a module for Next's
-            CSS optimizer. */}
-        {/* eslint-disable-next-line @next/next/no-css-tags */}
-        <link rel="stylesheet" href="/css/furgarden.css" />
-        <script src="/js/furgarden.js" defer />
+            CSS optimizer.
+            `?v=` cache-busts both files on every deploy — they're
+            served from public/ at a fixed URL with no content hash, so
+            without this a browser (or an edge/CDN cache) that already
+            fetched them once has no signal to refetch after a push,
+            and silently keeps serving the stale version. Reuses the
+            same build SHA as the footer's version line
+            (NEXT_PUBLIC_BUILD_SHA, see next.config.ts). */}
+        <link rel="stylesheet" href={`/css/furgarden.css?v=${buildSha}`} />
+        <script src={`/js/furgarden.js?v=${buildSha}`} defer />
       </head>
       {/* suppressHydrationWarning here only covers this element's own
           attributes (React docs), not children — it's for attributes
