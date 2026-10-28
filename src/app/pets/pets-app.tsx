@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { bbcodeToHtml } from "@/lib/bbcode";
 import { ExpandDenButton } from "@/components/expand-den-button";
@@ -82,6 +84,7 @@ export function PetsApp({
   initialPets: UIPet[];
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
 
   const [groups, setGroups] = useState<UIGroup[]>(initialGroups);
   const [pets, setPets] = useState<UIPet[]>(initialPets);
@@ -615,7 +618,11 @@ export function PetsApp({
                     onDragStart={() => onCardDragStart(p.id)}
                     onDragEnd={onCardDragEnd}
                     onClick={() => {
-                      if (selMode) togglePick(p.id);
+                      if (selMode) {
+                        togglePick(p.id);
+                        return;
+                      }
+                      router.push(`/pets/${p.id}`);
                     }}
                   >
                     <span className="lv">Lv {p.level}</span>
@@ -762,25 +769,36 @@ export function PetsApp({
         </form>
       </dialog>
 
-      <div className="pets-toast" role="status" aria-live="polite" hidden={!toastMsg}>
-        <span>{toastMsg}</span>
-        {hasUndo ? (
-          <button
-            type="button"
-            className="btn btn-sm btn-cream"
-            onClick={() => {
-              const u = undoRef.current;
-              undoRef.current = null;
-              setHasUndo(false);
-              setToastMsg(null);
-              if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-              u?.();
-            }}
-          >
-            Undo
-          </button>
-        ) : null}
-      </div>
+      {/* .sheet (this page's torn-paper wrapper) sets a CSS `filter`,
+          which makes it a containing block for `position: fixed`
+          descendants — without a portal the toast ends up pinned to
+          the bottom of .sheet instead of the viewport. document isn't
+          available during SSR, hence the guard (it's always true once
+          hydrated, so the portal appears immediately on the client). */}
+      {typeof document !== "undefined"
+        ? createPortal(
+            <div className="pets-toast" role="status" aria-live="polite" hidden={!toastMsg}>
+              <span>{toastMsg}</span>
+              {hasUndo ? (
+                <button
+                  type="button"
+                  className="btn btn-sm btn-cream"
+                  onClick={() => {
+                    const u = undoRef.current;
+                    undoRef.current = null;
+                    setHasUndo(false);
+                    setToastMsg(null);
+                    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                    u?.();
+                  }}
+                >
+                  Undo
+                </button>
+              ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
