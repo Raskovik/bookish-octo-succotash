@@ -4,7 +4,57 @@
    To change the look, edit the design tokens in :root (top of this file).
    See ../README.md for the component list and how to use each one.
    ===================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@400;900&family=Nunito:wght@600;700;800&display=swap');
+/* Self-hosted instead of a Google Fonts @import: an @import inside an
+   external stylesheet is a fully serial chain (fetch this CSS, parse
+   it, discover the @import, fetch *that* CSS, parse it, discover the
+   @font-face src, finally fetch the actual font file) — on a cold
+   cache that can take long enough for a screenshot or a quick glance
+   to land during the fallback-font window (font-display: swap shows
+   the fallback immediately, then swaps once the real font finishes
+   that whole chain). Serving the files from this origin collapses
+   that to one hop, and the <link rel="preload"> in layout.tsx starts
+   it in parallel with everything else instead of after. Files were
+   fetched per weight (fonts.gstatic.com returns the same bytes for a
+   combined `wght@600;700;800` request — a real Fonts API quirk, not a
+   formatting error here) — see public/fonts/.
+   Only the "latin" subset is self-hosted (this app has no non-Latin
+   text yet); re-fetch the other subsets from Google Fonts if that
+   changes. */
+@font-face {
+  font-family: 'Londrina Solid';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/londrina-solid-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Londrina Solid';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/fonts/londrina-solid-900.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/nunito-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/nunito-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/nunito-800.woff2') format('woff2');
+}
 
 /* =========================================================
    FURGARDEN — Home · "Jungle" recolor
@@ -244,6 +294,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
    but red and not clickable, instead of a live link to nowhere. */
 .foot-links .tbd { display: inline-block; padding: 4px 12px; font: 800 14px var(--font-body); color: #ff8a75; cursor: default; }
 .copy { margin: 0; font: 700 12.5px var(--font-body); color: #b9d9a0; }
+.build-ver { margin: 2px 0 0; font: 700 11px var(--font-body); color: #6f9a52; }
 
 /* ---------- small screens ---------- */
 @media (max-width: 860px) {

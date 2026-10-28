@@ -27,12 +27,32 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        {/* Self-hosted (public/fonts/) and preloaded so they start
+            fetching in parallel with furgarden.css instead of after it
+            — see the @font-face comment at the top of that file for
+            why an @import was dropped. Only the two weights used on
+            nearly every page (Londrina 400 for headings/numbers,
+            Nunito 700 for body text) are worth the preload; 600/800/900
+            are rarer and can load in after first paint. */}
+        <link
+          rel="preload"
+          href="/fonts/londrina-solid-400.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/nunito-700.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
         {/* The Furgarden "Jungle" design system — see public/css/furgarden.css
             and public/js/furgarden.js. Loaded on every page per its own
-            README; fonts (Londrina Solid/Nunito) come from an @import at
-            the top of the CSS file, so no separate font link is needed.
-            A plain <link>, not a CSS import, since this is a static file
-            served from public/, not a module for Next's CSS optimizer. */}
+            README. A plain <link>, not a CSS import, since this is a
+            static file served from public/, not a module for Next's
+            CSS optimizer. */}
         {/* eslint-disable-next-line @next/next/no-css-tags */}
         <link rel="stylesheet" href="/css/furgarden.css" />
         <script src="/js/furgarden.js" defer />

@@ -29,6 +29,10 @@ export function SiteFooter() {
           </ul>
         </nav>
         <p className="copy">{FOOTER_TEXT}</p>
+        {/* The commit actually deployed — see getBuildSha() in
+            next.config.ts. Updates itself on every push, no manual
+            bumping; "dev" outside a build that has git available. */}
+        <p className="build-ver">build {process.env.NEXT_PUBLIC_BUILD_SHA ?? "dev"}</p>
       </div>
     </footer>
   );
