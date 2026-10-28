@@ -49,7 +49,7 @@ function syntheticHp(petId: string): { hp: number; hpMax: number } {
   let h = 0;
   for (let i = 0; i < petId.length; i++) h = (h * 31 + petId.charCodeAt(i)) >>> 0;
   const hpMax = 100;
-  const hp = 55 + (h % 46); // 55–100: mostly-full bars, like the handoff's sample data
+  const hp = 10 + (h % 91); // 10–100: same wide spread as the handoff's own sample data
   return { hp, hpMax };
 }
 
