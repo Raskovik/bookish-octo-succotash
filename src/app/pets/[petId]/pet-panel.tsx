@@ -91,11 +91,25 @@ export function PetPanel({
   const tier = petLevelTier(level);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  // Separate from toastMsg so the bounce-out animation (.pets-toast-closing)
+  // has something to play before the toast leaves the DOM — see
+  // onAnimationEnd below, same pattern as pets-app.tsx's toast.
+  const [toastClosing, setToastClosing] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   function toast(msg: string) {
     setToastMsg(msg);
+    setToastClosing(false);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(() => setToastMsg(null), 2800);
+    toastTimerRef.current = setTimeout(() => {
+      setToastClosing(true);
+      // Fallback in case onAnimationEnd never fires (prefers-reduced-motion
+      // sets `animation: none`, so no animationend follows) — without this
+      // the toast would stay stuck in the closing state forever.
+      toastTimerRef.current = setTimeout(() => {
+        setToastClosing(false);
+        setToastMsg(null);
+      }, 400);
+    }, 2800);
   }
 
   /* ---------- rename ---------- */
@@ -431,7 +445,18 @@ export function PetPanel({
           the identical comment in pets-app.tsx. Portal past it. */}
       {typeof document !== "undefined"
         ? createPortal(
-            <div className="pets-toast" role="status" aria-live="polite" hidden={!toastMsg}>
+            <div
+              className={`pets-toast${toastClosing ? " pets-toast-closing" : ""}`}
+              role="status"
+              aria-live="polite"
+              hidden={!toastMsg}
+              onAnimationEnd={() => {
+                if (!toastClosing) return;
+                if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                setToastClosing(false);
+                setToastMsg(null);
+              }}
+            >
               <span>{toastMsg}</span>
             </div>,
             document.body,

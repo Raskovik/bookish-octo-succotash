@@ -561,8 +561,29 @@ dialog.fg::backdrop { background: rgba(45, 28, 10, 0.55); }
 .pet.dense .lv-rb { top: -4px; left: 7px; transform: scale(0.34); }
 .pet.dense .hp { height: 10px; }
 .abar .lnk { font-size: 13.5px; }
-.pets-toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); display: flex; gap: 14px; align-items: center; background: rgb(255, 250, 240); border: 3px solid var(--wood-edge); border-radius: 12px; padding: 9px 12px 9px 18px; font-weight: 800; color: var(--ink); box-shadow: 0 5px 0 var(--wood-edge); z-index: 60; }
+.pets-toast { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 0); display: flex; gap: 14px; align-items: center; background: rgb(255, 250, 240); border: 3px solid var(--wood-edge); border-radius: 12px; padding: 9px 12px 9px 18px; font-weight: 800; color: var(--ink); box-shadow: 0 5px 0 var(--wood-edge); z-index: 60; animation: pets-toast-in .5s cubic-bezier(.34, 1.56, .64, 1) both; }
 .pets-toast button { font-weight: 800; }
+/* Bounces in on open and (via toastClosing's extra class, see
+   pets-app.tsx/pet-panel.tsx) out before the toast actually leaves the
+   DOM. Animation restarts whenever this element goes display:none ->
+   flex (the [hidden] toggle) or its animation-name itself changes
+   (switching between the two classes), so no JS replay trick is
+   needed beyond that. */
+.pets-toast.pets-toast-closing { animation: pets-toast-out .35s cubic-bezier(.36, 0, .66, -0.56) both; }
+@keyframes pets-toast-in {
+  0% { transform: translate(-50%, 60px) scale(.85); opacity: 0; }
+  55% { transform: translate(-50%, -10px) scale(1.04); opacity: 1; }
+  75% { transform: translate(-50%, 4px) scale(.98); }
+  100% { transform: translate(-50%, 0) scale(1); }
+}
+@keyframes pets-toast-out {
+  0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  25% { transform: translate(-50%, -8px) scale(1.03); opacity: 1; }
+  100% { transform: translate(-50%, 60px) scale(.85); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pets-toast, .pets-toast.pets-toast-closing { animation: none; }
+}
 @media (max-width: 760px) {
   .pgrid { grid-template-columns: repeat(2, minmax(0px, 1fr)); }
   .pgrid.dense { grid-template-columns: repeat(3, minmax(0px, 1fr)); }

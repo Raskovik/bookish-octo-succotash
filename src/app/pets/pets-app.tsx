@@ -130,6 +130,11 @@ export function PetsApp({
   const [dropTarget, setDropTarget] = useState<string | null>(null); // "" = No group
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  // Separate from toastMsg so the bounce-out animation (triggered by
+  // this class, see .pets-toast-closing) has something to play before
+  // the toast actually leaves the DOM — see dismissToast()/onAnimationEnd
+  // below. Manual dismissal (clicking Undo) skips it and closes at once.
+  const [toastClosing, setToastClosing] = useState(false);
   const [hasUndo, setHasUndo] = useState(false);
   const undoRef = useRef<(() => void) | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -177,17 +182,28 @@ export function PetsApp({
 
   function toast(msg: string, undo?: () => void) {
     setToastMsg(msg);
+    setToastClosing(false);
     undoRef.current = undo ?? null;
     setHasUndo(!!undo);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = setTimeout(
-      () => {
-        setToastMsg(null);
-        undoRef.current = null;
-        setHasUndo(false);
-      },
-      undo ? 6000 : 2600,
-    );
+    toastTimerRef.current = setTimeout(() => {
+      setToastClosing(true);
+      // Fallback in case onAnimationEnd never fires — e.g.
+      // prefers-reduced-motion sets `animation: none`, so the bounce-out
+      // never actually plays and no animationend event follows. Without
+      // this the toast would stay stuck in the closing state forever.
+      // onAnimationEnd clears this when the real animation does finish.
+      toastTimerRef.current = setTimeout(dismissToast, 400);
+    }, undo ? 6000 : 2600);
+  }
+
+  // Called once the bounce-out animation actually finishes playing
+  // (onAnimationEnd), not on a timer of its own — see toastClosing.
+  function dismissToast() {
+    setToastClosing(false);
+    setToastMsg(null);
+    undoRef.current = null;
+    setHasUndo(false);
   }
 
   /* ---------- den expansion (real RPC) ---------- */
@@ -942,7 +958,17 @@ export function PetsApp({
           hydrated, so the portal appears immediately on the client). */}
       {typeof document !== "undefined"
         ? createPortal(
-            <div className="pets-toast" role="status" aria-live="polite" hidden={!toastMsg}>
+            <div
+              className={`pets-toast${toastClosing ? " pets-toast-closing" : ""}`}
+              role="status"
+              aria-live="polite"
+              hidden={!toastMsg}
+              onAnimationEnd={() => {
+                if (!toastClosing) return;
+                if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                dismissToast();
+              }}
+            >
               <span>{toastMsg}</span>
               {hasUndo ? (
                 <button
@@ -950,10 +976,8 @@ export function PetsApp({
                   className="btn btn-sm btn-cream"
                   onClick={() => {
                     const u = undoRef.current;
-                    undoRef.current = null;
-                    setHasUndo(false);
-                    setToastMsg(null);
                     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                    dismissToast();
                     u?.();
                   }}
                 >
