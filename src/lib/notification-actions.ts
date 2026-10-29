@@ -29,3 +29,27 @@ export async function markAllNotificationsRead() {
 
   await supabase.rpc("mark_all_notifications_read", { p_user_id: user.id });
 }
+
+// Deletes rather than just marking read — 0052_clear_notifications.sql.
+export async function clearNotification(notificationId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.rpc("clear_notification", {
+    p_user_id: user.id,
+    p_notification_id: notificationId,
+  });
+}
+
+export async function clearAllNotifications() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.rpc("clear_all_notifications", { p_user_id: user.id });
+}

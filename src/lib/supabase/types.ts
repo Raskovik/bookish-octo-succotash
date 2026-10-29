@@ -1336,6 +1336,14 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: null;
       };
+      clear_notification: {
+        Args: { p_user_id: string; p_notification_id: string };
+        Returns: null;
+      };
+      clear_all_notifications: {
+        Args: { p_user_id: string };
+        Returns: null;
+      };
       send_staff_message: {
         Args: { p_target_user_id: string; p_body: string };
         Returns: string;

@@ -221,9 +221,21 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .tray::before { top: -11px; right: 25px; border-width: 0 11px 11px; border-bottom-color: var(--wood-edge); }
 .tray::after { top: -7px; right: 26px; border-width: 0 10px 12px; border-bottom-color: var(--wood-1); }
 .has-menu.is-open > .tray { display: block; }
+/* NotificationBell owns its own open/closed state in React (see its own
+   comment for why) and only puts .tray in the DOM while open, rather
+   than toggling display via furgarden.js's .has-menu/.is-open class —
+   so .notif-menu (its wrapper, deliberately not .has-menu) just needs
+   .tray visible whenever it's rendered at all. */
+.notif-menu { position: relative; }
+.notif-menu > .tray { display: block; }
 .tray-head { position: relative; display: flex; align-items: center; gap: 9px; padding: 8px 14px 9px; background: linear-gradient(var(--wood-1) 0 60%, var(--wood-2) 60%); border-bottom: var(--bw) solid var(--wood-edge); border-radius: 14px 14px 0 0; font: var(--fw) 21px/1.1 var(--font-display); letter-spacing: .8px; color: #fff6dc; -webkit-text-stroke: 4px var(--wood-edge); paint-order: stroke fill; }
 .tray-head .count { margin-left: auto; padding: 1px 10px 2px; font: 900 13px/1.3 var(--font-display); letter-spacing: .5px; color: #fff; -webkit-text-stroke: 3px #8f2018; background: #ef5a45; border: 2px solid #8f2018; border-radius: 999px; }
 .notes { max-height: 330px; overflow-y: auto; }
+.note-row { position: relative; }
+.note-row + .note-row { border-top: 2px dotted var(--tan-line); }
+.note-clear { position: absolute; top: 7px; right: 7px; z-index: 2; display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; line-height: 1; border-radius: 50%; border: 2px solid var(--tan-line); background: var(--paper); color: var(--ink-soft); font: 800 13px/1 var(--font-body); cursor: pointer; }
+.note-clear:hover, .note-clear:focus-visible { background: #ef5a45; border-color: #8f2018; color: #fff; }
+.note-clear:focus-visible { outline: 2px dashed var(--orange-edge); outline-offset: 1px; }
 .note { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 11px; padding: 10px 34px 10px 12px; color: var(--ink); text-decoration: none; }
 .note + .note { border-top: 2px dotted var(--tan-line); }
 .note.unread { background: linear-gradient(#fff7d4, #fff0b8); }
@@ -304,7 +316,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
   .wordmark { --logo-xl: 46px; }
   .cnav { grid-template-columns: minmax(0, 1fr); justify-items: center; }
   .cnav .tools { justify-content: center; }
-  .cnav .has-menu { position: static; }
+  .cnav .has-menu, .cnav .notif-menu { position: static; }
   .cnav .menu { left: 10px; right: 10px; transform: none; min-width: 0; }
   .cnav .menu::before, .cnav .menu::after, .cnav .tray::before, .cnav .tray::after { display: none; }
   .cnav .tray { left: 10px; right: 10px; width: auto; }

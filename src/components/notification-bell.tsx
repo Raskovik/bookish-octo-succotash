@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { describeNotification } from "@/lib/notification-message";
-import { markAllNotificationsRead, markNotificationRead } from "@/lib/notification-actions";
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+  clearNotification,
+  clearAllNotifications,
+} from "@/lib/notification-actions";
 import type { NotificationType, NotificationWithActor } from "@/lib/supabase/types";
 
 // Maps each real notification type to one of furgarden.css's tile
@@ -29,18 +34,18 @@ const NOTIFICATION_TILE: Record<NotificationType, string> = {
  * header already re-fetches on every navigation, same as the DM badge.
  *
  * Matches furgarden-design/partials/site-header.html's notifications
- * tray. Unlike NavGroups, this can't be fully static: "mark as read"
- * has to persist to the database, not just toggle a CSS class. So this
- * stays a client component, but only for that — opening/closing the
- * tray itself is left to public/js/furgarden.js's global .has-menu
- * handling (no open/useState, no outside-click listener here). The
- * real mark-all-read button deliberately has no id="tray"/id="npip" or
- * data-markread — those hooks are what the script's own cosmetic-only
- * mark-read path keys off, which would race with React removing the
- * same badge node from the DOM a moment later; using plain onClick +
- * the existing server actions avoids that fight entirely, and the
- * .tray.all-read CSS (built for that script path) simply goes unused,
- * since the conditional rendering below does the same job.
+ * tray, but — unlike NavGroups — manages its own open/closed state in
+ * React instead of relying on furgarden.js's global .has-menu click
+ * handling: that handling drives visibility off an "is-open" class it
+ * adds/removes outside React's knowledge, and this component's own
+ * state updates (marking an item read, clearing it) made the tray's
+ * open/closed state fight with that class across re-renders — visibly,
+ * the tray would collapse the instant a notification was clicked. So
+ * this deliberately opts out of the `.has-menu` wiring (a different
+ * wrapper class, not `.has-menu`, so furgarden.js's `.has-menu > button`
+ * selector never matches it) and owns open/close + aria-expanded +
+ * click-outside/Escape itself, same pattern as ThreadAdminControls'
+ * popover.
  */
 export function NotificationBell({
   initialNotifications,
@@ -48,9 +53,29 @@ export function NotificationBell({
   initialNotifications: NotificationWithActor[];
 }) {
   const [notifications, setNotifications] = useState(initialNotifications);
+  const [open, setOpen] = useState(false);
   const [, startTransition] = useTransition();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
 
   function handleMarkAllRead() {
     setNotifications((list) => list.map((n) => ({ ...n, is_read: true })));
@@ -66,52 +91,86 @@ export function NotificationBell({
     });
   }
 
+  function handleClear(id: string) {
+    setNotifications((list) => list.filter((n) => n.id !== id));
+    startTransition(() => {
+      clearNotification(id);
+    });
+  }
+
+  function handleClearAll() {
+    setNotifications([]);
+    startTransition(() => {
+      clearAllNotifications();
+    });
+  }
+
   return (
-    <div className="has-menu">
+    <div className="notif-menu" ref={containerRef}>
       <button
         className="btn btn-round"
         type="button"
         aria-haspopup="true"
-        aria-expanded="false"
+        aria-expanded={open}
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} new` : "Notifications, none new"}
+        onClick={() => setOpen((v) => !v)}
       >
         <i className="ic i-bell" aria-hidden="true" />
         {unreadCount > 0 ? <span className="pip">{unreadCount > 9 ? "9+" : unreadCount}</span> : null}
       </button>
 
-      <div className="tray" role="region" aria-label="Notifications">
-        <div className="tray-head">
-          Notifications
-          {unreadCount > 0 ? <span className="count">{unreadCount} new</span> : null}
-        </div>
-        {notifications.length === 0 ? (
-          <p className="tray-empty">No notifications yet.</p>
-        ) : (
-          <div className="notes">
-            {notifications.map((notification) => (
-              <Link
-                key={notification.id}
-                href={notification.link}
-                onClick={() => handleItemClick(notification.id)}
-                className={notification.is_read ? "note" : "note unread"}
-              >
-                <span className={`tile ${NOTIFICATION_TILE[notification.type]}`} />
-                <div>
-                  <p>{describeNotification(notification)}</p>
-                  <time>{new Date(notification.created_at).toLocaleString()}</time>
+      {open ? (
+        <div className="tray" role="region" aria-label="Notifications">
+          <div className="tray-head">
+            Notifications
+            {unreadCount > 0 ? <span className="count">{unreadCount} new</span> : null}
+          </div>
+          {notifications.length === 0 ? (
+            <p className="tray-empty">No notifications yet.</p>
+          ) : (
+            <div className="notes">
+              {notifications.map((notification) => (
+                <div key={notification.id} className="note-row">
+                  <Link
+                    href={notification.link}
+                    onClick={() => handleItemClick(notification.id)}
+                    className={notification.is_read ? "note" : "note unread"}
+                  >
+                    <span className={`tile ${NOTIFICATION_TILE[notification.type]}`} />
+                    <div>
+                      <p>{describeNotification(notification)}</p>
+                      <time>{new Date(notification.created_at).toLocaleString()}</time>
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    className="note-clear"
+                    aria-label="Clear this notification"
+                    title="Clear this notification"
+                    onClick={() => handleClear(notification.id)}
+                  >
+                    &times;
+                  </button>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-        {unreadCount > 0 ? (
-          <div className="tray-foot">
-            <button className="btn btn-sm btn-cream" type="button" onClick={handleMarkAllRead}>
-              Mark all read
-            </button>
-          </div>
-        ) : null}
-      </div>
+              ))}
+            </div>
+          )}
+          {notifications.length > 0 ? (
+            <div className="tray-foot">
+              {unreadCount > 0 ? (
+                <button className="btn btn-sm btn-cream" type="button" onClick={handleMarkAllRead}>
+                  Mark all read
+                </button>
+              ) : (
+                <span />
+              )}
+              <button className="btn btn-sm btn-cream" type="button" onClick={handleClearAll}>
+                Clear all
+              </button>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
