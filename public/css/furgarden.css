@@ -901,3 +901,18 @@ dialog.fg .fg-foot .btn { min-width: 90px; }
 .fm-admin-pop label { display: flex; align-items: center; gap: 8px; }
 .fm-admin-pop input[type="text"] { width: 100%; font: 600 13px var(--font-body); padding: 6px 8px; border: 2px solid rgb(217, 181, 106); border-radius: 8px; background: #fff; color: var(--ink); box-sizing: border-box; }
 .fm-admin-pop hr { border: 0; border-top: 2px dotted var(--tan-line); margin: 2px 0; }
+
+/* Direct messages (messages/page.tsx, messages/[conversationId]/page.tsx)
+   — not part of the forum design package, restyled to resemble the
+   forum topic list / thread view (.fm-row/.fm-post/etc.) since DMs are
+   the same "list of threads" -> "list of posts in one thread" shape. */
+.sect-ico.ico-mail { --ic: var(--ic-mail); }
+.fm-row.fm-unread { background: linear-gradient(#fff7d4, #fff0b8); }
+.fm-row .fm-when { flex: none; align-self: flex-start; margin-top: 3px; font: 700 11.5px var(--font-body); color: var(--ink-soft); }
+.fm-sub.fm-trunc { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-content .msg-body { margin: 0; font: 600 15.5px/1.55 var(--font-body); white-space: pre-wrap; overflow-wrap: anywhere; }
+.fm-post.fm-staff { background: linear-gradient(rgba(170, 221, 128, .22), rgba(170, 221, 128, .22)); }
+.fm-official { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; font: 800 11px var(--font-body); color: var(--leaf-edge); }
+@media (max-width: 640px) {
+  .fm-row .fm-when { grid-column: 2; }
+}

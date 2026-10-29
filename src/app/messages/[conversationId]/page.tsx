@@ -1,11 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Mail, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatForumDate } from "@/lib/format-forum-date";
-import { ForumPanel, ForumPanelSection } from "@/components/forums/forum-panel";
-import { PaginationBar } from "@/components/forums/pagination-bar";
+import { FmPager } from "@/components/forums/fm-pager";
 import { PlayerLink } from "@/components/player-link";
 import { ReportButton } from "@/components/report-button";
 import { STAFF_USER_ID } from "@/lib/staff-account";
@@ -124,75 +122,72 @@ export default async function ConversationPage(
   return (
     <main id="main">
       <div className="sheet">
-        <div className="panel flex flex-col gap-5">
-      <Link
-        href="/messages"
-        className="flex w-fit items-center gap-1.5 text-sm text-stone-500 hover:underline"
-      >
-        <ArrowLeft size={14} />
-        Back to messages
-      </Link>
+        <div className="panel forum">
+          <nav className="fm-crumbs" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link href="/messages">Messages</Link>
+              </li>
+              <li aria-current="page">{otherName}</li>
+            </ol>
+          </nav>
 
-      <ForumPanel
-        icon={<Mail size={18} />}
-        title={
-          <>
-            Conversation with{" "}
-            <PlayerLink
-              userId={otherUserId}
-              name={otherName}
-              isAdmin={otherProfile?.is_admin ?? false}
-              isModerator={otherProfile?.is_moderator ?? false}
-              className="hover:underline"
-            />
-          </>
-        }
-        action={
-          <Link href={`/u/${otherUserId}`} className="text-sm text-white/90 underline hover:text-white">
-            View profile
-          </Link>
-        }
-      >
-        <div>
-          {messages.length === 0 ? (
-            <p className="px-6 py-6 text-sm italic text-stone-500">
-              No messages yet — say hello to {otherName}.
-            </p>
-          ) : (
-            messages.map((message) => {
-              const isMine = message.sender_id === user.id;
-              const isFromStaffAccount = message.sender_id === STAFF_USER_ID;
-              const author = isMine ? myProfile : otherProfile;
-              const authorName = isMine ? "You" : otherName;
-              return (
-                <MessageCard
-                  key={message.id}
-                  messageId={message.id}
-                  authorId={author?.id ?? message.sender_id}
-                  authorName={authorName}
-                  authorAvatarUrl={author?.avatar_url ?? null}
-                  authorIsAdmin={!isMine && (author?.is_admin ?? false)}
-                  authorIsModerator={!isMine && (author?.is_moderator ?? false)}
-                  isFromStaffAccount={isFromStaffAccount}
-                  createdAt={message.created_at}
-                  body={message.body}
-                  canReport={!isMine}
-                />
-              );
-            })
-          )}
-        </div>
+          <section className="col fm-block" aria-labelledby="conv-h">
+            <h2 className="frame-title" id="conv-h">
+              <span className="sect-ico ico-mail" />
+              Conversation with{" "}
+              <PlayerLink
+                userId={otherUserId}
+                name={otherName}
+                isAdmin={otherProfile?.is_admin ?? false}
+                isModerator={otherProfile?.is_moderator ?? false}
+              />
+              <Link className="btn btn-sm btn-cream fm-new" href={`/u/${otherUserId}`}>
+                View profile
+              </Link>
+            </h2>
+            <div className="frame-body fm-flush">
+              {messages.length === 0 ? (
+                <p style={{ padding: "18px" }}>No messages yet — say hello to {otherName}.</p>
+              ) : (
+                messages.map((message) => {
+                  const isMine = message.sender_id === user.id;
+                  const isFromStaffAccount = message.sender_id === STAFF_USER_ID;
+                  const author = isMine ? myProfile : otherProfile;
+                  const authorName = isMine ? "You" : otherName;
+                  return (
+                    <MessageCard
+                      key={message.id}
+                      messageId={message.id}
+                      authorId={author?.id ?? message.sender_id}
+                      authorName={authorName}
+                      authorAvatarUrl={author?.avatar_url ?? null}
+                      authorIsAdmin={!isMine && (author?.is_admin ?? false)}
+                      authorIsModerator={!isMine && (author?.is_moderator ?? false)}
+                      isFromStaffAccount={isFromStaffAccount}
+                      isMine={isMine}
+                      createdAt={message.created_at}
+                      body={message.body}
+                      canReport={!isMine}
+                    />
+                  );
+                })
+              )}
+              <div className="fm-foot">
+                <FmPager basePath={`/messages/${conversationId}`} page={page} totalPages={totalPages} />
+              </div>
+            </div>
+          </section>
 
-        <PaginationBar basePath={`/messages/${conversationId}`} page={page} totalPages={totalPages} />
-      </ForumPanel>
-
-      <div className="overflow-hidden rounded-xl border border-green-300 shadow-sm">
-        <ForumPanelSection title={`Reply to ${otherName}`}>
-          <div className="p-5">
-            <ReplyForm conversationId={conversationId} />
-          </div>
-        </ForumPanelSection>
-      </div>
+          <section className="col fm-block" aria-labelledby="reply-h" style={{ marginTop: "14px" }}>
+            <h2 className="frame-title" id="reply-h">
+              <span className="sect-ico ico-mail" />
+              Reply to {otherName}
+            </h2>
+            <div className="fm-form">
+              <ReplyForm conversationId={conversationId} />
+            </div>
+          </section>
         </div>
       </div>
     </main>
@@ -212,6 +207,7 @@ function MessageCard({
   authorIsAdmin,
   authorIsModerator,
   isFromStaffAccount,
+  isMine,
   createdAt,
   body,
   canReport,
@@ -223,6 +219,7 @@ function MessageCard({
   authorIsAdmin: boolean;
   authorIsModerator: boolean;
   isFromStaffAccount: boolean;
+  isMine: boolean;
   createdAt: string;
   body: string;
   canReport: boolean;
@@ -230,49 +227,43 @@ function MessageCard({
   const isStaffStyled = isFromStaffAccount || authorIsAdmin || authorIsModerator;
 
   return (
-    <article
-      className={`flex flex-col gap-4 border-t p-6 first:border-t-0 sm:flex-row ${
-        isStaffStyled
-          ? "border-green-200 bg-green-50/60 dark:border-stone-800 dark:bg-green-950/20"
-          : "border-green-100"
-      }`}
-    >
-      <div className="flex shrink-0 flex-row items-center gap-3 sm:w-32 sm:flex-col sm:text-center">
-        {authorAvatarUrl ? (
-          <Image
-            src={authorAvatarUrl}
-            alt=""
-            width={72}
-            height={72}
-            className="h-16 w-16 rounded-md border-2 border-green-400 object-cover sm:h-[72px] sm:w-[72px]"
+    <article className={`fm-post${isMine ? " fm-mine" : ""}${isStaffStyled ? " fm-staff" : ""}`}>
+      <div className="fm-author">
+        <Link href={`/u/${authorId}`}>
+          <div
+            className="av-sq"
+            role="img"
+            aria-label={`${authorName}'s avatar`}
+            style={authorAvatarUrl ? { backgroundImage: `url(${authorAvatarUrl})` } : undefined}
           />
-        ) : (
-          <div className="h-16 w-16 rounded-md border-2 border-dashed border-green-300 sm:h-[72px] sm:w-[72px]" />
-        )}
-        <PlayerLink
-          userId={authorId}
-          name={authorName}
-          isAdmin={authorIsAdmin}
-          isModerator={authorIsModerator}
-          className="text-sm font-semibold hover:underline"
-        />
+        </Link>
+        <PlayerLink userId={authorId} name={authorName} isAdmin={authorIsAdmin} isModerator={authorIsModerator} className="fm-name" />
         {isFromStaffAccount ? (
-          <span className="flex items-center gap-1 text-xs font-semibold text-green-700 dark:text-green-400">
+          <span className="fm-official">
             <ShieldAlert size={12} />
             Official
           </span>
         ) : null}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-sm text-stone-500">Sent {formatForumDate(createdAt)}</div>
-          {canReport ? (
-            <ReportButton targetType="dm_message" targetId={messageId} offendingUserId={authorId} />
-          ) : null}
-        </div>
+      <div className="fm-content">
+        <header className="fm-phead">
+          <p className="byline">
+            Sent <time>{formatForumDate(createdAt)}</time>
+          </p>
+          <div className="fm-acts">
+            {canReport ? (
+              <ReportButton
+                targetType="dm_message"
+                targetId={messageId}
+                offendingUserId={authorId}
+                triggerClassName="btn btn-sm btn-red"
+              />
+            ) : null}
+          </div>
+        </header>
         {/* Plain text, not BBCode — a DM isn't a forum post, so this is
             never passed through bbcodeToHtml()/dangerouslySetInnerHTML. */}
-        <p className="whitespace-pre-wrap break-words text-base leading-relaxed">{body}</p>
+        <p className="msg-body">{body}</p>
       </div>
     </article>
   );

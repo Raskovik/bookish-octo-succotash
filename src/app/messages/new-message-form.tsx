@@ -9,26 +9,15 @@ export function NewMessageForm() {
   const [state, formAction, isPending] = useActionState(startConversationWithName, initialState);
 
   return (
-    <form action={formAction} className="flex items-end gap-2">
-      <div className="flex flex-1 flex-col gap-1">
-        <label htmlFor="display_name" className="text-xs font-medium text-stone-500">
-          Message a player
-        </label>
-        <input
-          id="display_name"
-          name="display_name"
-          placeholder="Their username"
-          className="rounded-md border border-green-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-950"
-        />
-      </div>
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded-md bg-green-800 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-      >
+    <form action={formAction} style={{ display: "flex", alignItems: "flex-end", gap: "10px", flexWrap: "wrap" }}>
+      <label style={{ flex: "1 1 220px", minWidth: 0 }}>
+        Message a player
+        <input type="text" id="display_name" name="display_name" placeholder="Their username" className="fi" style={{ width: "100%", boxSizing: "border-box" }} />
+      </label>
+      <button type="submit" disabled={isPending} className="btn btn-sm btn-orange">
         {isPending ? "Finding…" : "Start"}
       </button>
-      {state?.error ? <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p> : null}
+      {state?.error ? <p className="fm-err" style={{ flexBasis: "100%" }}>{state.error}</p> : null}
     </form>
   );
 }
