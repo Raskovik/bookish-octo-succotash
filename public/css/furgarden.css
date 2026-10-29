@@ -321,8 +321,10 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 :root {
   --ic-paw: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cg fill='black'%3E%3Cellipse cx='12' cy='16' rx='5' ry='4.2'/%3E%3Ccircle cx='5.2' cy='11.5' r='2.2'/%3E%3Ccircle cx='9.4' cy='6.6' r='2.3'/%3E%3Ccircle cx='14.6' cy='6.6' r='2.3'/%3E%3Ccircle cx='18.8' cy='11.5' r='2.2'/%3E%3C/g%3E%3C/svg%3E");
   --ic-bag: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' stroke='black' stroke-width='1.4' stroke-linejoin='round' d='M5.4 8.5h13.2l1 12.2H4.4z'/%3E%3Cpath d='M8.8 9.5V7.6a3.2 3.2 0 0 1 6.4 0v1.9' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --ic-arrow-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' d='M15 4.5 7 12l8 7.5'/%3E%3C/svg%3E");
 }
 .i-paw { --ic: var(--ic-paw); }
+.i-arrow-left { --ic: var(--ic-arrow-left); }
 .i-bag { --ic: var(--ic-bag); }
 .panel.profile, .panel.edit { padding: 38px 26px 40px; }
 .btn-big { width: 100%; padding: 11px 16px 12px; font-size: 21px; }
@@ -772,3 +774,14 @@ dialog.fg .fg-foot .btn { min-width: 90px; }
 .pt-wrap .gedit { margin-top: 2px; }
 .pt-wrap .gb-pv { min-height: 90px; }
 .pet[data-owner="false"] .pt-owner-only { display: none; }
+
+/* Back-to-pets arrow — floats just outside the torn-paper panel (a
+   sibling of .panel inside .sheet, not a child of it: .panel's own
+   clip-path would otherwise cut off anything placed outside its box).
+   .page caps out at 1200px + 40px padding, so there's only reliably
+   room for this in the margin beyond that; below it, drop back to a
+   normal inline element so the control is never lost off-screen. */
+.pt-back { position: absolute; top: 40px; left: -50px; }
+@media (max-width: 1300px) {
+  .pt-back { position: static; display: inline-flex; margin: 0 0 10px; }
+}

@@ -46,17 +46,15 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
 
   const energyPct = calcPetEnergy(pet.last_fed_at);
 
+  const backHref = isOwner ? "/pets" : `/u/${pet.owner_id}/pets`;
+
   return (
     <main id="main">
       <div className="sheet">
+        <Link href={backHref} className="btn btn-round pt-back" aria-label="Back to pets">
+          <i className="ic i-arrow-left" aria-hidden="true" />
+        </Link>
         <div className="panel pet">
-          <Link
-            href={isOwner ? "/pets" : `/u/${pet.owner_id}/pets`}
-            className="lnk"
-            style={{ display: "inline-block", marginBottom: 12 }}
-          >
-            &larr; Back to pets
-          </Link>
           <PetPanel
             userId={user.id}
             petId={pet.id}
