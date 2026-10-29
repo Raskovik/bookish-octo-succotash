@@ -12,6 +12,13 @@ export function petTypeName(pet: { species?: { name: string } | null }): string 
   return pet.species?.name ?? "Unknown";
 }
 
+// The level-ribbon colour tier (furgarden.css's .pt-t1..pt-t5) — used
+// on both the pet detail page's big ribbon and the pets-grid card's
+// small one, so both read the same "how high-level is this pet" cue.
+export function petLevelTier(level: number): number {
+  return Math.min(5, Math.ceil(level / 10));
+}
+
 // Pets have no separate "birth date" — created_at doubles as both adopted
 // date and age basis, since this is when the pet first came into being.
 export function petAgeLabel(createdAt: string): string {

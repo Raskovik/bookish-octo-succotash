@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { bbcodeToHtml } from "@/lib/bbcode";
+import { petLevelTier } from "@/lib/pet-display";
 
 /**
  * The `.pt-wrap` contents of /pets/[petId] — ported from
@@ -43,10 +44,6 @@ function statTier(value: number, allTen: boolean): "" | "pt-silver" | "pt-gold" 
   if (value >= 10) return "pt-gold";
   if (value >= 6) return "pt-silver";
   return "";
-}
-
-function levelTier(level: number): number {
-  return Math.min(5, Math.ceil(level / 10));
 }
 
 const NAME_MAX = 40; // rename_pet() server limit — see file-level comment
@@ -91,7 +88,7 @@ export function PetPanel({
   const allTen = rollStrength === 10 && rollSpeed === 10 && rollDefence === 10;
   const energyClass = energyPct <= 25 ? " low" : energyPct <= 50 ? " mid" : "";
   const energyLabel = energyPct === 100 ? "Fully rested" : "Energy";
-  const tier = levelTier(level);
+  const tier = petLevelTier(level);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

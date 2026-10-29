@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { bbcodeToHtml } from "@/lib/bbcode";
+import { petLevelTier } from "@/lib/pet-display";
 import type { PetFolderColor } from "@/lib/supabase/types";
 
 /**
@@ -733,7 +734,12 @@ export function PetsApp({
                       router.push(`/pets/${p.id}`);
                     }}
                   >
-                    <span className="lv">Lv {p.level}</span>
+                    <span className={`pt-vr pt-t${petLevelTier(p.level)} lv-rb`} role="img" aria-label={`Level ${p.level}`}>
+                      <span aria-hidden="true">
+                        <small>LV</small>
+                        <b>{p.level}</b>
+                      </span>
+                    </span>
                     <span className="chk" />
                     <span className="img">
                       {p.img ? <img src={p.img} alt="" /> : null}
