@@ -1,6 +1,5 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
 import { deletePost } from "../../actions";
 
 /**
@@ -32,11 +31,7 @@ export function DeletePostButton({
       <input type="hidden" name="category_id" value={categoryId} />
       <input type="hidden" name="thread_id" value={threadId} />
       <input type="hidden" name="post_id" value={postId} />
-      <button
-        type="submit"
-        className="flex items-center gap-1.5 rounded-md border border-red-300 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-      >
-        <Trash2 size={14} />
+      <button type="submit" className="btn btn-sm btn-red fm-mod">
         Delete
       </button>
     </form>

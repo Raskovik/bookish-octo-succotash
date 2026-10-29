@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { createForumReply, type ForumFormState } from "../../actions";
-import { BBCodeEditor } from "@/components/forums/bbcode-editor";
+import { GardenBBCodeField } from "@/components/forums/garden-bbcode-field";
 
 const initialState: ForumFormState = null;
 
@@ -10,19 +10,15 @@ export function ReplyForm({ categoryId, threadId }: { categoryId: string; thread
   const [state, formAction, isPending] = useActionState(createForumReply, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction}>
       <input type="hidden" name="category_id" value={categoryId} />
       <input type="hidden" name="thread_id" value={threadId} />
 
-      <BBCodeEditor />
+      <GardenBBCodeField placeholder="Write your reply..." />
 
-      {state?.error ? <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p> : null}
+      {state?.error ? <p className="fm-err">{state.error}</p> : null}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="self-start rounded-md bg-green-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-      >
+      <button type="submit" disabled={isPending} className="btn btn-sm btn-orange">
         {isPending ? "Posting…" : "Post Reply"}
       </button>
     </form>

@@ -806,3 +806,86 @@ dialog.fg .fg-foot .btn { min-width: 90px; }
 @media (max-width: 1300px) {
   .pt-back { position: static; display: inline-flex; margin: 0 0 10px; }
 }
+
+/* ==================================================================
+   Forum pages (pages/forums.html, forum.html, topic.html). Prefix: fm-
+   Reuses .col / .frame-title, .thread-title, .tile, .btn, .bbcode.
+   ================================================================== */
+.panel.forum { padding: 38px 26px 40px; }
+.fm-block + .fm-block { margin-top: 20px; }
+.fm-flush { padding: 0; }
+.fm-crumbs { margin: 0 4px 12px; }
+.fm-crumbs ol { display: flex; flex-wrap: wrap; gap: 2px 0; margin: 0; padding: 0; list-style: none; font: 800 13px/1.4 var(--font-body); color: var(--ink-soft); }
+.fm-crumbs li + li::before { content: "/"; margin: 0 7px; color: var(--ink-soft); font-weight: 700; }
+.fm-crumbs a { text-decoration: none; } .fm-crumbs a:hover { text-decoration: underline; }
+.fm-crumbs [aria-current] { color: var(--ink-soft); }
+.frame-title .fm-new { margin: -4px 0 -4px auto; }
+.fm-cat-h { margin: 0; padding: 12px 18px 8px; font: var(--fw) 20px/1.1 var(--font-display); letter-spacing: .5px; color: var(--orange-text); }
+.fm-cat + .fm-cat { border-top: 2px dotted var(--tan-line); }
+.fm-list { list-style: none; margin: 0; padding: 0; }
+.fm-row { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-top: 2px dotted var(--tan-line); }
+.fm-list > .fm-row:first-child { border-top: 0; }
+.fm-cat .fm-list > .fm-row:first-child { border-top: 2px dotted var(--tan-line); }
+.fm-row:hover { background: rgba(255, 226, 140, .22); }
+.fm-main { flex: 1 1 auto; min-width: 0; }
+.fm-sub { margin: 2px 0 0; font: 700 12.5px/1.4 var(--font-body); color: var(--ink-soft); }
+.fm-sub a { font-weight: 800; }
+.fm-counts { display: flex; flex: none; gap: 18px; margin: 0; }
+.fm-counts > div { display: flex; flex-direction: column-reverse; align-items: center; min-width: 48px; }
+.fm-counts dt { font: 800 11px/1.2 var(--font-body); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); }
+.fm-counts dd { margin: 0; font: var(--fw) 19px/1.1 var(--font-display); color: var(--brown); }
+.fm-jump { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.fm-jump .btn { display: flex; width: 100%; justify-content: flex-start; }
+.fm-foot { padding: 8px 14px; background: #fbefcf; border-top: var(--bw) solid var(--tan-line); }
+.fm-pager { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.fm-pager .btn { margin-bottom: calc(var(--lift) + 2px); }
+.fm-pg { margin: 0 8px; font: 800 13px var(--font-body); color: var(--ink); }
+.fm-post { display: flex; }
+.fm-post.fm-mine { background: linear-gradient(rgba(255, 233, 128, .16), rgba(255, 233, 128, .16)); }
+.fm-post + .fm-post { border-top: 2px dotted var(--tan-line); }
+.fm-author { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 138px; padding: 16px 12px; border-right: 2px dotted var(--tan-line); text-align: center; }
+.fm-name { font: var(--fw) 17px/1.15 var(--font-display); letter-spacing: .3px; text-decoration: none; overflow-wrap: anywhere; }
+.fm-name:hover { text-decoration: underline; }
+.fm-content { flex: 1 1 auto; min-width: 0; padding: 14px 18px 12px; }
+.fm-phead { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.fm-phead .byline { margin: 6px 0 0; }
+.fm-acts { display: flex; gap: 2px; flex: none; }
+.fm-content .bbcode { font: 600 15.5px/1.55 var(--font-body); }
+.fm-replyrow { margin: 14px 0 0; }
+.panel.forum[data-mod="false"] .fm-mod { display: none; }
+@media (max-width: 640px) {
+  .panel.forum { padding: 34px 12px 32px; }
+  .fm-row { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 6px 12px; align-items: start; padding: 12px 14px; }
+  .fm-counts { grid-column: 2; gap: 14px; }
+  .fm-counts > div { flex-direction: row-reverse; gap: 5px; min-width: 0; align-items: baseline; }
+  .fm-post { flex-direction: column; }
+  .fm-author { flex-direction: row; width: auto; padding: 10px 14px; border-right: 0; border-bottom: 2px dotted var(--tan-line); text-align: left; }
+  .fm-author .av-sq { width: 44px; border-radius: 10px; }
+  .fm-pager { justify-content: center; }
+}
+.col.lime .frame-body.fm-flush { padding: 0; }
+.sect-ico.fm-star { --ic: var(--ic-star); }
+.frame-title .fm-new { white-space: nowrap; flex: none; }
+.fm-acts .btn { white-space: nowrap; }
+
+/* Reply/new-thread/edit-post forms aren't in the forum design package
+   (only the index, topic-list, and thread views are) — styled to match
+   the fm- forum frames using existing .col/.frame-title/.frame-body and
+   the same .gb-bar/.gb-b/.gedit textarea/.gb-pv BBCode toolbar classes
+   pet-panel.tsx and pets-app.tsx already use for their own inline BBCode
+   editors, rather than reintroducing the old Tailwind BBCodeEditor. */
+.fm-form { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 12px; }
+.fm-form label { display: flex; flex-direction: column; gap: 6px; font: 800 13px var(--font-body); color: var(--ink-soft); }
+.fm-form input[type="text"] { font: 600 15px var(--font-body); padding: 9px 12px; border: 2px solid rgb(217, 181, 106); border-radius: 10px; background: rgb(255, 253, 243); color: var(--ink); }
+.fm-form .fm-err { margin: 0; font: 700 13px var(--font-body); color: #b5342a; }
+.fm-form .gedit textarea { min-height: 160px; }
+
+/* Mod tools popover (thread-admin-controls.tsx) — not in the design
+   package (it only shows the "Mod tools" trigger button), styled to
+   match the parchment look of the rest of the fm- pages. Portaled to
+   document.body so it isn't clipped by .col's overflow:hidden. */
+.fm-admin-pop { position: fixed; z-index: 50; width: 230px; display: flex; flex-direction: column; gap: 10px; padding: 14px; font: 600 13px var(--font-body); color: var(--ink); background: var(--paper-2); border: var(--bw) solid var(--tan-line); border-radius: 12px; box-shadow: 0 6px 14px rgba(60, 35, 10, .28); }
+.fm-admin-pop h4 { margin: 0; font: 800 11px var(--font-body); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-soft); }
+.fm-admin-pop label { display: flex; align-items: center; gap: 8px; }
+.fm-admin-pop input[type="text"] { width: 100%; font: 600 13px var(--font-body); padding: 6px 8px; border: 2px solid rgb(217, 181, 106); border-radius: 8px; background: #fff; color: var(--ink); box-sizing: border-box; }
+.fm-admin-pop hr { border: 0; border-top: 2px dotted var(--tan-line); margin: 2px 0; }

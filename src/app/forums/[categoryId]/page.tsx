@@ -1,10 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Folder, MessageSquare, Lock, Plus, Eye, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { ForumPanel } from "@/components/forums/forum-panel";
-import { PaginationBar } from "@/components/forums/pagination-bar";
+import { FmPager } from "@/components/forums/fm-pager";
 import { PlayerLink } from "@/components/player-link";
 import { formatForumDate } from "@/lib/format-forum-date";
 import type { ForumThreadListItem } from "@/lib/supabase/types";
@@ -41,7 +38,7 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
     category.parent_id === null
       ? supabase
           .from("forum_categories")
-          .select("id, name, icon_url")
+          .select("id, name, description")
           .eq("parent_id", category.id)
           .eq("is_active", true)
           .order("sort_order")
@@ -110,137 +107,130 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
   const threads = threadRows.map(toListItem);
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / PAGE_SIZE));
 
-  const newPostButton = (
-    <Link
-      href={`/forums/${category.id}/new`}
-      className="flex items-center gap-1.5 rounded-md bg-white px-3.5 py-1.5 text-sm font-semibold text-green-800 hover:bg-green-50"
-    >
-      <Plus size={16} />
-      New Post
-    </Link>
-  );
-
   return (
     <main id="main">
       <div className="sheet">
-        <div className="panel flex flex-col gap-5">
-      <div className="text-sm text-stone-500">
-        <Link href="/forums" className="hover:underline">
-          Forums
-        </Link>
-        {parent ? (
-          <>
-            {" / "}
-            <Link href={`/forums/${parent.id}`} className="hover:underline">
-              {parent.name}
-            </Link>
-          </>
-        ) : null}
-        {" / "}
-        {category.name}
-      </div>
+        <div className="panel forum">
+          <nav className="fm-crumbs" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link href="/forums">Forums</Link>
+              </li>
+              {parent ? (
+                <li>
+                  <Link href={`/forums/${parent.id}`}>{parent.name}</Link>
+                </li>
+              ) : null}
+              <li aria-current="page">{category.name}</li>
+            </ol>
+          </nav>
 
-      {children && children.length > 0 ? (
-        <ForumPanel icon={<Folder size={18} />} title="Subcategories">
-          <div>
-            {children.map((child) => (
-              <Link
-                key={child.id}
-                href={`/forums/${child.id}`}
-                className="flex items-center gap-3 border-t border-green-100 p-4 first:border-t-0 hover:bg-green-50"
-              >
-                {child.icon_url ? (
-                  <Image src={child.icon_url} alt="" width={24} height={24} className="h-6 w-6 rounded" />
-                ) : (
-                  <MessageSquare size={20} className="text-green-700" aria-hidden />
-                )}
-                <span className="text-base font-medium text-green-900">{child.name}</span>
-              </Link>
-            ))}
-          </div>
-        </ForumPanel>
-      ) : null}
+          {isDividerCategory ? (
+            <section className="col fm-block" aria-labelledby="sub-h">
+              <h2 className="frame-title" id="sub-h">
+                <span className="sect-ico ico-forum" />
+                {category.name}
+              </h2>
+              <div className="frame-body fm-flush">
+                <ul className="fm-list">
+                  {(children ?? []).map((child) => (
+                    <li className="fm-row" key={child.id}>
+                      <span className="tile t-orange i-chat" aria-hidden="true" />
+                      <div className="fm-main">
+                        <Link className="thread-title" href={`/forums/${child.id}`}>
+                          {child.name}
+                        </Link>
+                        {child.description ? <p className="fm-sub">{child.description}</p> : null}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </section>
+          ) : (
+            <>
+              {pinned.length > 0 ? (
+                <section className="col lime fm-block" aria-labelledby="pin-h">
+                  <h2 className="frame-title" id="pin-h">
+                    <span className="sect-ico fm-star" />
+                    Pinned Topics
+                  </h2>
+                  <div className="frame-body fm-flush">
+                    <ul className="fm-list">
+                      {pinned.map((thread) => (
+                        <ThreadRow key={thread.id} categoryId={category.id} thread={thread} pinned />
+                      ))}
+                    </ul>
+                  </div>
+                </section>
+              ) : null}
 
-      {isDividerCategory ? (
-        <p className="rounded-md border border-green-200 bg-green-50 px-5 py-4 text-sm text-stone-500">
-          {category.name} is organized into the subcategories above — pick one to see its threads.
-        </p>
-      ) : (
-        <>
-          <ForumPanel
-            icon={<MessageSquare size={18} />}
-            title={`${category.name} — Pinned Topics`}
-            action={newPostButton}
-          >
-            {pinned.length > 0 ? (
-              <ThreadTable categoryId={category.id} threads={pinned} />
-            ) : (
-              <p className="p-5 text-sm text-stone-500">No pinned topics.</p>
-            )}
-          </ForumPanel>
-
-          <ForumPanel icon={<MessageSquare size={18} />} title={category.name}>
-            {threads.length > 0 ? (
-              <ThreadTable categoryId={category.id} threads={threads} />
-            ) : (
-              <p className="p-8 text-center text-stone-500">No threads yet — be the first to post!</p>
-            )}
-            <PaginationBar basePath={`/forums/${category.id}`} page={page} totalPages={totalPages} />
-          </ForumPanel>
-        </>
-      )}
+              <section className="col fm-block" aria-labelledby="tp-h">
+                <h2 className="frame-title" id="tp-h">
+                  <span className="sect-ico ico-forum" />
+                  {category.name}
+                  <Link className="btn btn-sm btn-orange fm-new" href={`/forums/${category.id}/new`}>
+                    + New Post
+                  </Link>
+                </h2>
+                <div className="frame-body fm-flush">
+                  <ul className="fm-list">
+                    {threads.map((thread) => (
+                      <ThreadRow key={thread.id} categoryId={category.id} thread={thread} pinned={false} />
+                    ))}
+                    {threads.length === 0 ? <li style={{ padding: "18px" }}>No threads yet — be the first to post!</li> : null}
+                  </ul>
+                  <div className="fm-foot">
+                    <FmPager basePath={`/forums/${category.id}`} page={page} totalPages={totalPages} />
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
         </div>
       </div>
     </main>
   );
 }
 
-function ThreadTable({ categoryId, threads }: { categoryId: string; threads: ForumThreadListItem[] }) {
+function ThreadRow({
+  categoryId,
+  thread,
+  pinned,
+}: {
+  categoryId: string;
+  thread: ForumThreadListItem;
+  pinned: boolean;
+}) {
   return (
-    <table className="w-full text-sm">
-      <tbody>
-        {threads.map((thread) => (
-          <tr key={thread.id} className="border-t border-green-100 first:border-t-0 hover:bg-green-50">
-            <td className="w-12 px-5 py-4" aria-hidden>
-              {thread.is_locked ? (
-                <Lock size={20} className="text-stone-400" />
-              ) : (
-                <MessageSquare size={20} className="text-green-600" />
-              )}
-            </td>
-            <td className="px-2 py-4">
-              <Link href={`/forums/${categoryId}/${thread.id}`} className="text-base font-semibold hover:underline">
-                {thread.title}
-              </Link>
-              <div className="mt-0.5 text-sm text-stone-500">
-                Posted by{" "}
-                <PlayerLink
-                  userId={thread.authorId}
-                  name={thread.authorName}
-                  isAdmin={thread.authorIsAdmin}
-                  isModerator={thread.authorIsModerator}
-                  className="font-medium hover:underline"
-                />{" "}
-                » {formatForumDate(thread.created_at)}
-              </div>
-            </td>
-            <td className="w-24 px-4 py-4 text-right text-xs text-stone-500">
-              <div className="flex items-center justify-end gap-1 text-sm font-semibold text-stone-700">
-                <Eye size={14} className="text-stone-400" />
-                {thread.view_count}
-              </div>
-              Views
-            </td>
-            <td className="w-24 px-4 py-4 text-right text-xs text-stone-500">
-              <div className="flex items-center justify-end gap-1 text-sm font-semibold text-stone-700">
-                <MessageCircle size={14} className="text-stone-400" />
-                {thread.reply_count}
-              </div>
-              Replies
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <li className="fm-row">
+      <span className={`tile ${pinned ? "t-gold i-star" : "i-chat"}`} aria-hidden="true" />
+      <div className="fm-main">
+        <Link className="thread-title" href={`/forums/${categoryId}/${thread.id}`}>
+          {thread.title}
+          {thread.is_locked ? " (Locked)" : ""}
+        </Link>
+        <p className="fm-sub">
+          Posted by{" "}
+          <PlayerLink
+            userId={thread.authorId}
+            name={thread.authorName}
+            isAdmin={thread.authorIsAdmin}
+            isModerator={thread.authorIsModerator}
+          />{" "}
+          » <time>{formatForumDate(thread.created_at)}</time>
+        </p>
+      </div>
+      <dl className="fm-counts">
+        <div>
+          <dt>Views</dt>
+          <dd>{thread.view_count}</dd>
+        </div>
+        <div>
+          <dt>Replies</dt>
+          <dd>{thread.reply_count}</dd>
+        </div>
+      </dl>
+    </li>
   );
 }

@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Settings } from "lucide-react";
+import { createPortal } from "react-dom";
 import { updateThreadFlags, deleteThread } from "../../actions";
 
 /**
- * Staff-only (moderator or admin) pin/lock/delete controls, tucked behind
- * a small icon button in the thread panel's header bar instead of an
- * always-visible strip across the top of every post — matches the
- * "hamburger menu on the thread header" affordance from the original
- * reference mockup. Click-outside-to-close, same pattern as nav-
- * groups.tsx and the BBCode editor's popovers. Was admin-only before
- * 0027_moderation.sql widened pin/lock (and added delete) to moderators.
+ * Staff-only (moderator or admin) pin/lock/title/delete controls, behind
+ * the "Mod tools" button in the thread header — matches topic.html's
+ * `<button class="btn btn-sm btn-cream fm-mod fm-new">Mod tools</button>`.
+ * The popover itself isn't in the design package, so it's a plain
+ * parchment-styled card (see .fm-admin-pop in furgarden.css), portaled
+ * to document.body since .col's overflow:hidden would otherwise clip
+ * it. Click-outside-to-close, same pattern as nav-groups.tsx and the
+ * BBCode editor's popovers. Was admin-only before 0027_moderation.sql
+ * widened pin/lock (and added delete) to moderators.
  */
 export function ThreadAdminControls({
   categoryId,
@@ -27,94 +29,83 @@ export function ThreadAdminControls({
   isLocked: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ top: number; right: number } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  function openPopover() {
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      setPosition({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
+      const target = event.target as Node;
+      if (triggerRef.current?.contains(target) || popoverRef.current?.contains(target)) {
+        return;
       }
+      setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Moderation controls"
-        title="Moderation controls"
-        className={`rounded-md p-1.5 text-white hover:bg-white/15 ${open ? "bg-white/15" : ""}`}
+        className="btn btn-sm btn-cream fm-mod fm-new"
+        onClick={() => (open ? setOpen(false) : openPopover())}
       >
-        <Settings size={18} />
+        Mod tools
       </button>
-      {open ? (
-        <div className="absolute right-0 top-full z-10 mt-1 flex w-52 flex-col gap-3 rounded-md border border-green-300 bg-white p-3 text-sm text-stone-700 shadow-lg">
-          <span className="text-xs font-semibold uppercase tracking-wide text-stone-400">
-            Moderation
-          </span>
-          <form action={updateThreadFlags} className="flex flex-col gap-3">
-            <input type="hidden" name="category_id" value={categoryId} />
-            <input type="hidden" name="thread_id" value={threadId} />
-            <label className="flex flex-col gap-1 text-xs font-medium text-stone-500">
-              Title
-              <input
-                type="text"
-                name="title"
-                defaultValue={title}
-                maxLength={200}
-                required
-                className="rounded-md border border-green-300 px-2 py-1 text-sm font-normal text-stone-900 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100"
-              />
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="is_pinned"
-                defaultChecked={isPinned}
-                className="h-4 w-4 rounded border-green-300"
-              />
-              Pinned
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="is_locked"
-                defaultChecked={isLocked}
-                className="h-4 w-4 rounded border-green-300"
-              />
-              Locked
-            </label>
-            <button
-              type="submit"
-              className="self-start rounded-md bg-green-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-            >
-              Save
-            </button>
-          </form>
-          <form
-            action={deleteThread}
-            className="border-t border-green-100 pt-3"
-            onSubmit={(event) => {
-              if (!confirm("Delete this whole thread and all its posts? This can't be undone.")) {
-                event.preventDefault();
-              }
-            }}
-          >
-            <input type="hidden" name="category_id" value={categoryId} />
-            <input type="hidden" name="thread_id" value={threadId} />
-            <button
-              type="submit"
-              className="self-start rounded-md border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
-            >
-              Delete thread
-            </button>
-          </form>
-        </div>
-      ) : null}
-    </div>
+      {open && position
+        ? createPortal(
+            <div ref={popoverRef} className="fm-admin-pop" style={{ top: position.top, right: position.right }}>
+              <h4>Moderation</h4>
+              <form action={updateThreadFlags} className="fm-form" style={{ padding: 0 }}>
+                <input type="hidden" name="category_id" value={categoryId} />
+                <input type="hidden" name="thread_id" value={threadId} />
+                <label>
+                  Title
+                  <input type="text" name="title" defaultValue={title} maxLength={200} required />
+                </label>
+                <label>
+                  <input type="checkbox" name="is_pinned" defaultChecked={isPinned} />
+                  Pinned
+                </label>
+                <label>
+                  <input type="checkbox" name="is_locked" defaultChecked={isLocked} />
+                  Locked
+                </label>
+                <button type="submit" className="btn btn-sm btn-leaf">
+                  Save
+                </button>
+              </form>
+              <hr />
+              <form
+                action={deleteThread}
+                onSubmit={(event) => {
+                  if (!confirm("Delete this whole thread and all its posts? This can't be undone.")) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="category_id" value={categoryId} />
+                <input type="hidden" name="thread_id" value={threadId} />
+                <button type="submit" className="btn btn-sm btn-red">
+                  Delete thread
+                </button>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }

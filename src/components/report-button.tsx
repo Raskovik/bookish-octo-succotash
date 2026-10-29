@@ -31,11 +31,13 @@ export function ReportButton({
   targetId,
   offendingUserId,
   label = "Report",
+  triggerClassName,
 }: {
   targetType: ReportTargetType;
   targetId: string;
   offendingUserId?: string;
   label?: string;
+  triggerClassName?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [reportState, reportAction, isReportPending] = useActionState(submitReport, initialReportState);
@@ -54,9 +56,12 @@ export function ReportButton({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+        className={
+          triggerClassName ??
+          "flex items-center gap-1.5 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950"
+        }
       >
-        <Flag size={14} />
+        {triggerClassName ? null : <Flag size={14} />}
         {label}
       </button>
     );

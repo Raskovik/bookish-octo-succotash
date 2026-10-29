@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { updateForumPost, type ForumFormState } from "../../../../actions";
-import { BBCodeEditor } from "@/components/forums/bbcode-editor";
+import { GardenBBCodeField } from "@/components/forums/garden-bbcode-field";
 
 const initialState: ForumFormState = null;
 
@@ -20,20 +20,16 @@ export function EditPostForm({
   const [state, formAction, isPending] = useActionState(updateForumPost, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="fm-form">
       <input type="hidden" name="category_id" value={categoryId} />
       <input type="hidden" name="thread_id" value={threadId} />
       <input type="hidden" name="post_id" value={postId} />
 
-      <BBCodeEditor defaultValue={defaultBody} />
+      <GardenBBCodeField defaultValue={defaultBody} placeholder="Write your post..." />
 
-      {state?.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
+      {state?.error ? <p className="fm-err">{state.error}</p> : null}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="self-start rounded-md bg-green-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-60"
-      >
+      <button type="submit" disabled={isPending} className="btn btn-sm btn-orange" style={{ alignSelf: "flex-start" }}>
         {isPending ? "Saving…" : "Save changes"}
       </button>
     </form>

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -37,12 +38,25 @@ export default async function NewThreadPage(props: PageProps<"/forums/[categoryI
   return (
     <main id="main">
       <div className="sheet">
-        <div className="panel flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">New thread</h1>
-        <p className="text-sm text-stone-500">in {category.name}</p>
-      </div>
-      <NewThreadForm categoryId={category.id} />
+        <div className="panel forum">
+          <nav className="fm-crumbs" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link href="/forums">Forums</Link>
+              </li>
+              <li>
+                <Link href={`/forums/${category.id}`}>{category.name}</Link>
+              </li>
+              <li aria-current="page">New Post</li>
+            </ol>
+          </nav>
+          <section className="col" aria-labelledby="new-h">
+            <h2 className="frame-title" id="new-h">
+              <span className="sect-ico ico-forum" />
+              New Post in {category.name}
+            </h2>
+            <NewThreadForm categoryId={category.id} />
+          </section>
         </div>
       </div>
     </main>

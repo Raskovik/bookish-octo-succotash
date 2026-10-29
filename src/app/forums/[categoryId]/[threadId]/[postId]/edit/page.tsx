@@ -36,14 +36,25 @@ export default async function EditForumPostPage(
   return (
     <main id="main">
       <div className="sheet">
-        <div className="panel flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Edit post</h1>
-        <Link href={`/forums/${categoryId}/${threadId}`} className="text-sm text-stone-500 hover:underline">
-          ← Back to thread
-        </Link>
-      </div>
-      <EditPostForm categoryId={categoryId} threadId={threadId} postId={post.id} defaultBody={post.body_raw} />
+        <div className="panel forum">
+          <nav className="fm-crumbs" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link href="/forums">Forums</Link>
+              </li>
+              <li>
+                <Link href={`/forums/${categoryId}/${threadId}`}>Back to thread</Link>
+              </li>
+              <li aria-current="page">Edit post</li>
+            </ol>
+          </nav>
+          <section className="col" aria-labelledby="edit-h">
+            <h2 className="frame-title" id="edit-h">
+              <span className="sect-ico ico-forum" />
+              Edit post
+            </h2>
+            <EditPostForm categoryId={categoryId} threadId={threadId} postId={post.id} defaultBody={post.body_raw} />
+          </section>
         </div>
       </div>
     </main>

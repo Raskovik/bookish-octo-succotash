@@ -1,16 +1,13 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Lock, MessageSquare, Pencil, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ReplyForm } from "./reply-form";
 import { ReplyToggle } from "./reply-toggle";
 import { ThreadAdminControls } from "./thread-admin-controls";
 import { DeletePostButton } from "./delete-post-button";
-import { ForumPanel, ForumPanelSection } from "@/components/forums/forum-panel";
 import { ReportButton } from "@/components/report-button";
 import { PlayerLink } from "@/components/player-link";
-import { PaginationBar } from "@/components/forums/pagination-bar";
+import { FmPager } from "@/components/forums/fm-pager";
 import { formatForumDate } from "@/lib/format-forum-date";
 import { unhidePost, testHidePost } from "../../actions";
 import type { ForumPostWithAuthor } from "@/lib/supabase/types";
@@ -45,7 +42,7 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
   } = await supabase.auth.getUser();
 
   const [{ data: category }, { data: postsData, count }, profile] = await Promise.all([
-    supabase.from("forum_categories").select("id, name").eq("id", categoryId).maybeSingle(),
+    supabase.from("forum_categories").select("id, parent_id, name").eq("id", categoryId).maybeSingle(),
     supabase
       .from("forum_posts")
       .select(
@@ -66,6 +63,10 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
 
   const isAdmin = profile?.data?.is_admin ?? false;
   const canModerate = isAdmin || (profile?.data?.is_moderator ?? false);
+
+  const { data: parentCategory } = category?.parent_id
+    ? await supabase.from("forum_categories").select("id, name").eq("id", category.parent_id).maybeSingle()
+    : { data: null };
 
   const posts = postsData ?? [];
   // last_edited_by is usually the same person as author_id, but not
@@ -113,70 +114,86 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
   return (
     <main id="main">
       <div className="sheet">
-        <div className="panel flex flex-col gap-5">
-      <ForumPanel
-        icon={thread.is_locked ? <Lock size={18} /> : <MessageSquare size={18} />}
-        title={category ? `${category.name} > ${thread.title}` : thread.title}
-        action={
-          canModerate ? (
-            <ThreadAdminControls
-              categoryId={categoryId}
-              threadId={thread.id}
-              title={thread.title}
-              isPinned={thread.is_pinned}
-              isLocked={thread.is_locked}
-            />
-          ) : null
-        }
-      >
-        <div>
-          {postsWithAuthor.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              categoryId={categoryId}
-              threadId={thread.id}
-              canEdit={user?.id === post.authorId || canModerate}
-              canModerate={canModerate}
-              canReport={!!user && user.id !== post.authorId}
-            />
-          ))}
-        </div>
+        <div className="panel forum">
+          <nav className="fm-crumbs" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link href="/forums">Forums</Link>
+              </li>
+              {parentCategory ? (
+                <li>
+                  <Link href={`/forums/${parentCategory.id}`}>{parentCategory.name}</Link>
+                </li>
+              ) : null}
+              {category ? (
+                <li>
+                  <Link href={`/forums/${categoryId}`}>{category.name}</Link>
+                </li>
+              ) : null}
+              <li aria-current="page">
+                {thread.title}
+                {thread.is_locked ? " (Locked)" : ""}
+              </li>
+            </ol>
+          </nav>
 
-        <PaginationBar basePath={`/forums/${categoryId}/${threadId}`} page={page} totalPages={totalPages} />
-      </ForumPanel>
-
-      {thread.is_locked ? (
-        <p className="rounded-md border border-green-300 bg-green-50 px-5 py-4 text-sm text-stone-500">
-          This thread is locked — no new replies.
-        </p>
-      ) : user ? (
-        <ReplyToggle>
-          <ForumPanelWrapper title={`Reply to ${thread.title}`}>
-            <div className="p-5">
-              <ReplyForm categoryId={categoryId} threadId={thread.id} />
+          <section className="col fm-block" aria-labelledby="th-h">
+            <h2 className="frame-title" id="th-h">
+              <span className="sect-ico ico-forum" />
+              {thread.title}
+              {canModerate ? (
+                <ThreadAdminControls
+                  categoryId={categoryId}
+                  threadId={thread.id}
+                  title={thread.title}
+                  isPinned={thread.is_pinned}
+                  isLocked={thread.is_locked}
+                />
+              ) : null}
+            </h2>
+            <div className="frame-body fm-flush">
+              {postsWithAuthor.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  categoryId={categoryId}
+                  threadId={thread.id}
+                  isMine={user?.id === post.authorId}
+                  canEdit={user?.id === post.authorId || canModerate}
+                  canModerate={canModerate}
+                  canReport={!!user && user.id !== post.authorId}
+                />
+              ))}
+              <div className="fm-foot">
+                <FmPager basePath={`/forums/${categoryId}/${threadId}`} page={page} totalPages={totalPages} />
+              </div>
             </div>
-          </ForumPanelWrapper>
-        </ReplyToggle>
-      ) : (
-        <p className="rounded-md border border-green-300 bg-green-50 px-5 py-4 text-sm">
-          <Link href="/login" className="underline">
-            Sign in
-          </Link>{" "}
-          to reply.
-        </p>
-      )}
+          </section>
+
+          {thread.is_locked ? (
+            <p className="fm-sub" style={{ marginTop: "14px" }}>
+              This thread is locked — no new replies.
+            </p>
+          ) : user ? (
+            <ReplyToggle>
+              <section className="col fm-block" aria-labelledby="reply-h" style={{ marginTop: "14px" }}>
+                <h2 className="frame-title" id="reply-h">
+                  <span className="sect-ico ico-forum" />
+                  Reply to {thread.title}
+                </h2>
+                <div className="fm-form">
+                  <ReplyForm categoryId={categoryId} threadId={thread.id} />
+                </div>
+              </section>
+            </ReplyToggle>
+          ) : (
+            <p className="fm-sub" style={{ marginTop: "14px" }}>
+              <Link href="/login">Sign in</Link> to reply.
+            </p>
+          )}
         </div>
       </div>
     </main>
-  );
-}
-
-function ForumPanelWrapper({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="overflow-hidden rounded-xl border border-green-300 shadow-sm">
-      <ForumPanelSection title={title}>{children}</ForumPanelSection>
-    </div>
   );
 }
 
@@ -184,6 +201,7 @@ function PostCard({
   post,
   categoryId,
   threadId,
+  isMine,
   canEdit,
   canModerate,
   canReport,
@@ -191,6 +209,7 @@ function PostCard({
   post: ForumPostWithAuthor;
   categoryId: string;
   threadId: string;
+  isMine: boolean;
   canEdit: boolean;
   canModerate: boolean;
   canReport: boolean;
@@ -208,101 +227,90 @@ function PostCard({
         : (post.lastEditorName ?? "Unknown");
 
   return (
-    <article className="flex flex-col gap-4 border-t border-green-100 p-6 first:border-t-0 sm:flex-row">
-      <div className="flex shrink-0 flex-row items-center gap-3 sm:w-32 sm:flex-col sm:text-center">
-        {post.authorAvatarUrl ? (
-          <Image
-            src={post.authorAvatarUrl}
-            alt=""
-            width={72}
-            height={72}
-            className="h-16 w-16 rounded-md border-2 border-green-400 object-cover sm:h-[72px] sm:w-[72px]"
+    <article className={`fm-post${isMine ? " fm-mine" : ""}`}>
+      <div className="fm-author">
+        <Link href={`/u/${post.authorId}`}>
+          <div
+            className="av-sq"
+            role="img"
+            aria-label={`${post.authorName}'s avatar`}
+            style={post.authorAvatarUrl ? { backgroundImage: `url(${post.authorAvatarUrl})` } : undefined}
           />
-        ) : (
-          <div className="h-16 w-16 rounded-md border-2 border-dashed border-green-300 sm:h-[72px] sm:w-[72px]" />
-        )}
+        </Link>
         <PlayerLink
           userId={post.authorId}
           name={post.authorName}
           isAdmin={post.authorIsAdmin}
           isModerator={post.authorIsModerator}
-          className="text-sm font-semibold hover:underline"
+          className="fm-name"
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-sm text-stone-500">Posted {formatForumDate(post.created_at)}</div>
-          <div className="flex shrink-0 gap-2">
+      <div className="fm-content">
+        <header className="fm-phead">
+          <p className="byline">
+            Posted <time>{formatForumDate(post.created_at)}</time>
+          </p>
+          <div className="fm-acts">
             {canEdit ? (
-              <Link
-                href={`/forums/${categoryId}/${threadId}/${post.id}/edit`}
-                className="flex items-center gap-1.5 rounded-md border border-green-300 px-2.5 py-1.5 text-xs font-medium hover:bg-green-50"
-              >
-                <Pencil size={14} />
+              <Link className="btn btn-sm btn-cream" href={`/forums/${categoryId}/${threadId}/${post.id}/edit`}>
                 Edit
               </Link>
             ) : null}
-            {canModerate ? (
-              <DeletePostButton categoryId={categoryId} threadId={threadId} postId={post.id} />
-            ) : null}
             {canReport ? (
-              <ReportButton targetType="forum_post" targetId={post.id} offendingUserId={post.authorId} />
+              <ReportButton
+                targetType="forum_post"
+                targetId={post.id}
+                offendingUserId={post.authorId}
+                triggerClassName="btn btn-sm btn-red"
+              />
             ) : null}
+            {canModerate ? <DeletePostButton categoryId={categoryId} threadId={threadId} postId={post.id} /> : null}
           </div>
-        </div>
+        </header>
 
         {post.is_hidden && !canModerate ? (
-          <p className="flex items-center gap-2 rounded-md border border-stone-200 bg-stone-50 px-4 py-6 text-sm italic text-stone-500 dark:border-stone-800 dark:bg-stone-950">
-            <EyeOff size={16} />
-            This post is hidden pending moderator review.
-          </p>
+          <p className="fm-sub">This post is hidden pending moderator review.</p>
         ) : (
           <>
             {post.is_hidden ? (
-              <div className="flex items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-                <span className="flex items-center gap-1.5">
-                  <EyeOff size={14} />
-                  Hidden pending review — only staff can see this post right now.
-                </span>
-                <form action={unhidePost}>
+              <p className="fm-sub">
+                Hidden pending review — only staff can see this post right now.{" "}
+                <form action={unhidePost} style={{ display: "inline" }}>
                   <input type="hidden" name="category_id" value={categoryId} />
                   <input type="hidden" name="thread_id" value={threadId} />
                   <input type="hidden" name="post_id" value={post.id} />
-                  <button type="submit" className="font-semibold underline">
+                  <button type="submit" className="btn btn-sm btn-cream">
                     Unhide
                   </button>
                 </form>
-              </div>
+              </p>
             ) : null}
             {/* body_html is produced exclusively by bbcodeToHtml() at write
                 time (src/lib/bbcode.ts) — this is the one place that
                 rendered output is ever trusted enough to render. Never
                 render body_raw directly. */}
-            <div
-              className="forum-content text-base leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: post.body_html }}
-            />
+            <div className="bbcode" dangerouslySetInnerHTML={{ __html: post.body_html }} />
           </>
         )}
 
         {post.edit_count > 0 && post.edited_at ? (
-          <p className="text-xs text-stone-400">
+          <p className="fm-sub">
             Last edited by {editedByLabel} at {formatForumDate(post.edited_at)}. This post has been edited{" "}
             {post.edit_count} time{post.edit_count === 1 ? "" : "s"}.
           </p>
         ) : null}
 
         {canModerate && !post.is_hidden ? (
-          <form action={testHidePost} className="self-start">
+          <form action={testHidePost}>
             <input type="hidden" name="category_id" value={categoryId} />
             <input type="hidden" name="thread_id" value={threadId} />
             <input type="hidden" name="post_id" value={post.id} />
             <button
               type="submit"
+              className="btn btn-sm btn-cream fm-mod"
               title="Manually hides this post as if 5 players had reported it — for visually testing the auto-hide feature"
-              className="text-xs text-stone-400 underline hover:text-stone-600 dark:hover:text-stone-300"
             >
-              Hide (test auto-hide-at-5-reports)
+              Hide (test)
             </button>
           </form>
         ) : null}

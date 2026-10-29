@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Reply } from "lucide-react";
 
 /**
  * Keeps the reply box out of the way until a player actually wants to
- * reply — the form only mounts (and BBCodeEditor's toolbar/textarea
- * only render) once they click the button.
+ * reply — the form only mounts (and the BBCode toolbar/textarea only
+ * render) once they click the button. Matches topic.html's
+ * `<p class="fm-replyrow"><a class="btn btn-orange" href="#reply">Reply</a></p>`.
  */
 export function ReplyToggle({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -14,13 +14,10 @@ export function ReplyToggle({ children }: { children: React.ReactNode }) {
   if (open) return <>{children}</>;
 
   return (
-    <button
-      type="button"
-      onClick={() => setOpen(true)}
-      className="flex items-center gap-2 self-start rounded-md bg-green-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-green-600"
-    >
-      <Reply size={18} />
-      Reply
-    </button>
+    <p className="fm-replyrow">
+      <button type="button" className="btn btn-orange" onClick={() => setOpen(true)}>
+        Reply
+      </button>
+    </p>
   );
 }
