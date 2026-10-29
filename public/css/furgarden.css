@@ -239,7 +239,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .note { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 11px; padding: 10px 34px 10px 12px; color: var(--ink); text-decoration: none; }
 .note + .note { border-top: 2px dotted var(--tan-line); }
 .note.unread { background: linear-gradient(#fff7d4, #fff0b8); }
-.note.unread::after { content: ""; position: absolute; top: 50%; right: 14px; width: 11px; height: 11px; margin-top: -5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffc766, var(--orange-2)); border: 2px solid var(--orange-edge); }
+.note.unread .tile::before { content: ""; position: absolute; top: -5px; left: -5px; z-index: 2; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffc766, var(--orange-2)); border: 2px solid var(--orange-edge); }
+.note.unread p { font-weight: 800; }
 .note:hover { background: #fff3c8; }
 .note:focus-visible { outline: 2px dashed var(--orange-edge); outline-offset: -4px; }
 .note p { margin: 0; font: 700 13.5px/1.35 var(--font-body); }
@@ -253,6 +254,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
    verbatim copy; everything else in this file is untouched. */
 .tray-empty { display: block; padding: 18px 14px; text-align: center; font: 700 14px var(--font-body); color: var(--ink-soft); }
 .tray.all-read .note.unread { background: none; }
+.tray.all-read .note.unread .tile::before { display: none; }
+.tray.all-read .note.unread p { font-weight: 700; }
 .tray.all-read .tray-head .count { display: none; }
 
 /* ---------- MAIN: news + forum ---------- */
