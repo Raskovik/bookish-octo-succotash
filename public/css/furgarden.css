@@ -651,3 +651,121 @@ body.dragon .pb-tabs.wood::after { content: "Drop on a group"; text-align: cente
 .pb-tab.drop { outline: 3px dashed var(--leaf-2); outline-offset: 1px; }
 .lnk { color: var(--link); font-weight: 700; background: none; border: 0; padding: 0; font-family: inherit; font-size: inherit; cursor: pointer; text-decoration: underline; }
 .fg-body .hintbar { margin: 12px 0 8px; }
+
+/* ===== Pet page (pages/pet.html, js/pet.js) =====
+   Hanging level ribbon (.pt-vr .pt-t1 to .pt-t5), name bar, picture area, one-container details row with the
+   candy-stripe energy bar and wood / silver / gold / diamond stat plaques, and the bio card. All pet-only classes start with pt-. */
+.pt-pe-rows { margin: 0px; padding: 0px; list-style: none; }
+.pt-pe-rows li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 4px; border-bottom: 1px dotted rgb(217, 181, 106); font: 700 14px var(--font-body); }
+.pt-pe-rows li:last-child { border-bottom: 0px; }
+.pt-pe-rows span { color: var(--ink-soft); }
+.pt-pe-rows b { font-weight: 800; text-align: right; }
+.pt-bio-card .bbcode { min-height: 140px; }
+.pt-bio-card .pt-none { color: var(--ink-soft); font-style: italic; font-weight: 600; }
+.pt-bio-card .gb-act, .pt-bio-card p.pt-ed { margin: 10px 0px 0px; }
+.pt-wrap .pt-imgwrap { display: grid; place-items: center; padding: 18px 10px 14px; }
+.pt-wrap .pt-imgwrap img { display: block; height: 300px; width: auto; max-width: 92%; }
+.pt-wrap .pt-pe-rows li { padding: 5px 2px; font-size: 13.5px; }
+.pt-wrap .acts { display: grid; gap: 8px; }
+.pt-wrap .acts .btn { justify-content: center; padding-top: 6px; padding-bottom: 8px; }
+.pt-wrap .bio-card { margin-top: 20px; }
+.pt-wrap .bio-card .pt-none { color: var(--ink-soft); font-style: italic; font-weight: 600; }
+.pt-wrap .bio-card .bbcode { min-height: 90px; }
+.pt-wrap .pt-ed { margin: 10px 0px 0px; }
+@media (max-width: 900px) {
+  .pt-wrap .acts { grid-template-columns: repeat(3, 1fr); }
+  .pt-wrap .pt-imgwrap img { height: 240px; }
+}
+.pt-wrap .col { margin: 0px; }
+.pt-wrap .sect-ico { --ic: var(--ic-paw); }
+.pt-wrap .frame-title { -webkit-text-stroke: 0px; }
+.pt-wrap .frame-title .pt-rn { margin-left: auto; color: rgb(255, 255, 255); font: 800 12.5px var(--font-body); }
+.pt-wrap .pt-bio { margin-top: 20px; }
+.pt-wrap .col.pt-herof .pt-imgwrap { background: var(--paper-2); }
+.pt-wrap .acts .btn { width: 100%; }
+.pt-s1 { margin-top: 20px; display: grid; grid-template-columns: minmax(0px, 1fr) minmax(0px, 1.2fr) 150px; padding: 0px; }
+.pt-s1 > div { padding: 20px 16px 14px; }
+.pt-s1 > div + div { border-left: 2px dotted rgb(217, 181, 106); }
+.pt-s1 h3 { margin: 0px 0px 6px; font: 400 20px/1 var(--font-display); color: var(--brown); }
+.pt-s1 .acts { align-content: center; height: 100%; }
+.pc.pt-s1 { margin-bottom: 0px; }
+.pt-wrap .pc.pt-s1 + .pt-bio { margin-top: 26px !important; }
+@media (max-width: 900px) {
+  .pt-s1, .flat { grid-template-columns: minmax(0px, 1fr); }
+  .pt-s1 > div + div { border-left: 0px; border-top: 2px dotted rgb(217, 181, 106); }
+}
+.pt-tier { --e: #5c3718; --g1: var(--wood-1); --g2: var(--wood-2); --tx: #ffe9c6; --nt: #fff; --sh: rgba(255,255,255,.35); }
+.pt-tier.pt-silver { --e: #4a5668; --g1: #e9eef5; --g2: #a9b4c4; --tx: #3a4658; --nt: #fff; --sh: rgba(255,255,255,.8); }
+.pt-tier.pt-gold { --e: #8a5a00; --g1: #ffe98a; --g2: #f0b21c; --tx: #7a4a00; --nt: #fff; --sh: rgba(255,255,255,.7); }
+.pt-tier.pt-diamond { --e: #1b5f9e; --g1: #e9fbff; --g2: #74cdf5; --tx: #16507f; --nt: #fff; --sh: rgba(255,255,255,.9); }
+.pt-tier .pt-p { position: relative; text-align: center; padding: 6px 4px 7px; border: 3px solid var(--e); border-radius: 10px; background: linear-gradient(var(--g1),var(--g2)); box-shadow: 0 3px 0 var(--e), inset 0 2px 0 var(--sh); min-width: 96px; }
+.pt-tier.pt-diamond .pt-p { overflow: hidden; background: linear-gradient(135deg, rgb(244, 253, 255) 0px, rgb(184, 236, 255) 30%, rgb(108, 198, 242) 55%, rgb(201, 241, 255) 80%, rgb(234, 252, 255) 100%); }
+/* Fixed from the handoff's own bug: its .pt-diamond glint referenced a
+   keyframe named "gl", but only @keyframes pt-gleam was ever defined —
+   so the sparkle silently never animated. Point it at the real name. */
+.pt-tier.pt-diamond .pt-p > i { position: absolute; top: 0px; bottom: 0px; left: -60%; width: 40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent); transform: skewX(-18deg); animation: 8s ease-in-out 0s infinite normal none running pt-gleam; pointer-events: none; }
+@keyframes pt-gleam {
+  0%, 60% { left: -60%; }
+  100% { left: 130%; }
+}
+.pt-tier .pt-p::before, .pt-tier .pt-p::after { content: ""; position: absolute; top: 5px; width: 5px; height: 5px; border-radius: 50%; background: var(--e); box-shadow: inset 0 1px 0 var(--sh); }
+.pt-tier .pt-p::before { left: 5px; }
+.pt-tier .pt-p::after { right: 5px; }
+.pt-tier small { display: block; font: 800 10.5px var(--font-body); letter-spacing: 0.9px; color: var(--tx); }
+.pt-tier.pt-diamond small { text-shadow: rgba(255, 255, 255, 0.6) 0px 1px 0px; }
+.pt-tier b { display: block; font: 400 30px/1.05 var(--font-display); color: var(--nt); -webkit-text-stroke: 4px var(--e); paint-order: stroke; }
+@media (prefers-reduced-motion: reduce) {
+  .pt-tier.pt-diamond .pt-p > i { animation: auto ease 0s 1 normal none running none; display: none; }
+}
+.pt-wrap .pt-imgwrap { min-height: 480px; padding: 24px 12px 20px; }
+.pt-wrap .pt-imgwrap img { height: auto; max-height: 430px; width: auto; max-width: 92%; object-fit: contain; }
+@media (max-width: 900px) {
+  .pt-wrap .pt-imgwrap { min-height: 340px; }
+  .pt-wrap .pt-imgwrap img { max-height: 290px; }
+}
+dialog.fg .fg-foot .btn { min-width: 90px; }
+.pt-s1 > div.pt-cmid { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 18px 22px 16px; gap: 14px; }
+.pt-cmid .pt-ebox { width: 100%; max-width: 380px; }
+.pt-cmid .pt-ehead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; font: 800 11.5px var(--font-body); letter-spacing: 0.9px; color: var(--ink-soft); }
+.pt-cmid .pt-ehead b { font: 400 20px/1 var(--font-display); color: var(--brown); letter-spacing: 0px; }
+.pt-cmid .pt-stripe { display: block; height: 24px; border-radius: 12px; border: 2px solid rgb(185, 143, 85); background: rgb(234, 218, 176); overflow: hidden; box-shadow: rgba(0, 0, 0, 0.12) 0px 2px 0px inset; }
+.pt-cmid .pt-stripe i { display: block; height: 100%; border-radius: 10px; background: repeating-linear-gradient(-45deg, rgb(143, 212, 74) 0px, rgb(143, 212, 74) 10px, rgb(111, 183, 58) 10px, rgb(111, 183, 58) 20px); box-shadow: rgba(255, 255, 255, 0.4) 0px 3px 0px inset; }
+.pt-cmid .pt-plq { display: flex; justify-content: center; gap: 14px; width: 100%; }
+.pt-cmid .pt-plq .pt-p { flex: 1 1 0%; max-width: 112px; }
+.pt-cmid .pt-sub { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 380px; font: 800 11.5px var(--font-body); letter-spacing: 0.9px; color: var(--ink-soft); text-transform: uppercase; }
+.pt-cmid .pt-sub::before, .pt-cmid .pt-sub::after { content: ""; flex: 1 1 0%; border-top: 2px dotted rgb(217, 181, 106); }
+@media (max-width: 900px) {
+  .pt-s1 > div.pt-cmid { padding: 16px 14px; }
+  .pt-cmid .pt-plq { gap: 8px; }
+}
+.pt-vr { --e: #2c6a22; --a: #b6ee6a; --b: #5fa32c; display: inline-block; filter: drop-shadow(1.5px 0 0 var(--e)) drop-shadow(-1.5px 0 0 var(--e)) drop-shadow(0 1.5px 0 var(--e)) drop-shadow(0 -1.5px 0 var(--e)) drop-shadow(0 2.5px 0 var(--e)); }
+.pt-vr.pt-t2 { --e: #17518f; --a: #8fd3ff; --b: #2f8fe0; }
+.pt-vr.pt-t3 { --e: #8f1f3e; --a: #ffa6bf; --b: #e8456f; }
+.pt-vr.pt-t4 { --e: #3f1f85; --a: #c79bff; --b: #7a45d6; }
+.pt-vr.pt-t5 { --e: #8a5a00; --a: #fff1a8; --b: #f0b21c; }
+.pt-vr > span { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 52px; height: 78px; padding-top: 9px; color: rgb(255, 255, 255); -webkit-text-stroke: 3.5px var(--e); paint-order: stroke; background: linear-gradient(90deg,rgba(255,255,255,.34) 0 30%,transparent 30%),linear-gradient(var(--a),var(--b)); clip-path: polygon(0px 0px, 100% 0px, 100% 100%, 50% calc(100% - 14px), 0px 100%); }
+.pt-vr small { font: 400 11px/1 var(--font-display); letter-spacing: 1px; -webkit-text-stroke: 2.5px var(--e); }
+.pt-vr b { font: 400 28px/1 var(--font-display); margin-top: 1px; }
+.pt-vr.pt-t5 > span::after { content: ""; position: absolute; top: 0px; bottom: 0px; left: -80%; width: 50%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent); transform: skewX(-18deg); animation: 8s ease-in-out 0s infinite normal none running pt-gleam2; }
+@keyframes pt-gleam2 {
+  0%, 60% { left: -60%; }
+  100% { left: 130%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pt-vr.pt-t5 > span::after { animation: auto ease 0s 1 normal none running none; display: none; }
+}
+.col.pt-herof.pt-hang { position: relative; overflow: visible; margin-top: 6px; }
+.col.pt-herof.pt-hang > .pt-vr { position: absolute; z-index: 6; top: -8px; left: 24px; }
+.col.pt-herof.pt-hang .frame-title { padding-left: 96px; border-radius: 14px 14px 0px 0px; }
+.col.pt-herof.pt-hang .pt-imgwrap { border-radius: 0px 0px 14px 14px; }
+.col.pt-herof.pt-hang .frame-title .sect-ico { display: none; }
+@media (max-width: 900px) {
+  .col.pt-herof.pt-hang .frame-title { padding-left: 84px; }
+}
+.panel.pet { padding: 56px 30px 40px; }
+.pt-wrap .pt-plq .pt-tier { display: contents; }
+.pt-wrap .pt-cmid .pt-stripe.mid i { background: repeating-linear-gradient(-45deg, rgb(255, 215, 90) 0px, rgb(255, 215, 90) 10px, rgb(240, 178, 28) 10px, rgb(240, 178, 28) 20px); }
+.pt-wrap .pt-cmid .pt-stripe.low i { background: repeating-linear-gradient(-45deg, rgb(255, 154, 134) 0px, rgb(255, 154, 134) 10px, rgb(232, 69, 47) 10px, rgb(232, 69, 47) 20px); }
+.pt-wrap .gedit { margin-top: 2px; }
+.pt-wrap .gb-pv { min-height: 90px; }
+.pet[data-owner="false"] .pt-owner-only { display: none; }
