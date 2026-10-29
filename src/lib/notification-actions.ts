@@ -31,6 +31,11 @@ export async function markAllNotificationsRead() {
 }
 
 // Deletes rather than just marking read — 0052_clear_notifications.sql.
+// Errors are logged (not surfaced to the player — NotificationBell's
+// clear is optimistic/fire-and-forget like the read-marking actions
+// above) so a failure, e.g. that migration not having been run against
+// this environment's database yet, shows up in server logs instead of
+// just quietly not sticking past the next refetch.
 export async function clearNotification(notificationId: string) {
   const supabase = await createClient();
   const {
@@ -38,10 +43,13 @@ export async function clearNotification(notificationId: string) {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase.rpc("clear_notification", {
+  const { error } = await supabase.rpc("clear_notification", {
     p_user_id: user.id,
     p_notification_id: notificationId,
   });
+  if (error) {
+    console.error("clear_notification failed", notificationId, error);
+  }
 }
 
 export async function clearAllNotifications() {
@@ -51,5 +59,8 @@ export async function clearAllNotifications() {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase.rpc("clear_all_notifications", { p_user_id: user.id });
+  const { error } = await supabase.rpc("clear_all_notifications", { p_user_id: user.id });
+  if (error) {
+    console.error("clear_all_notifications failed", error);
+  }
 }

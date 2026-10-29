@@ -46,13 +46,20 @@ const NOTIFICATION_TILE: Record<NotificationType, string> = {
  * selector never matches it) and owns open/close + aria-expanded +
  * click-outside/Escape itself, same pattern as ThreadAdminControls'
  * popover.
+ *
+ * The notification list itself is a controlled prop, not local state —
+ * HeaderActivity (the parent) owns it, since it also polls for fresh
+ * notifications in the background (see that component's comment for
+ * why) and this needs to render whichever list is most current,
+ * whether that came from the initial page load or a poll.
  */
 export function NotificationBell({
-  initialNotifications,
+  notifications,
+  onNotificationsChange,
 }: {
-  initialNotifications: NotificationWithActor[];
+  notifications: NotificationWithActor[];
+  onNotificationsChange: (updater: (list: NotificationWithActor[]) => NotificationWithActor[]) => void;
 }) {
-  const [notifications, setNotifications] = useState(initialNotifications);
   const [open, setOpen] = useState(false);
   const [, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,28 +85,28 @@ export function NotificationBell({
   }, [open]);
 
   function handleMarkAllRead() {
-    setNotifications((list) => list.map((n) => ({ ...n, is_read: true })));
+    onNotificationsChange((list) => list.map((n) => ({ ...n, is_read: true })));
     startTransition(() => {
       markAllNotificationsRead();
     });
   }
 
   function handleItemClick(id: string) {
-    setNotifications((list) => list.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    onNotificationsChange((list) => list.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
     startTransition(() => {
       markNotificationRead(id);
     });
   }
 
   function handleClear(id: string) {
-    setNotifications((list) => list.filter((n) => n.id !== id));
+    onNotificationsChange((list) => list.filter((n) => n.id !== id));
     startTransition(() => {
       clearNotification(id);
     });
   }
 
   function handleClearAll() {
-    setNotifications([]);
+    onNotificationsChange(() => []);
     startTransition(() => {
       clearAllNotifications();
     });

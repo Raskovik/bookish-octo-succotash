@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TRADING_ENABLED, BREWING_ENABLED } from "@/lib/feature-flags";
 import { NavGroups, type NavGroup } from "@/components/nav-groups";
-import { NotificationBell } from "@/components/notification-bell";
+import { HeaderActivity } from "@/components/header-live-badges";
 import type { NotificationWithActor } from "@/lib/supabase/types";
 
 /**
@@ -14,11 +14,13 @@ import type { NotificationWithActor } from "@/lib/supabase/types";
  * element), not React.
  */
 export function SiteNav({
+  userId,
   isAdmin,
   isModerator,
   unreadDmCount,
   notifications,
 }: {
+  userId: string;
   isAdmin: boolean;
   isModerator: boolean;
   unreadDmCount: number;
@@ -89,15 +91,7 @@ export function SiteNav({
         groups={groups}
       />
       <div className="tools">
-        <Link
-          className="btn btn-round"
-          href="/messages"
-          aria-label={unreadDmCount > 0 ? `Messages, ${unreadDmCount} unread` : "Messages"}
-        >
-          <i className="ic i-mail" aria-hidden="true" />
-          {unreadDmCount > 0 ? <span className="pip">{unreadDmCount > 9 ? "9+" : unreadDmCount}</span> : null}
-        </Link>
-        <NotificationBell initialNotifications={notifications} />
+        <HeaderActivity userId={userId} initialUnreadDmCount={unreadDmCount} initialNotifications={notifications} />
         <form action="/auth/sign-out" method="post">
           <button className="btn btn-sm btn-cream" type="submit">
             Sign out

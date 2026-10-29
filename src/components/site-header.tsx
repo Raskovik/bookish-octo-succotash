@@ -121,6 +121,7 @@ export async function SiteHeader() {
       </div>
 
       <SiteNav
+        userId={user.id}
         isAdmin={profile?.is_admin ?? false}
         isModerator={profile?.is_moderator ?? false}
         unreadDmCount={unreadDmCount}
