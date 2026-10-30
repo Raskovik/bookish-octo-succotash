@@ -22,14 +22,20 @@ export function SearchablePicker({
   name,
   options,
   placeholder = "Search…",
+  defaultSelected = null,
 }: {
   name: string;
   options: PickerOption[];
   placeholder?: string;
+  // Pre-fills the "already picked" state — for editing a single
+  // existing field (e.g. a shop listing's item/species), as opposed to
+  // every other use of this component so far, which only ever adds new
+  // entries to a list and so always starts empty.
+  defaultSelected?: PickerOption | null;
 }) {
   const inputId = useId();
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<PickerOption | null>(null);
+  const [selected, setSelected] = useState<PickerOption | null>(defaultSelected);
   const [isOpen, setIsOpen] = useState(false);
 
   const matches = useMemo(() => {

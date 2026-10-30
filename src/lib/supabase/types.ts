@@ -156,6 +156,26 @@ export type ItemRow = {
   created_at: string;
 };
 
+// See 0053_shop_listings.sql.
+export type ShopSection = "pets" | "food" | "den" | "specials";
+export type ShopListingType = "item" | "pet";
+
+export type ShopListingRow = {
+  id: string;
+  section: ShopSection;
+  listing_type: ShopListingType;
+  item_id: string | null;
+  species_id: string | null;
+  description: string | null;
+  price_coins: number | null;
+  price_gems: number | null;
+  is_new: boolean;
+  ends_at: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+};
+
 export type UserInventoryRow = {
   user_id: string;
   item_id: string;
@@ -453,6 +473,26 @@ export type BuyShopItemResult = {
 export type ShopItem = Pick<ItemRow, "id" | "name" | "image_url" | "rarity" | "type"> & {
   shopPrice: number;
   quantityOwned: number;
+};
+
+// What buy_shop_listing returns — see 0053_shop_listings.sql.
+export type BuyShopListingResult = {
+  listing_id: string;
+  currency: "coin" | "gem";
+  price: number;
+  granted_pet_id: string | null;
+};
+
+// A shop_listings row resolved to its actual item/species for display —
+// one of itemName/speciesName is set depending on listing_type, never
+// both (same shape the table's own CHECK constraint enforces).
+export type ShopListingWithTarget = Pick<
+  ShopListingRow,
+  "id" | "section" | "listing_type" | "price_coins" | "price_gems" | "is_new" | "ends_at"
+> & {
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
 };
 
 // What harvest_plot() returns — either nothing (a wilted plant) or what
@@ -1003,6 +1043,10 @@ export type Database = {
         Partial<ZonePetPoolRow> & { zone_id: string; species_id: string }
       >;
       items: TableOf<ItemRow, Partial<ItemRow> & { name: string }>;
+      shop_listings: TableOf<
+        ShopListingRow,
+        Partial<ShopListingRow> & { section: ShopSection; listing_type: ShopListingType }
+      >;
       user_inventory: TableOf<
         UserInventoryRow,
         Partial<UserInventoryRow> & { user_id: string; item_id: string }
@@ -1162,6 +1206,10 @@ export type Database = {
       buy_shop_item: {
         Args: { p_user_id: string; p_item_id: string; p_quantity?: number };
         Returns: BuyShopItemResult;
+      };
+      buy_shop_listing: {
+        Args: { p_user_id: string; p_listing_id: string; p_currency: string };
+        Returns: BuyShopListingResult;
       };
       admin_grant_self_currency: {
         Args: {

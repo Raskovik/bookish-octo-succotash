@@ -13,6 +13,7 @@ export default async function AdminDashboardPage() {
     { count: newsCount },
     { count: forumCategoryCount },
     { count: gardenPlantCount },
+    { count: shopListingCount },
   ] = await Promise.all([
     supabase.from("zones").select("*", { count: "exact", head: true }),
     supabase.from("items").select("*", { count: "exact", head: true }),
@@ -23,6 +24,7 @@ export default async function AdminDashboardPage() {
     supabase.from("site_news_posts").select("*", { count: "exact", head: true }),
     supabase.from("forum_categories").select("*", { count: "exact", head: true }),
     supabase.from("garden_plants").select("*", { count: "exact", head: true }),
+    supabase.from("shop_listings").select("*", { count: "exact", head: true }),
   ]);
 
   const cards = [
@@ -33,6 +35,7 @@ export default async function AdminDashboardPage() {
     { href: "/admin/news", label: "Site news", count: newsCount ?? 0 },
     { href: "/admin/forums", label: "Forum categories", count: forumCategoryCount ?? 0 },
     { href: "/admin/garden-plants", label: "Garden plants", count: gardenPlantCount ?? 0 },
+    { href: "/admin/shop-listings", label: "Shop listings", count: shopListingCount ?? 0 },
   ];
 
   return (

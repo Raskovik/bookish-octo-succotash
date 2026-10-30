@@ -28,6 +28,9 @@ export default async function AdminLayout({
           <Link href="/admin/species" className="hover:underline">
             Species
           </Link>
+          <Link href="/admin/shop-listings" className="hover:underline">
+            Shop listings
+          </Link>
           {BREWING_ENABLED ? (
             <Link href="/admin/recipes" className="hover:underline">
               Potion recipes
