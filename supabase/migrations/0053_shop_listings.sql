@@ -93,7 +93,7 @@ declare
   v_gem_balance integer;
   v_den_size integer;
   v_pet_count integer;
-  v_species_rarity public.pet_rarity;
+  v_species_rarity public.rarity_tier;
   v_new_pet_id uuid;
 begin
   if auth.uid() is distinct from p_user_id then
