@@ -16,8 +16,10 @@ function readItemFields(formData: FormData) {
   const type = String(formData.get("type") ?? "");
   const rarity = String(formData.get("rarity") ?? "");
   const imageUrlRaw = String(formData.get("image_url") ?? "").trim();
+  const descriptionRaw = String(formData.get("description") ?? "").trim();
   const sellValueRaw = String(formData.get("sell_value") ?? "");
   const shopPriceRaw = String(formData.get("shop_price") ?? "").trim();
+  const foodValueRaw = String(formData.get("food_value") ?? "").trim();
   const isActive = formData.get("is_active") === "on";
 
   if (name.length === 0) return { ok: false as const, error: "Name can't be empty." };
@@ -39,6 +41,14 @@ function readItemFields(formData: FormData) {
     }
   }
 
+  let foodValue: number | null = null;
+  if (foodValueRaw.length > 0) {
+    foodValue = Number(foodValueRaw);
+    if (!Number.isInteger(foodValue) || foodValue < 0) {
+      return { ok: false as const, error: "Food value must be a non-negative whole number, or blank." };
+    }
+  }
+
   return {
     ok: true as const,
     fields: {
@@ -46,8 +56,10 @@ function readItemFields(formData: FormData) {
       type: type as ItemType,
       rarity: rarity as ItemRarity,
       image_url: imageUrlRaw.length > 0 ? imageUrlRaw : null,
+      description: descriptionRaw.length > 0 ? descriptionRaw : null,
       sell_value: sellValue,
       shop_price: shopPrice,
+      food_value: foodValue,
       is_active: isActive,
     },
   };

@@ -12,6 +12,9 @@ export type UserRow = {
   gem_balance: number;
   den_size: number;
   garden_rows: number;
+  // Spent by feed_pet(), earned by converting items (convert_items_to_food) —
+  // see 0054_food_points.sql.
+  food_points: number;
   is_admin: boolean;
   is_moderator: boolean;
   starter_granted: boolean;
@@ -148,10 +151,16 @@ export type ItemRow = {
   type: ItemType;
   rarity: ItemRarity;
   image_url: string | null;
+  // Shown on /items' detail panel — see 0054_food_points.sql.
+  description: string | null;
   sell_value: number;
   // Coin price in the NPC shop (/shop) — see 0036_shop.sql. Null means
   // not for sale there; distinct from sell_value.
   shop_price: number | null;
+  // Food points gained per unit converted via convert_items_to_food()
+  // (/items' "Food points" action) — see 0054_food_points.sql. Null/0
+  // means this item can't be converted.
+  food_value: number | null;
   is_active: boolean;
   created_at: string;
 };
@@ -385,7 +394,23 @@ export type PetDetail = PetWithSpecies &
 export type ItemWithQuantity = {
   quantity: number;
   is_for_trade: boolean;
-  item: Pick<ItemRow, "id" | "name" | "image_url" | "rarity" | "type"> | null;
+  item: Pick<ItemRow, "id" | "name" | "image_url" | "rarity" | "type" | "description" | "food_value"> | null;
+};
+
+// What convert_items_to_food() returns — see 0054_food_points.sql.
+export type ConvertItemsToFoodResult = {
+  item_id: string;
+  used: number;
+  gained: number;
+  new_quantity: number;
+  new_food_points: number;
+};
+
+// What feed_pet() returns — see 0054_food_points.sql (previously free/void).
+export type FeedPetResult = {
+  pet_id: string;
+  cost: number;
+  new_food_points: number;
 };
 
 // A pet another player has marked for_trade, as shown on /trades/browse
@@ -1254,7 +1279,11 @@ export type Database = {
       };
       feed_pet: {
         Args: { p_user_id: string; p_pet_id: string };
-        Returns: null;
+        Returns: FeedPetResult;
+      };
+      convert_items_to_food: {
+        Args: { p_user_id: string; p_item_id: string; p_amount: number };
+        Returns: ConvertItemsToFoodResult;
       };
       change_display_name: {
         Args: {

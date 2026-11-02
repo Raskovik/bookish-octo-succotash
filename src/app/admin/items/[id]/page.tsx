@@ -27,7 +27,7 @@ export default async function EditItemPage(props: PageProps<"/admin/items/[id]">
 
   const { data: item } = await supabase
     .from("items")
-    .select("id, name, type, rarity, image_url, sell_value, shop_price, is_active, created_at")
+    .select("id, name, type, rarity, image_url, description, sell_value, shop_price, food_value, is_active, created_at")
     .eq("id", id)
     .maybeSingle();
 

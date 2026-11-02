@@ -38,11 +38,14 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
   const pet = petData as unknown as PetDetail;
   const isOwner = pet.owner_id === user.id;
 
-  const { count: adventureCount } = await supabase
-    .from("expeditions")
-    .select("*", { count: "exact", head: true })
-    .eq("pet_id", petId)
-    .eq("user_id", pet.owner_id);
+  const [{ count: adventureCount }, { data: viewerRow }] = await Promise.all([
+    supabase
+      .from("expeditions")
+      .select("*", { count: "exact", head: true })
+      .eq("pet_id", petId)
+      .eq("user_id", pet.owner_id),
+    supabase.from("users").select("food_points").eq("id", user.id).single(),
+  ]);
 
   const energyPct = calcPetEnergy(pet.last_fed_at);
 
@@ -70,6 +73,7 @@ export default async function PetDetailPage(props: PageProps<"/pets/[petId]">) {
             rollSpeed={pet.roll_speed}
             rollDefence={pet.roll_defence}
             initialBio={pet.bio}
+            initialFoodPoints={viewerRow?.food_points ?? 0}
           />
         </div>
       </div>

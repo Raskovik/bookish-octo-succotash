@@ -27,11 +27,11 @@ import { petLevelTier } from "@/lib/pet-display";
  *    handoff's data-name-max="20"/data-bio-max="500" placeholders,
  *    which would just be a UI lie about what the server actually
  *    accepts.
- * 3. Feed has no food-points cost here — feed_pet() (0046_pet_energy.sql)
- *    is free and just resets the energy-decay clock to now(). The
- *    confirm dialog's copy reflects that instead of the handoff's
- *    "use food points" text, which belongs to the separate (and still
- *    only partly wired) food-points system on /pets.
+ * 3. Feed costs food points (0054_food_points.sql) — scaled down from
+ *    the handoff's own "1 point = 1 HP" rule: ceil((100 - energy%) / 10),
+ *    so a full 0%-to-100% feed costs at most 10, not 100 (the player's
+ *    own call when asked). feed_pet() enforces this for real; the cost
+ *    shown here is just a mirror of that same formula for display.
  *
  * Sell and Release have no backend at all yet (no coin-economy sell
  * price, no pet-deletion path) — kept as disabled "Coming soon"
@@ -64,6 +64,7 @@ export function PetPanel({
   rollSpeed,
   rollDefence,
   initialBio,
+  initialFoodPoints,
 }: {
   userId: string;
   petId: string;
@@ -79,6 +80,7 @@ export function PetPanel({
   rollSpeed: number;
   rollDefence: number;
   initialBio: string | null;
+  initialFoodPoints: number;
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -142,18 +144,23 @@ export function PetPanel({
     router.refresh();
   }
 
-  /* ---------- feed (real, free — see file-level comment) ---------- */
+  /* ---------- feed (real, costs food points — see file-level comment) ---------- */
   const feedDialogRef = useRef<HTMLDialogElement>(null);
   const [isFeeding, setIsFeeding] = useState(false);
+  const [foodPoints, setFoodPoints] = useState(initialFoodPoints);
+  const feedCost = Math.ceil((100 - energyPct) / 10);
+  const canAffordFeed = foodPoints >= feedCost;
+
   async function doFeed() {
     setIsFeeding(true);
-    const { error } = await supabase.rpc("feed_pet", { p_user_id: userId, p_pet_id: petId });
+    const { data, error } = await supabase.rpc("feed_pet", { p_user_id: userId, p_pet_id: petId });
     setIsFeeding(false);
     feedDialogRef.current?.close();
     if (error) {
-      toast("That didn't work. Please try again.");
+      toast(error.message);
       return;
     }
+    setFoodPoints(data.new_food_points);
     toast(`${displayName} has been fed`);
     router.refresh();
   }
@@ -284,7 +291,12 @@ export function PetPanel({
         {isOwner ? (
           <div className="pt-owner-only">
             <div className="acts">
-              <button type="button" className="btn btn-orange" onClick={() => feedDialogRef.current?.showModal()}>
+              <button
+                type="button"
+                className="btn btn-orange"
+                disabled={energyPct >= 100}
+                onClick={() => feedDialogRef.current?.showModal()}
+              >
                 Feed
               </button>
               <button type="button" className="btn btn-leaf" disabled title="Coming soon">
@@ -427,14 +439,26 @@ export function PetPanel({
             <span>Feed {displayName}?</span>
           </h2>
           <div className="fg-body">
-            <p style={{ margin: 0 }}>This restores {displayName}&rsquo;s energy to 100%.</p>
+            <p style={{ margin: 0 }}>
+              This restores {displayName}&rsquo;s energy to 100% for <b>{feedCost}</b> food points. You have{" "}
+              <b>{foodPoints}</b>.
+            </p>
+            {!canAffordFeed ? (
+              <p style={{ margin: "8px 0 0", color: "#a3281a" }}>
+                Not enough food points — convert items into more on the{" "}
+                <a href="/items" style={{ fontWeight: 800 }}>
+                  Items
+                </a>{" "}
+                page.
+              </p>
+            ) : null}
           </div>
           <div className="fg-foot">
             <button type="button" className="btn btn-sm btn-cream" onClick={() => feedDialogRef.current?.close()}>
               Cancel
             </button>
-            <button type="button" className="btn btn-sm btn-orange" disabled={isFeeding} onClick={doFeed}>
-              {isFeeding ? "Feeding…" : "Feed"}
+            <button type="button" className="btn btn-sm btn-orange" disabled={isFeeding || !canAffordFeed} onClick={doFeed}>
+              {isFeeding ? "Feeding…" : `Feed for ${feedCost}`}
             </button>
           </div>
         </form>

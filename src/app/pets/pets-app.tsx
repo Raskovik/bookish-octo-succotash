@@ -87,12 +87,14 @@ export function PetsApp({
   capacity,
   initialGroups,
   initialPets,
+  initialFoodPoints,
 }: {
   userId: string;
   userName: string;
   capacity: number;
   initialGroups: UIGroup[];
   initialPets: UIPet[];
+  initialFoodPoints: number;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
@@ -216,18 +218,44 @@ export function PetsApp({
     router.refresh();
   }
 
-  /* ---------- feeding (real, per-pet feed_pet RPC) ---------- */
+  /* ---------- feeding (real, per-pet feed_pet RPC, costs food points) ---------- */
 
   const feedDialogRef = useRef<HTMLDialogElement>(null);
   const [feedScope, setFeedScope] = useState<Tab>("all");
   const [isFeeding, setIsFeeding] = useState(false);
+  const [foodPoints, setFoodPoints] = useState(initialFoodPoints);
+
+  function feedCostOf(pet: UIPet): number {
+    return Math.ceil((100 - energyOf(pet)) / 10);
+  }
 
   const feedPool = inTab(effectiveTab);
   const feedHungryCount = feedPool.filter((p) => energyOf(p) < 100).length;
   const feedScopeLabel = effectiveTab === "all" ? "all" : effectiveTab === "none" ? "these" : "group";
-  const feedTargets = inTab(feedScope)
+
+  // Same "neediest pets first" priority the handoff's own food-points
+  // plan used, adapted to a per-pet flat cost instead of continuous HP
+  // points: hungriest pets in scope are queued first, and as many as
+  // the player's real balance covers get fed — a pet further down the
+  // list that happens to be cheap enough still gets included even if an
+  // earlier, pricier one didn't fit, so the budget isn't wasted leaving
+  // gaps.
+  const hungryInScope = inTab(feedScope)
     .filter((p) => energyOf(p) < 100)
     .sort((a, b) => energyOf(a) - energyOf(b));
+  let feedBudgetLeft = foodPoints;
+  const feedTargets: UIPet[] = [];
+  const feedSkipped: UIPet[] = [];
+  for (const pet of hungryInScope) {
+    const cost = feedCostOf(pet);
+    if (cost <= feedBudgetLeft) {
+      feedTargets.push(pet);
+      feedBudgetLeft -= cost;
+    } else {
+      feedSkipped.push(pet);
+    }
+  }
+  const feedTargetsCost = feedTargets.reduce((s, p) => s + feedCostOf(p), 0);
 
   function openFeedDialog() {
     setFeedScope(effectiveTab);
@@ -242,6 +270,7 @@ export function PetsApp({
     const prevFedAt = new Map(targets.map((p) => [p.id, p.lastFedAt]));
 
     setPets((curr) => curr.map((p) => (prevFedAt.has(p.id) ? { ...p, lastFedAt: now } : p)));
+    setFoodPoints((f) => f - feedTargetsCost);
     feedDialogRef.current?.close();
     setIsFeeding(true);
 
@@ -250,11 +279,22 @@ export function PetsApp({
     );
     setIsFeeding(false);
 
-    const failedIds = targets.filter((_, i) => results[i].error).map((p) => p.id);
+    // Each successful feed_pet() call returns its own new_food_points,
+    // but these calls run concurrently (Promise.all) — real server-side
+    // row locking serializes the actual deductions, so the final
+    // balance is correct either way, but any one response's balance can
+    // reflect a different in-flight moment than another's and isn't
+    // safe to pick as "the" final value. The optimistic total already
+    // deducted up front is exact for whichever targets succeed, so
+    // failures just get refunded back onto it — no per-response
+    // reconciliation needed.
+    const failed = targets.filter((_, i) => results[i].error);
+    const failedIds = failed.map((p) => p.id);
     if (failedIds.length > 0) {
       setPets((curr) =>
         curr.map((p) => (failedIds.includes(p.id) ? { ...p, lastFedAt: prevFedAt.get(p.id)! } : p)),
       );
+      setFoodPoints((f) => f + failed.reduce((s, p) => s + feedCostOf(p), 0));
     }
 
     if (failedIds.length === targets.length) {
@@ -262,7 +302,7 @@ export function PetsApp({
     } else if (failedIds.length > 0) {
       toast(`Fed ${targets.length - failedIds.length} of ${targets.length} pets — the rest didn't save.`);
     } else {
-      toast(`Fed ${targets.length} ${targets.length === 1 ? "pet" : "pets"}`);
+      toast(`Fed ${targets.length} ${targets.length === 1 ? "pet" : "pets"} for ${feedTargetsCost} food points`);
     }
   }
 
@@ -475,7 +515,7 @@ export function PetsApp({
             </button>
             {feedHungryCount ? (
               <small>
-                <b>{feedHungryCount}</b> hungry
+                <b>{feedHungryCount}</b> hungry &middot; <b>{foodPoints}</b> food points
               </small>
             ) : null}
           </div>
@@ -889,9 +929,14 @@ export function PetsApp({
           </h2>
           <div className="fg-body">
             <p>
-              {feedTargets.length === 0
-                ? "Everyone in this group is already full."
-                : `Feeding is free and instantly restores full energy — ${feedTargets.length} ${feedTargets.length === 1 ? "pet" : "pets"} will be fed to 100%.`}
+              {hungryInScope.length === 0 ? (
+                "Everyone in this group is already full."
+              ) : (
+                <>
+                  Feeding instantly restores full energy. You have <b>{foodPoints}</b> food points — the hungriest
+                  pets eat first.
+                </>
+              )}
             </p>
             <ul className="fpv">
               {feedTargets.slice(0, 5).map((pet) => {
@@ -904,13 +949,23 @@ export function PetsApp({
                       <i style={{ width: "100%" }} />
                     </span>
                     <span className="fa">
-                      {before}% &rarr; 100%
+                      {before}% &rarr; 100% (&minus;{feedCostOf(pet)})
                     </span>
                   </li>
                 );
               })}
               {feedTargets.length > 5 ? <li className="more">+ {feedTargets.length - 5} more pets</li> : null}
             </ul>
+            {feedSkipped.length > 0 ? (
+              <p className="iv-sp-note">
+                Not enough food points left for {feedSkipped.length} more {feedSkipped.length === 1 ? "pet" : "pets"}{" "}
+                — feed fewer at once, or make more food points on the{" "}
+                <a href="/items" style={{ fontWeight: 800 }}>
+                  Items
+                </a>{" "}
+                page.
+              </p>
+            ) : null}
           </div>
           <div className="fg-foot">
             <button type="button" className="btn btn-sm btn-cream" onClick={() => feedDialogRef.current?.close()}>
@@ -922,7 +977,9 @@ export function PetsApp({
               disabled={isFeeding || feedTargets.length === 0}
               onClick={applyFeed}
             >
-              {isFeeding ? "Feeding…" : `Feed ${feedTargets.length} ${feedTargets.length === 1 ? "pet" : "pets"}`}
+              {isFeeding
+                ? "Feeding…"
+                : `Feed ${feedTargets.length} ${feedTargets.length === 1 ? "pet" : "pets"} for ${feedTargetsCost}`}
             </button>
           </div>
         </form>

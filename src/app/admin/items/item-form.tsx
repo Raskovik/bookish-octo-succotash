@@ -147,6 +147,39 @@ export function ItemForm({
         <p className="text-xs text-stone-500">Leave blank to keep this item out of /shop.</p>
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="food_value" className="text-sm font-medium">
+          Food points (per unit)
+        </label>
+        <input
+          id="food_value"
+          name="food_value"
+          type="number"
+          min={0}
+          step={1}
+          defaultValue={item?.food_value ?? ""}
+          placeholder="Blank = can't be turned into food points"
+          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+        />
+        <p className="text-xs text-stone-500">
+          Leave blank to keep this item out of /items&apos; &quot;Food points&quot; action.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="description" className="text-sm font-medium">
+          Description
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={3}
+          defaultValue={item?.description ?? ""}
+          placeholder="Shown on /items' detail panel — optional"
+          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+        />
+      </div>
+
       <label className="flex items-center gap-2 text-sm font-medium">
         <input
           type="checkbox"

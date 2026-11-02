@@ -22,7 +22,7 @@ export default async function PetsPage() {
   const userId = user.id;
 
   const [{ data: userRow }, { data: foldersData }, { data: petsData }] = await Promise.all([
-    supabase.from("users").select("display_name, den_size").eq("id", userId).single(),
+    supabase.from("users").select("display_name, den_size, food_points").eq("id", userId).single(),
     supabase
       .from("pet_folders")
       .select("id, owner_id, name, color, bio, sort_order, created_at")
@@ -66,6 +66,7 @@ export default async function PetsPage() {
           capacity={denSize}
           initialGroups={groups}
           initialPets={pets}
+          initialFoodPoints={userRow?.food_points ?? 0}
         />
       </div>
     </main>

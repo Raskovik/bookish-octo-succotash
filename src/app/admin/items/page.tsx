@@ -7,7 +7,7 @@ export default async function AdminItemsPage() {
 
   const { data: items } = await supabase
     .from("items")
-    .select("id, name, type, rarity, image_url, sell_value, shop_price, is_active")
+    .select("id, name, type, rarity, image_url, sell_value, shop_price, food_value, is_active")
     .order("name");
 
   return (
