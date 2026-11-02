@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { bbcodeToHtml } from "@/lib/bbcode";
 import { petLevelTier } from "@/lib/pet-display";
+import { calcPetEnergy } from "@/lib/pet-energy";
 import type { PetFolderColor } from "@/lib/supabase/types";
 
 /**
@@ -13,27 +14,17 @@ import type { PetFolderColor } from "@/lib/supabase/types";
  * reference implementation to React state instead of manual DOM
  * patching, per the design handoff for the "den/my pets" page.
  *
- * Three deliberate departures from the handoff, each one the user's own
+ * Two deliberate departures from the handoff, each one the user's own
  * call when asked (see commit message / PR description for the full
  * reasoning):
  *
- * 1. HP and food points have no real backend yet — this app already
- *    has a different, working pet-vitality system (energy, see
- *    pet-energy.ts + the real per-pet Feed button on /pets/[petId]) —
- *    so hp/hpMax and food points here are a stable, per-pet synthetic
- *    placeholder (see syntheticHp() below), and feeding only updates
- *    local state, never the database. This matches how the reference
- *    js/pets.js itself behaves with no `data-api` configured ("runs in
- *    memory," its own words) rather than a bug — the visual and the
- *    interaction are both real, just not persisted. A second pass
- *    reconciles this with the real energy system.
- * 2. "Groups" are the existing pet_folders table (0012), extended with
+ * 1. "Groups" are the existing pet_folders table (0012), extended with
  *    color/bio/sort_order (0051) rather than a new parallel concept —
  *    group CRUD here is plain RLS-gated client writes, matching 0012's
  *    own "folders hold nothing sensitive" convention. Only the bulk
  *    pet-move goes through an RPC (move_pets_to_folder, 0051), since
  *    pets has no client UPDATE policy at all.
- * 3. Drag-and-drop, multi-select with a persistent selection, and the
+ * 2. Drag-and-drop, multi-select with a persistent selection, and the
  *    6-second Undo toast are all real and fully wired (not simplified).
  *
  * Bulk for-trade tagging (the old page's BulkForTradeButton) has no
@@ -41,18 +32,22 @@ import type { PetFolderColor } from "@/lib/supabase/types";
  * for-trade toggle on /pets/[petId] is unaffected. "Upgrade your den"
  * is wired to the real expand_den RPC (not a dead link to a shop page
  * that doesn't exist), styled to match the handoff's plain text link.
+ *
+ * The handoff's own reference js/pets.js has no backend at all ("runs
+ * in memory") and invents an HP/food-points resource system of its
+ * own. This page used to mirror that with a per-pet synthetic HP value
+ * (a hash of the pet's id) and a fake shared food-points budget — which
+ * meant this page's bar and /pets/[petId]'s real energy bar could show
+ * two different values for the same pet, and feeding here never
+ * touched the real energy a pet actually adventures with. Both are now
+ * the one real thing: the same last_fed_at-based energy percentage
+ * (calcPetEnergy, pet-energy.ts) the single-pet page already used, and
+ * feeding calls the same real feed_pet() RPC that page's Feed button
+ * does (once per pet in the chosen scope — feed_pet has no per-pet
+ * resource cost of its own, so there's no "food points" budget to ever
+ * run out of; the food-ic/food CSS classes from the handoff go unused
+ * now that there's nothing real for them to show).
  */
-
-// A pet's hp/hpMax everywhere below is derived from this, not stored —
-// see the file-level comment. Deterministic per pet id so a given
-// pet's bar doesn't jump around between renders/pagination.
-function syntheticHp(petId: string): { hp: number; hpMax: number } {
-  let h = 0;
-  for (let i = 0; i < petId.length; i++) h = (h * 31 + petId.charCodeAt(i)) >>> 0;
-  const hpMax = 100;
-  const hp = 10 + (h % 91); // 10–100: same wide spread as the handoff's own sample data
-  return { hp, hpMax };
-}
 
 const COLORS: PetFolderColor[] = ["leaf", "blue", "orange", "rose", "plum"];
 const MAX_GROUPS = 12;
@@ -68,11 +63,12 @@ export type UIPet = {
   img: string | null;
   typeName: string;
   groupId: string | null;
+  lastFedAt: string;
 };
 
-// UIPet plus the synthetic hp/hpMax every pet gets on mount — see the
-// file-level comment on syntheticHp().
-type Pet = UIPet & { hp: number; hpMax: number };
+function energyOf(pet: UIPet): number {
+  return calcPetEnergy(pet.lastFedAt);
+}
 
 export type UIGroup = {
   id: string;
@@ -83,7 +79,7 @@ export type UIGroup = {
 };
 
 type Tab = "all" | "none" | string;
-type SortKey = "name" | "level" | "levellow" | "hp";
+type SortKey = "name" | "level" | "levellow" | "energy";
 
 export function PetsApp({
   userId,
@@ -102,8 +98,7 @@ export function PetsApp({
   const router = useRouter();
 
   const [groups, setGroups] = useState<UIGroup[]>(initialGroups);
-  const [pets, setPets] = useState<Pet[]>(() => initialPets.map((p) => ({ ...p, ...syntheticHp(p.id) })));
-  const [food, setFood] = useState(() => Math.max(100, initialPets.length * 20));
+  const [pets, setPets] = useState<UIPet[]>(initialPets);
 
   const [tab, setTab] = useState<Tab>("all");
   const [page, setPage] = useState(1);
@@ -169,7 +164,7 @@ export function PetsApp({
     a.sort((x, y) => {
       if (sort === "level") return y.level - x.level;
       if (sort === "levellow") return x.level - y.level;
-      if (sort === "hp") return x.hp / x.hpMax - y.hp / y.hpMax;
+      if (sort === "energy") return energyOf(x) - energyOf(y);
       return x.name.localeCompare(y.name);
     });
     return a;
@@ -221,54 +216,54 @@ export function PetsApp({
     router.refresh();
   }
 
-  /* ---------- feeding (local-only simulation — see file-level comment) ---------- */
+  /* ---------- feeding (real, per-pet feed_pet RPC) ---------- */
 
   const feedDialogRef = useRef<HTMLDialogElement>(null);
   const [feedScope, setFeedScope] = useState<Tab>("all");
-  const [feedPlan, setFeedPlan] = useState<{ pet: Pet; give: number }[]>([]);
+  const [isFeeding, setIsFeeding] = useState(false);
 
   const feedPool = inTab(effectiveTab);
-  const feedMissing = feedPool.reduce((s, p) => s + (p.hpMax - p.hp), 0);
-  const feedHungryCount = feedPool.filter((p) => p.hp < p.hpMax).length;
+  const feedHungryCount = feedPool.filter((p) => energyOf(p) < 100).length;
   const feedScopeLabel = effectiveTab === "all" ? "all" : effectiveTab === "none" ? "these" : "group";
-  const feedScopeMissing = inTab(feedScope).reduce((s, p) => s + (p.hpMax - p.hp), 0);
-  const feedPlanTotal = feedPlan.reduce((s, x) => s + x.give, 0);
-
-  function computeFeedPlan(scope: Tab, foodAvailable: number) {
-    let left = foodAvailable;
-    const out: { pet: Pet; give: number }[] = [];
-    const pool = inTab(scope)
-      .filter((p) => p.hp < p.hpMax)
-      .sort((a, b) => a.hp / a.hpMax - b.hp / b.hpMax);
-    for (const p of pool) {
-      const give = Math.min(p.hpMax - p.hp, left);
-      if (give > 0) {
-        out.push({ pet: p, give });
-        left -= give;
-      }
-    }
-    return out;
-  }
+  const feedTargets = inTab(feedScope)
+    .filter((p) => energyOf(p) < 100)
+    .sort((a, b) => energyOf(a) - energyOf(b));
 
   function openFeedDialog() {
     setFeedScope(effectiveTab);
-    setFeedPlan(computeFeedPlan(effectiveTab, food));
     feedDialogRef.current?.showModal();
   }
 
-  function applyFeed() {
-    const plan = feedPlan;
-    const spent = plan.reduce((s, x) => s + x.give, 0);
-    if (!spent) return;
-    setPets((curr) =>
-      curr.map((p) => {
-        const entry = plan.find((x) => x.pet.id === p.id);
-        return entry ? { ...p, hp: p.hp + entry.give } : p;
-      }),
-    );
-    setFood((f) => f - spent);
+  async function applyFeed() {
+    const targets = feedTargets;
+    if (targets.length === 0) return;
+
+    const now = new Date().toISOString();
+    const prevFedAt = new Map(targets.map((p) => [p.id, p.lastFedAt]));
+
+    setPets((curr) => curr.map((p) => (prevFedAt.has(p.id) ? { ...p, lastFedAt: now } : p)));
     feedDialogRef.current?.close();
-    toast(`Fed ${plan.length} ${plan.length === 1 ? "pet" : "pets"} with food points`);
+    setIsFeeding(true);
+
+    const results = await Promise.all(
+      targets.map((p) => supabase.rpc("feed_pet", { p_user_id: userId, p_pet_id: p.id })),
+    );
+    setIsFeeding(false);
+
+    const failedIds = targets.filter((_, i) => results[i].error).map((p) => p.id);
+    if (failedIds.length > 0) {
+      setPets((curr) =>
+        curr.map((p) => (failedIds.includes(p.id) ? { ...p, lastFedAt: prevFedAt.get(p.id)! } : p)),
+      );
+    }
+
+    if (failedIds.length === targets.length) {
+      toast("That didn't work. Please try again.");
+    } else if (failedIds.length > 0) {
+      toast(`Fed ${targets.length - failedIds.length} of ${targets.length} pets — the rest didn't save.`);
+    } else {
+      toast(`Fed ${targets.length} ${targets.length === 1 ? "pet" : "pets"}`);
+    }
   }
 
   /* ---------- moving pets (real, bulk RPC) ---------- */
@@ -470,29 +465,19 @@ export function PetsApp({
         </div>
         <div className="pb-hr">
           <div className="fl">
-            <button type="button" className="btn btn-orange btn-sm btn-feed" disabled={!feedMissing} onClick={openFeedDialog}>
-              {feedMissing ? (
-                <>
-                  Feed {feedScopeLabel} &middot; {feedMissing}{" "}
-                  <span className="food-ic" aria-hidden="true">
-                    🍖
-                  </span>
-                </>
-              ) : (
-                "Everyone is full"
-              )}
+            <button
+              type="button"
+              className="btn btn-orange btn-sm btn-feed"
+              disabled={!feedHungryCount}
+              onClick={openFeedDialog}
+            >
+              {feedHungryCount ? `Feed ${feedScopeLabel} · ${feedHungryCount}` : "Everyone is full"}
             </button>
-            <small>
-              {feedHungryCount ? (
-                <>
-                  <b>{feedHungryCount}</b> hungry &middot;{" "}
-                </>
-              ) : null}
-              <span className="food-ic" aria-hidden="true">
-                🍖
-              </span>{" "}
-              <b>{food}</b> available
-            </small>
+            {feedHungryCount ? (
+              <small>
+                <b>{feedHungryCount}</b> hungry
+              </small>
+            ) : null}
           </div>
         </div>
       </div>
@@ -695,7 +680,7 @@ export function PetsApp({
                 <option value="name">Sort: Name</option>
                 <option value="level">Sort: Level (high)</option>
                 <option value="levellow">Sort: Level (low)</option>
-                <option value="hp">Sort: Needs food first</option>
+                <option value="energy">Sort: Needs feeding first</option>
               </select>
               <span className="seg" role="group" aria-label="Card size">
                 <button type="button" aria-pressed={!small} onClick={() => { setSmall(false); setPage(1); }}>
@@ -731,7 +716,7 @@ export function PetsApp({
             <div className={`pgrid${small ? " dense" : ""}${selMode ? " selmode" : ""}`}>
               {pageItems.map((p) => {
                 const on = !!picked[p.id];
-                const pct = Math.round((p.hp / p.hpMax) * 100);
+                const pct = Math.round(energyOf(p));
                 const hpClass = pct <= 25 ? " low" : pct <= 50 ? " mid" : "";
                 return (
                   <button
@@ -761,12 +746,7 @@ export function PetsApp({
                       {p.img ? <img src={p.img} alt="" /> : null}
                     </span>
                     <span className="nm">{p.name}</span>
-                    <span
-                      className={`hp${hpClass}`}
-                      role="img"
-                      aria-label={`Health ${p.hp} of ${p.hpMax}`}
-                      title={`${p.hp} / ${p.hpMax} HP`}
-                    >
+                    <span className={`hp${hpClass}`} role="img" aria-label={`Energy ${pct}%`} title={`${pct}% energy`}>
                       <i style={{ width: `${pct}%` }} />
                     </span>
                   </button>
@@ -908,43 +888,41 @@ export function PetsApp({
             </span>
           </h2>
           <div className="fg-body">
-            <p className="fbig">
-              <span className="food">
-                <span aria-hidden="true">🍖</span> You have <b>{food}</b>
-              </span>
-              <span className="food">
-                To fill everyone <b>{feedScopeMissing}</b>
-              </span>
-            </p>
             <p>
-              {food < feedScopeMissing
-                ? "Not quite enough for everyone, so the pets with the lowest health eat first."
-                : "Food points are shared out for you. No items to sort."}
+              {feedTargets.length === 0
+                ? "Everyone in this group is already full."
+                : `Feeding is free and instantly restores full energy — ${feedTargets.length} ${feedTargets.length === 1 ? "pet" : "pets"} will be fed to 100%.`}
             </p>
             <ul className="fpv">
-              {feedPlan.slice(0, 5).map(({ pet, give }) => {
-                const before = Math.round((pet.hp / pet.hpMax) * 100);
-                const after = Math.round(((pet.hp + give) / pet.hpMax) * 100);
+              {feedTargets.slice(0, 5).map((pet) => {
+                const before = Math.round(energyOf(pet));
                 const cls = before <= 25 ? " low" : before <= 50 ? " mid" : "";
                 return (
                   <li key={pet.id}>
                     <span className="nm2">{pet.name}</span>
                     <span className={`hp${cls}`}>
-                      <i style={{ width: `${after}%` }} />
+                      <i style={{ width: "100%" }} />
                     </span>
-                    <span className="fa">+{give}</span>
+                    <span className="fa">
+                      {before}% &rarr; 100%
+                    </span>
                   </li>
                 );
               })}
-              {feedPlan.length > 5 ? <li className="more">+ {feedPlan.length - 5} more pets</li> : null}
+              {feedTargets.length > 5 ? <li className="more">+ {feedTargets.length - 5} more pets</li> : null}
             </ul>
           </div>
           <div className="fg-foot">
             <button type="button" className="btn btn-sm btn-cream" onClick={() => feedDialogRef.current?.close()}>
               Cancel
             </button>
-            <button type="button" className="btn btn-sm btn-orange" disabled={!feedPlanTotal} onClick={applyFeed}>
-              Feed for {feedPlanTotal} points
+            <button
+              type="button"
+              className="btn btn-sm btn-orange"
+              disabled={isFeeding || feedTargets.length === 0}
+              onClick={applyFeed}
+            >
+              {isFeeding ? "Feeding…" : `Feed ${feedTargets.length} ${feedTargets.length === 1 ? "pet" : "pets"}`}
             </button>
           </div>
         </form>

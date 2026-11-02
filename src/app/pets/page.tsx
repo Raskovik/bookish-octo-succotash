@@ -30,7 +30,9 @@ export default async function PetsPage() {
       .order("sort_order", { ascending: true }),
     supabase
       .from("pets")
-      .select("id, rarity, color_variant, folder_id, custom_name, is_for_trade, level, created_at, species(name, image_url)")
+      .select(
+        "id, rarity, color_variant, folder_id, custom_name, is_for_trade, level, last_fed_at, created_at, species(name, image_url)",
+      )
       .eq("owner_id", userId)
       .order("created_at", { ascending: true }),
   ]);
@@ -52,6 +54,7 @@ export default async function PetsPage() {
     img: petImageUrl(p),
     typeName: petTypeName(p),
     groupId: p.folder_id,
+    lastFedAt: p.last_fed_at,
   }));
 
   return (

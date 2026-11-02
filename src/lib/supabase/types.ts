@@ -367,6 +367,7 @@ export type PetWithSpecies = Pick<
   | "custom_name"
   | "is_for_trade"
   | "level"
+  | "last_fed_at"
   | "created_at"
 > & {
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
