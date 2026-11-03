@@ -4,8 +4,12 @@
 // enforces server-side — keep the two in sync by hand if either
 // changes, same convention src/config.ts documents for its own
 // RPC-mirroring display constants.
-export const ENERGY_DECAY_HOURS = 48;
-export const MIN_ENERGY_TO_ADVENTURE = 75;
+// 240 hours (10 days) to fully decay; a pet at 20% energy or less can't
+// adventure (<= 20, not < 20 — see start_expedition()). Starving has no
+// other consequence: a pet never dies or runs away, feeding just
+// restores it same as always. See 0055_slower_energy_decay.sql.
+export const ENERGY_DECAY_HOURS = 240;
+export const MIN_ENERGY_TO_ADVENTURE = 20;
 
 export function calcPetEnergy(lastFedAt: string): number {
   const hoursSinceFed = (Date.now() - new Date(lastFedAt).getTime()) / 3_600_000;
