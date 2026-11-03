@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { bbcodeToHtml } from "@/lib/bbcode";
 import { petLevelTier } from "@/lib/pet-display";
+import { statTier } from "@/lib/pet-combat";
 
 /**
  * The `.pt-wrap` contents of /pets/[petId] — ported from
@@ -21,7 +22,8 @@ import { petLevelTier } from "@/lib/pet-display";
  *    rule, not the handoff's placeholder thresholds (7/25/60/99, which
  *    don't even fit — rolls are 1-10, see roll_strength's own column
  *    comment): <=5 wood, 6-9 silver, 10 gold, diamond when all three
- *    rolls are 10. See statTier() below.
+ *    rolls are 10. See statTier() in lib/pet-combat.ts (shared with the
+ *    expedition planner's pet picker, which shows the same plaques).
  * 2. name-max/bio-max use this app's real, already-enforced server
  *    limits (40 / 2000 — rename_pet()/set_pet_bio()) instead of the
  *    handoff's data-name-max="20"/data-bio-max="500" placeholders,
@@ -38,13 +40,6 @@ import { petLevelTier } from "@/lib/pet-display";
  * buttons, same as the Tailwind version of this page did, rather than
  * building confirm dialogs for actions that don't do anything real.
  */
-
-function statTier(value: number, allTen: boolean): "" | "pt-silver" | "pt-gold" | "pt-diamond" {
-  if (allTen) return "pt-diamond";
-  if (value >= 10) return "pt-gold";
-  if (value >= 6) return "pt-silver";
-  return "";
-}
 
 const NAME_MAX = 40; // rename_pet() server limit — see file-level comment
 const BIO_MAX = 2000; // set_pet_bio() server limit — see file-level comment

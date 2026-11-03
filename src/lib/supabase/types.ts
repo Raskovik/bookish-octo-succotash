@@ -359,6 +359,7 @@ export type ExpeditionRow = {
   result_item_id: string | null;
   pending_species_id: string | null;
   pending_item_id: string | null;
+  coins_reward: number;
   created_at: string;
 };
 
@@ -383,6 +384,13 @@ export type PetWithSpecies = Pick<
 > & {
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
 };
+
+// PetWithSpecies plus the three stat rolls (no bio/owner_id — unlike
+// PetDetail below, this is for the expedition planner's pet picker,
+// which shows the same stat plaques as the pet page but never needs the
+// owner-vs-visitor distinction, since only your own pets are pickable).
+export type PetWithStats = PetWithSpecies &
+  Pick<PetRow, "roll_strength" | "roll_speed" | "roll_defence">;
 
 // Everything PetWithSpecies has, plus bio, stats data, and owner_id
 // (needed to tell an owner viewing their own pet from anyone else
@@ -453,7 +461,7 @@ export type ExpeditionWithZone = Pick<
 // awaiting_claim too — it isn't free until the reward is claimed.
 export type ActiveExpeditionSummary = Pick<
   ExpeditionRow,
-  "id" | "pet_id" | "zone_id" | "resolves_at" | "status"
+  "id" | "pet_id" | "zone_id" | "started_at" | "resolves_at" | "status"
 >;
 
 // The revealed reward for a single awaiting_claim expedition, fetched
@@ -463,6 +471,7 @@ export type ActiveExpeditionSummary = Pick<
 export type ExpeditionRewardReveal = {
   pending_species_id: string | null;
   pending_item_id: string | null;
+  coins_reward: number;
   species: Pick<SpeciesRow, "name" | "image_url" | "rarity"> | null;
   items: Pick<ItemRow, "name" | "image_url" | "rarity"> | null;
 };

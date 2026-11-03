@@ -47,3 +47,16 @@ export function calcPetStats(pet: {
 export function formatStat(value: number): string {
   return value.toFixed(1);
 }
+
+// Stat-plaque tier (wood/silver/gold/diamond, furgarden.css's .pt-tier)
+// — the player's own rule (asked when /pets/[petId] was ported), keyed
+// off the birth ROLL (1-10), not the computed stat value: <=5 wood, 6-9
+// silver, 10 gold, diamond when all three rolls are 10. Shared by the
+// pet detail page and the expedition planner's pet-picker, which both
+// show these same plaques.
+export function statTier(roll: number, allTen: boolean): "" | "pt-silver" | "pt-gold" | "pt-diamond" {
+  if (allTen) return "pt-diamond";
+  if (roll >= 10) return "pt-gold";
+  if (roll >= 6) return "pt-silver";
+  return "";
+}

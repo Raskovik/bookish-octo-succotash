@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ExpeditionMap } from "@/components/expedition-map";
+import { ExpeditionsApp } from "./expeditions-app";
 import type {
   ActiveExpeditionSummary,
   ExplorableZone,
   OwnedPotion,
-  PetWithSpecies,
+  PetFolderRow,
+  PetWithStats,
 } from "@/lib/supabase/types";
 
 // Row shapes of the zone_pet_pool -> species, zone_loot_table -> items,
@@ -45,6 +46,7 @@ export default async function ExpeditionsPage() {
     { data: petPoolData },
     { data: lootTableData },
     { data: petsData },
+    { data: foldersData },
     { data: activeData },
     { data: potionsData },
   ] = await Promise.all([
@@ -58,12 +60,19 @@ export default async function ExpeditionsPage() {
     supabase.from("zone_loot_table").select("zone_id, items(id, name, image_url, rarity)"),
     supabase
       .from("pets")
-      .select("id, rarity, color_variant, created_at, species(name, image_url)")
+      .select(
+        "id, rarity, color_variant, folder_id, custom_name, is_for_trade, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
+      )
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true }),
     supabase
+      .from("pet_folders")
+      .select("id, owner_id, name, color, bio, sort_order, created_at")
+      .eq("owner_id", user.id)
+      .order("sort_order", { ascending: true }),
+    supabase
       .from("expeditions")
-      .select("id, pet_id, zone_id, resolves_at, status")
+      .select("id, pet_id, zone_id, started_at, resolves_at, status")
       .eq("user_id", user.id)
       .in("status", ["in_progress", "awaiting_claim"]),
     supabase
@@ -108,7 +117,8 @@ export default async function ExpeditionsPage() {
     pool: poolByZone.get(zone.id) ?? [],
   }));
 
-  const pets = (petsData ?? []) as unknown as PetWithSpecies[];
+  const pets = (petsData ?? []) as unknown as PetWithStats[];
+  const folders = (foldersData ?? []) as PetFolderRow[];
   const activeExpeditions = (activeData ?? []) as ActiveExpeditionSummary[];
   const ownedPotions: OwnedPotion[] = ((potionsData ?? []) as unknown as OwnedPotionJoinRow[])
     .filter((row) => row.items)
@@ -122,19 +132,15 @@ export default async function ExpeditionsPage() {
   return (
     <main id="main">
       <div className="sheet">
-        <div className="panel flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Expeditions</h1>
-        <p className="text-sm text-stone-500">
-          Pick an area on the map to see what it offers and send a pet to explore it.
-        </p>
-      </div>
-      <ExpeditionMap
-        zones={zones}
-        pets={pets}
-        activeExpeditions={activeExpeditions}
-        ownedPotions={ownedPotions}
-      />
+        <div className="panel">
+          <ExpeditionsApp
+            userId={user.id}
+            zones={zones}
+            pets={pets}
+            folders={folders}
+            activeExpeditions={activeExpeditions}
+            ownedPotions={ownedPotions}
+          />
         </div>
       </div>
     </main>
