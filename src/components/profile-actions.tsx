@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { blockPlayer, unblockPlayer, submitReport } from "@/lib/report-actions";
 import { sendMessageToUser } from "@/app/messages/actions";
 
@@ -29,23 +30,31 @@ const REPORT_REASONS: { value: string; label: string }[] = [
  * effect, and belongs where the action's outcome is actually known
  * (the transition callback), not in a passive effect reacting to state.
  *
- * Friending isn't a real feature yet (no friends table), so "friend"/
- * "pending" are left out entirely rather than built as dead buttons —
- * "Add friend" always renders disabled. Message/Report/Block are real:
- * they call the same server actions the rest of the app already uses.
+ * Friend requests are responded to (accept/deny) only from the
+ * notifications tray, never from here — this page only ever shows
+ * "visitor" (send a request), "pending" (request sent, can cancel) or
+ * "friend" (can remove). Message/Report/Block are real: they call the
+ * same server actions the rest of the app already uses. The friend
+ * RPCs are called directly from this client component (createClient),
+ * same pattern as pet-panel.tsx's feed/play calls, rather than through
+ * a server action.
  */
 export function ProfileActions({
   initialView,
   profileId,
   profileName,
   viewerSignedIn,
+  viewerId,
 }: {
-  initialView: "owner" | "visitor" | "blocked";
+  initialView: "owner" | "visitor" | "blocked" | "friend" | "pending";
   profileId: string;
   profileName: string;
   viewerSignedIn: boolean;
+  viewerId: string | null;
 }) {
+  const supabase = useMemo(() => createClient(), []);
   const [view, setView] = useState(initialView);
+  const [isFriendPending, setIsFriendPending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -108,6 +117,60 @@ export function ProfileActions({
     });
   }
 
+  function handleSendFriendRequest() {
+    if (!viewerId) return;
+    setIsFriendPending(true);
+    (async () => {
+      const { error } = await supabase.rpc("send_friend_request", {
+        p_user_id: viewerId,
+        p_other_user_id: profileId,
+      });
+      setIsFriendPending(false);
+      if (error) {
+        say(error.message);
+        return;
+      }
+      setView("pending");
+      say(`Friend request sent to ${profileName}.`);
+    })();
+  }
+
+  function handleCancelFriendRequest() {
+    if (!viewerId) return;
+    setIsFriendPending(true);
+    (async () => {
+      const { error } = await supabase.rpc("cancel_friend_request", {
+        p_user_id: viewerId,
+        p_other_user_id: profileId,
+      });
+      setIsFriendPending(false);
+      if (error) {
+        say(error.message);
+        return;
+      }
+      setView("visitor");
+      say("Friend request cancelled.");
+    })();
+  }
+
+  function handleRemoveFriend() {
+    if (!viewerId) return;
+    setIsFriendPending(true);
+    (async () => {
+      const { error } = await supabase.rpc("remove_friend", {
+        p_user_id: viewerId,
+        p_other_user_id: profileId,
+      });
+      setIsFriendPending(false);
+      if (error) {
+        say(error.message);
+        return;
+      }
+      setView("visitor");
+      say(`Removed ${profileName} as a friend.`);
+    })();
+  }
+
   function handleReport(formData: FormData) {
     setReportError(null);
     startReportTransition(async () => {
@@ -149,9 +212,29 @@ export function ProfileActions({
             </>
           ) : (
             <>
-              <button className="btn btn-sm btn-leaf" type="button" disabled title="Friending isn't available yet">
-                Add friend
-              </button>
+              {view === "friend" ? (
+                <span className="fbadge">
+                  <i className="ic i-star" aria-hidden="true" />
+                  Friends
+                </span>
+              ) : null}
+              {view === "friend" ? (
+                <button className="btn btn-sm btn-cream" type="button" disabled={isFriendPending} onClick={handleRemoveFriend}>
+                  {isFriendPending ? "Removing…" : "Remove friend"}
+                </button>
+              ) : view === "pending" ? (
+                <button className="btn btn-sm btn-cream" type="button" disabled={isFriendPending} onClick={handleCancelFriendRequest}>
+                  {isFriendPending ? "Cancelling…" : "Request sent — Cancel"}
+                </button>
+              ) : viewerSignedIn ? (
+                <button className="btn btn-sm btn-leaf" type="button" disabled={isFriendPending} onClick={handleSendFriendRequest}>
+                  {isFriendPending ? "Sending…" : "Add friend"}
+                </button>
+              ) : (
+                <Link className="btn btn-sm btn-leaf" href="/login" title="Sign in to add a friend">
+                  Add friend
+                </Link>
+              )}
               {viewerSignedIn ? (
                 <button
                   className="btn btn-sm"

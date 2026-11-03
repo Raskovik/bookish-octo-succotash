@@ -9,28 +9,32 @@ import type { PublicUserProfile } from "@/lib/supabase/types";
  * owner/visitor markup anymore: /profile and /u/[id] both render this
  * same component, just with a different `view`.
  *
- * Left out, since there's no data behind them: the friend badge/"friend"
- * and "pending" views (no friends feature exists — "Add friend" always
- * renders disabled rather than as a dead button for a fake state), and
- * the two decorative .bimg pet images flanking the bio (the handoff's
- * own README calls them "placeholder content" — nothing in this app
- * tracks "this player's two showcase pets"). The bio itself renders
- * through .forum-content (same as every other BBCode bio/post in the
- * app) rather than the mockup's centered-tagline .bio treatment, since
- * real bios run longer than the sample blurb and already need to
+ * Left out: the two decorative .bimg pet images flanking the bio (the
+ * handoff's own README calls them "placeholder content" — nothing in
+ * this app tracks "this player's two showcase pets"). The bio itself
+ * renders through .forum-content (same as every other BBCode bio/post
+ * in the app) rather than the mockup's centered-tagline .bio treatment,
+ * since real bios run longer than the sample blurb and already need to
  * support headings/lists/quotes/images.
+ *
+ * "friend"/"pending" are real view states now (0056_friendships.sql) —
+ * only ever set for the REQUESTER's own view of the addressee's
+ * profile; accepting/denying a request happens in the notifications
+ * tray, never here (see ProfileActions).
  */
 export function ProfilePanel({
   profile,
   petCount,
   view,
   viewerSignedIn,
+  viewerId,
   viewerCanModerate,
 }: {
   profile: PublicUserProfile;
   petCount: number;
-  view: "owner" | "visitor" | "blocked";
+  view: "owner" | "visitor" | "blocked" | "friend" | "pending";
   viewerSignedIn: boolean;
+  viewerId: string | null;
   viewerCanModerate: boolean;
 }) {
   const joined = new Date(profile.created_at).toLocaleDateString(undefined, {
@@ -69,6 +73,7 @@ export function ProfilePanel({
               profileId={profile.id}
               profileName={profile.display_name}
               viewerSignedIn={viewerSignedIn}
+              viewerId={viewerId}
             />
           </section>
 

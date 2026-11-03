@@ -951,7 +951,8 @@ export type SiteNewsPostWithAuthor = SiteNewsPostRow & {
   authorIsModerator: boolean;
 };
 
-// See 0044_notifications.sql for which DB event creates each type, and
+// See 0044_notifications.sql (and 0056_friendships.sql for the two
+// friend_* types) for which DB event creates each type, and
 // notification-message.ts for how each is turned into a sentence.
 export type NotificationType =
   | "dm"
@@ -961,7 +962,9 @@ export type NotificationType =
   | "marketplace_sold"
   | "marketplace_expired"
   | "ban_issued"
-  | "report_filed";
+  | "report_filed"
+  | "friend_request"
+  | "friend_accepted";
 
 export type NotificationRow = {
   id: string;
@@ -1019,6 +1022,16 @@ export type BlockRow = {
   id: string;
   blocker_id: string;
   blocked_id: string;
+  created_at: string;
+};
+
+export type FriendshipStatus = "pending" | "accepted";
+
+export type FriendshipRow = {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: FriendshipStatus;
   created_at: string;
 };
 
@@ -1134,6 +1147,10 @@ export type Database = {
       // is select-only in practice; TableOf still needs an Insert shape.
       notifications: TableOf<NotificationRow>;
       blocks: TableOf<BlockRow, Partial<BlockRow> & { blocker_id: string; blocked_id: string }>;
+      friendships: TableOf<
+        FriendshipRow,
+        Partial<FriendshipRow> & { requester_id: string; addressee_id: string }
+      >;
       player_notes: TableOf<
         PlayerNoteRow,
         Partial<PlayerNoteRow> & { user_id: string; author_id: string; body: string }
@@ -1433,6 +1450,22 @@ export type Database = {
       is_blocked_by: {
         Args: { p_blocked_id: string; p_blocker_id: string };
         Returns: boolean;
+      };
+      send_friend_request: {
+        Args: { p_user_id: string; p_other_user_id: string };
+        Returns: null;
+      };
+      respond_to_friend_request: {
+        Args: { p_user_id: string; p_other_user_id: string; p_accept: boolean };
+        Returns: null;
+      };
+      cancel_friend_request: {
+        Args: { p_user_id: string; p_other_user_id: string };
+        Returns: null;
+      };
+      remove_friend: {
+        Args: { p_user_id: string; p_other_user_id: string };
+        Returns: null;
       };
     };
   };

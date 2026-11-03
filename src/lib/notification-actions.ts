@@ -64,3 +64,24 @@ export async function clearAllNotifications() {
     console.error("clear_all_notifications failed", error);
   }
 }
+
+// Accept or deny a friend_request notification's underlying request
+// (0056_friendships.sql) — respond_to_friend_request also deletes the
+// matching notification row server-side, so this is the only call
+// NotificationBell needs to fire for either button.
+export async function respondToFriendRequest(requesterId: string, accept: boolean) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { error } = await supabase.rpc("respond_to_friend_request", {
+    p_user_id: user.id,
+    p_other_user_id: requesterId,
+    p_accept: accept,
+  });
+  if (error) {
+    console.error("respond_to_friend_request failed", requesterId, accept, error);
+  }
+}

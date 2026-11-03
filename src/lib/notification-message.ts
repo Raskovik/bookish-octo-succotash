@@ -32,6 +32,10 @@ export function describeNotification(notification: NotificationWithActor): strin
         : "You've received a ban";
     case "report_filed":
       return `${actor} filed a new report`;
+    case "friend_request":
+      return `${actor} sent you a friend request`;
+    case "friend_accepted":
+      return `${actor} accepted your friend request`;
     default:
       return "New notification";
   }

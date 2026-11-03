@@ -8,6 +8,7 @@ import {
   markNotificationRead,
   clearNotification,
   clearAllNotifications,
+  respondToFriendRequest,
 } from "@/lib/notification-actions";
 import type { NotificationType, NotificationWithActor } from "@/lib/supabase/types";
 
@@ -24,6 +25,8 @@ const NOTIFICATION_TILE: Record<NotificationType, string> = {
   marketplace_expired: "t-gold i-diamond",
   ban_issued: "t-gold i-megaphone",
   report_filed: "t-gold i-megaphone",
+  friend_request: "t-leaf i-paw",
+  friend_accepted: "t-gold i-star",
 };
 
 /**
@@ -112,6 +115,19 @@ export function NotificationBell({
     });
   }
 
+  // Accept/Deny on a friend_request notification — the ONLY place a
+  // request is ever responded to (never the requester's profile page).
+  // Clearing the notification instead (handleClear above) is handled
+  // server-side as an implicit deny, same RPC call shape either way.
+  function handleFriendRequestResponse(notification: NotificationWithActor, accept: boolean) {
+    onNotificationsChange((list) => list.filter((n) => n.id !== notification.id));
+    startTransition(() => {
+      if (notification.actor_id) {
+        respondToFriendRequest(notification.actor_id, accept);
+      }
+    });
+  }
+
   return (
     <div className="notif-menu" ref={containerRef}>
       <button
@@ -158,6 +174,24 @@ export function NotificationBell({
                   >
                     &times;
                   </button>
+                  {notification.type === "friend_request" ? (
+                    <div className="note-friend-acts">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-leaf"
+                        onClick={() => handleFriendRequestResponse(notification, true)}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-cream"
+                        onClick={() => handleFriendRequestResponse(notification, false)}
+                      >
+                        Deny
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
