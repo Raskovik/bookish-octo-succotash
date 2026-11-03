@@ -45,12 +45,14 @@ export function ProfileActions({
   profileName,
   viewerSignedIn,
   viewerId,
+  allowFriendRequests,
 }: {
   initialView: "owner" | "visitor" | "blocked" | "friend" | "pending";
   profileId: string;
   profileName: string;
   viewerSignedIn: boolean;
   viewerId: string | null;
+  allowFriendRequests: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [view, setView] = useState(initialView);
@@ -225,6 +227,10 @@ export function ProfileActions({
               ) : view === "pending" ? (
                 <button className="btn btn-sm btn-cream" type="button" disabled={isFriendPending} onClick={handleCancelFriendRequest}>
                   {isFriendPending ? "Cancelling…" : "Request sent — Cancel"}
+                </button>
+              ) : !allowFriendRequests ? (
+                <button className="btn btn-sm btn-leaf" type="button" disabled title="This player isn't accepting friend requests right now">
+                  Add friend
                 </button>
               ) : viewerSignedIn ? (
                 <button className="btn btn-sm btn-leaf" type="button" disabled={isFriendPending} onClick={handleSendFriendRequest}>

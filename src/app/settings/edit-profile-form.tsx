@@ -32,17 +32,20 @@ export function EditProfileForm({
   avatarUrl,
   bio,
   whoCanMessage,
+  allowFriendRequests,
 }: {
   usernameCard: React.ReactNode;
   profileUrl: string;
   avatarUrl: string | null;
   bio: string;
   whoCanMessage: WhoCanMessage;
+  allowFriendRequests: boolean;
 }) {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [allowRequests, setAllowRequests] = useState(allowFriendRequests);
 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -140,17 +143,21 @@ export function EditProfileForm({
 
           <section className="pc lt" aria-labelledby="ef-priv-h">
             <h2 className="ltab" id="ef-priv-h">
-              Messages
+              Messages &amp; friends
             </h2>
-            {/* The design also offers "allow friend requests" and an
-                "only friends" messaging option — both dropped, since
-                there's no friends feature yet for either to attach to. */}
             <fieldset className="field">
               <legend>Who can message me</legend>
               <div className="choices">
                 <label>
                   <input type="radio" name="who_can_message" value="everyone" defaultChecked={whoCanMessage === "everyone"} />
                   <span>Everyone</span>
+                </label>
+                <label>
+                  <input type="radio" name="who_can_message" value="friends" defaultChecked={whoCanMessage === "friends"} />
+                  <span>
+                    Friends only
+                    <small>Only players you&apos;re friends with can message you.</small>
+                  </span>
                 </label>
                 <label>
                   <input type="radio" name="who_can_message" value="nobody" defaultChecked={whoCanMessage === "nobody"} />
@@ -161,6 +168,19 @@ export function EditProfileForm({
                 </label>
               </div>
             </fieldset>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={allowRequests}
+                onChange={(e) => setAllowRequests(e.target.checked)}
+              />
+              <span className="track" />
+              <span>
+                Allow friend requests
+                <small>Other players can send you a friend request from your profile.</small>
+              </span>
+            </label>
+            <input type="hidden" name="allow_friend_requests" value={allowRequests ? "1" : "0"} />
           </section>
         </div>
 

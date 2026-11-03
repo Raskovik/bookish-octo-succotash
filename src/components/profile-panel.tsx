@@ -74,6 +74,7 @@ export function ProfilePanel({
               profileName={profile.display_name}
               viewerSignedIn={viewerSignedIn}
               viewerId={viewerId}
+              allowFriendRequests={profile.allow_friend_requests}
             />
           </section>
 

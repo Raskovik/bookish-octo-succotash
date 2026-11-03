@@ -1,4 +1,4 @@
-export type WhoCanMessage = "everyone" | "nobody";
+export type WhoCanMessage = "everyone" | "friends" | "nobody";
 
 export type UserRow = {
   id: string;
@@ -19,6 +19,7 @@ export type UserRow = {
   is_moderator: boolean;
   starter_granted: boolean;
   who_can_message: WhoCanMessage;
+  allow_friend_requests: boolean;
   created_at: string;
 };
 
@@ -44,6 +45,7 @@ export type PublicUserProfile = Pick<
   | "gem_balance"
   | "den_size"
   | "who_can_message"
+  | "allow_friend_requests"
 >;
 
 // Named rarity_tier in Postgres (renamed from pet_rarity once items also

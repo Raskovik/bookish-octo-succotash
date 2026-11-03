@@ -43,10 +43,11 @@ export async function updateProfileSettings(
   }
 
   const whoCanMessageRaw = formData.get("who_can_message");
-  if (whoCanMessageRaw !== "everyone" && whoCanMessageRaw !== "nobody") {
+  if (whoCanMessageRaw !== "everyone" && whoCanMessageRaw !== "friends" && whoCanMessageRaw !== "nobody") {
     return { error: "Invalid messaging preference." };
   }
   const whoCanMessage: WhoCanMessage = whoCanMessageRaw;
+  const allowFriendRequests = formData.get("allow_friend_requests") === "1";
 
   const removeAvatar = formData.get("remove_avatar") === "1";
 
@@ -74,6 +75,7 @@ export async function updateProfileSettings(
     .update({
       bio: bio.length > 0 ? bio : null,
       who_can_message: whoCanMessage,
+      allow_friend_requests: allowFriendRequests,
       ...(removeAvatar ? { avatar_url: null } : {}),
       ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
     })
