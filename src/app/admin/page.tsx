@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
-import { BREWING_ENABLED } from "@/lib/feature-flags";
+import { BREWING_ENABLED, GARDEN_ENABLED } from "@/lib/feature-flags";
 
 export default async function AdminDashboardPage() {
   const { supabase } = await requireAdmin();
@@ -23,7 +23,9 @@ export default async function AdminDashboardPage() {
       : Promise.resolve({ count: null }),
     supabase.from("site_news_posts").select("*", { count: "exact", head: true }),
     supabase.from("forum_categories").select("*", { count: "exact", head: true }),
-    supabase.from("garden_plants").select("*", { count: "exact", head: true }),
+    GARDEN_ENABLED
+      ? supabase.from("garden_plants").select("*", { count: "exact", head: true })
+      : Promise.resolve({ count: null }),
     supabase.from("shop_listings").select("*", { count: "exact", head: true }),
   ]);
 
@@ -34,7 +36,7 @@ export default async function AdminDashboardPage() {
     ...(BREWING_ENABLED ? [{ href: "/admin/recipes", label: "Potion recipes", count: recipeCount ?? 0 }] : []),
     { href: "/admin/news", label: "Site news", count: newsCount ?? 0 },
     { href: "/admin/forums", label: "Forum categories", count: forumCategoryCount ?? 0 },
-    { href: "/admin/garden-plants", label: "Garden plants", count: gardenPlantCount ?? 0 },
+    ...(GARDEN_ENABLED ? [{ href: "/admin/garden-plants", label: "Garden plants", count: gardenPlantCount ?? 0 }] : []),
     { href: "/admin/shop-listings", label: "Shop listings", count: shopListingCount ?? 0 },
   ];
 

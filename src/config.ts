@@ -56,3 +56,13 @@ export const TRADING_ENABLED = false;
 // /admin/recipes page 404 while this is false, and its nav links (player
 // "Play" menu, admin panel nav, admin dashboard card) disappear too.
 export const BREWING_ENABLED = false;
+
+// Gardening (src/app/garden/, /admin/garden-plants, migration
+// 0035_gardening.sql) is fully built and tested but hidden for now —
+// the player doesn't expect to pick it back up for a long while. Same
+// on/off shape as TRADING_ENABLED/BREWING_ENABLED above: flip this
+// back to true to bring it back, nothing else needs to change.
+// /garden and every /admin/garden-plants page 404 while this is false,
+// and its nav links (player "Play" menu, admin panel nav, admin
+// dashboard card) disappear too.
+export const GARDEN_ENABLED = false;

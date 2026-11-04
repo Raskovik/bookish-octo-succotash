@@ -1,8 +1,14 @@
+import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { GARDEN_ENABLED } from "@/lib/feature-flags";
 import { GardenPlantForm } from "../garden-plant-form";
 import { createGardenPlant } from "../actions";
 
 export default async function NewGardenPlantPage() {
+  if (!GARDEN_ENABLED) {
+    notFound();
+  }
+
   const { supabase } = await requireAdmin();
 
   const { data: items } = await supabase.from("items").select("id, name").eq("is_active", true).order("name");

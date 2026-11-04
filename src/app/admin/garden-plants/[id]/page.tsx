@@ -1,9 +1,14 @@
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { GARDEN_ENABLED } from "@/lib/feature-flags";
 import { GardenPlantForm } from "../garden-plant-form";
 import { updateGardenPlant } from "../actions";
 
 export default async function EditGardenPlantPage(props: PageProps<"/admin/garden-plants/[id]">) {
+  if (!GARDEN_ENABLED) {
+    notFound();
+  }
+
   const { id } = await props.params;
   const { supabase } = await requireAdmin();
 

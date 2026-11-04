@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TRADING_ENABLED, BREWING_ENABLED } from "@/lib/feature-flags";
+import { TRADING_ENABLED, BREWING_ENABLED, GARDEN_ENABLED } from "@/lib/feature-flags";
 import { NavGroups, type NavGroup } from "@/components/nav-groups";
 import { HeaderActivity } from "@/components/header-live-badges";
 import type { NotificationWithActor } from "@/lib/supabase/types";
@@ -32,7 +32,7 @@ export function SiteNav({
       links: [
         { href: "/expeditions", label: "Expeditions" },
         ...(BREWING_ENABLED ? [{ href: "/brewing", label: "Brewing" }] : []),
-        { href: "/garden", label: "Garden" },
+        ...(GARDEN_ENABLED ? [{ href: "/garden", label: "Garden" }] : []),
       ],
     },
     {

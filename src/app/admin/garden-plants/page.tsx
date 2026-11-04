@@ -1,8 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { GARDEN_ENABLED } from "@/lib/feature-flags";
 
 export default async function AdminGardenPlantsPage() {
+  if (!GARDEN_ENABLED) {
+    notFound();
+  }
+
   const { supabase } = await requireAdmin();
 
   const { data: plants } = await supabase

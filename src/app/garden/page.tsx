@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { GARDEN_ENABLED } from "@/lib/feature-flags";
 import { nextGardenExpansionCost } from "@/lib/garden";
 import { GardenGrid } from "./garden-grid";
 import type { GardenPlantingWithPlant, ItemType } from "@/lib/supabase/types";
@@ -8,6 +9,10 @@ import type { InventoryOption } from "./plant-seed-modal";
 type InventoryJoinRow = { quantity: number; item: { id: string; name: string; image_url: string | null; type: ItemType } | null };
 
 export default async function GardenPage() {
+  if (!GARDEN_ENABLED) {
+    notFound();
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
