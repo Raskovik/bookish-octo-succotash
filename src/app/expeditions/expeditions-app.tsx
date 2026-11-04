@@ -44,6 +44,37 @@ function PetPicture({ pet }: { pet: PetWithStats }) {
   return <span className="iv-ph paw leaf" aria-hidden="true" />;
 }
 
+// Which zone is under the pointer, tested against each zone's own
+// image alpha (not just its bounding rectangle) so hovering only
+// reacts to the island's own visible shape — same idea as the design
+// handoff's canvas hit-test, generalized to however many zones have
+// real cutout art instead of 3 hardcoded ones. A zone whose mask isn't
+// ready yet (image still loading, or none set) falls back to its plain
+// bounding box rather than never being hoverable.
+function hitTestZone(
+  zones: ExplorableZone[],
+  masks: Map<string, CanvasRenderingContext2D>,
+  fx: number,
+  fy: number,
+): string | null {
+  for (const zone of zones) {
+    if (zone.map_x === null || zone.map_y === null || zone.map_width === null || zone.map_height === null) continue;
+    const x0 = zone.map_x / 100;
+    const y0 = zone.map_y / 100;
+    const w = zone.map_width / 100;
+    const h = zone.map_height / 100;
+    if (fx < x0 || fy < y0 || fx > x0 + w || fy > y0 + h) continue;
+
+    const ctx = masks.get(zone.id);
+    if (!ctx) return zone.id;
+
+    const u = Math.min(ctx.canvas.width - 1, Math.floor(((fx - x0) / w) * ctx.canvas.width));
+    const v = Math.min(ctx.canvas.height - 1, Math.floor(((fy - y0) / h) * ctx.canvas.height));
+    if (ctx.getImageData(u, v, 1, 1).data[3] > 40) return zone.id;
+  }
+  return null;
+}
+
 function clockFormat(totalSeconds: number): string {
   const s = Math.max(0, totalSeconds);
   const h = Math.floor(s / 3600);
@@ -179,11 +210,47 @@ export function ExpeditionsApp({
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
+  const masksRef = useRef<Map<string, CanvasRenderingContext2D>>(new Map());
 
   function toast(msg: string) {
     setToastMsg(msg);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToastMsg(null), 3200);
+  }
+
+  // Builds one alpha-sampling canvas per zone image, off-screen — not
+  // tied to the <img> elements actually rendered on the map, so this
+  // doesn't care whether/how many times those re-render. A zone with
+  // no image, or whose image fails to load, just has no entry in the
+  // map and hitTestZone() falls back to its bounding box for it.
+  useEffect(() => {
+    for (const zone of zones) {
+      if (!zone.image_url || masksRef.current.has(zone.id)) continue;
+      const img = new Image();
+      img.src = zone.image_url;
+      img.decode()
+        .then(() => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return;
+          ctx.drawImage(img, 0, 0);
+          masksRef.current.set(zone.id, ctx);
+        })
+        .catch(() => {
+          // No hover-precision test for this zone's image; hitTestZone
+          // falls back to its bounding box.
+        });
+    }
+  }, [zones]);
+
+  function pointerZoneId(clientX: number, clientY: number): string | null {
+    const rect = mapRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0 || rect.height === 0) return null;
+    const fx = (clientX - rect.left) / rect.width;
+    const fy = (clientY - rect.top) / rect.height;
+    return hitTestZone(zones, masksRef.current, fx, fy);
   }
 
   const busyPetIds = useMemo(() => new Set(activeExpeditions.map((e) => e.pet_id)), [activeExpeditions]);
@@ -333,9 +400,37 @@ export function ExpeditionsApp({
         className={`ex-mapwrap${hoveredZoneId || selectedZoneId ? " is-over" : ""}`}
         id="ex-map"
         ref={mapRef}
+        onPointerMove={(e) => setHoveredZoneId(pointerZoneId(e.clientX, e.clientY))}
+        onPointerLeave={() => setHoveredZoneId(null)}
+        onClick={(e) => {
+          // A click on a zone's own pill button (keyboard/touch target,
+          // below) already opened it via that button's own onClick —
+          // only fall through to the alpha hit-test for a click
+          // elsewhere on the map (the base image, or an overlay).
+          if ((e.target as HTMLElement).closest(".ex-go")) return;
+          const id = pointerZoneId(e.clientX, e.clientY);
+          if (id) openZone(id);
+        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- fills the panel via CSS, same reasoning as the sitewide background art */}
         <img className="ex-base" id="ex-base" src={MAP_IMAGE_URL} alt="Map of the expedition areas." />
+        {zones.map((zone) => {
+          if (zone.map_x === null || zone.map_y === null || zone.map_width === null || zone.map_height === null) {
+            return null;
+          }
+          const hot = hoveredZoneId === zone.id;
+          const on = selectedZoneId === zone.id;
+          return zone.image_url ? (
+            // eslint-disable-next-line @next/next/no-img-element -- absolutely positioned fade-in overlay, not a normal content image
+            <img
+              key={zone.id}
+              className={`ex-ov${hot ? " is-hot" : ""}${on ? " is-on" : ""}`}
+              style={{ left: `${zone.map_x}%`, top: `${zone.map_y}%`, width: `${zone.map_width}%` }}
+              src={zone.image_url}
+              alt=""
+            />
+          ) : null;
+        })}
         {zones.map((zone) => {
           if (zone.map_x === null || zone.map_y === null || zone.map_width === null || zone.map_height === null) {
             return null;
@@ -347,23 +442,12 @@ export function ExpeditionsApp({
             <button
               key={zone.id}
               type="button"
-              className={`ex-go ex-go-full${hot ? " is-hot" : ""}${on ? " is-on" : ""}${active ? " is-busy" : ""}`}
-              style={{
-                left: `${zone.map_x}%`,
-                top: `${zone.map_y}%`,
-                width: `${zone.map_width}%`,
-                height: `${zone.map_height}%`,
-              }}
+              className={`ex-go${hot ? " is-hot" : ""}${on ? " is-on" : ""}${active ? " is-busy" : ""}`}
+              style={{ left: `${zone.map_x + zone.map_width / 2}%`, top: `${zone.map_y + zone.map_height / 2}%` }}
               onClick={() => openZone(zone.id)}
-              onMouseEnter={() => setHoveredZoneId(zone.id)}
-              onMouseLeave={() => setHoveredZoneId(null)}
               onFocus={() => setHoveredZoneId(zone.id)}
               onBlur={() => setHoveredZoneId(null)}
             >
-              {zone.image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element -- absolutely positioned fade-in overlay, not a normal content image
-                <img className={`ex-ov${hot ? " is-hot" : ""}${on ? " is-on" : ""}`} src={zone.image_url} alt="" />
-              ) : null}
               <span>{zone.name}</span>
             </button>
           );

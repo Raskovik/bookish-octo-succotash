@@ -1130,12 +1130,11 @@ dialog.fg .fg-foot .btn { min-width: 90px; }
    zone count) rather than the handoff's hardcoded per-region CSS rules
    for its 3 sample islands (meadow/forest/beach) — same percentage-of-
    the-map-image scheme the map already used before this port, just
-   reskinned. The handoff's canvas alpha-mask hover test (hovering only
-   reacts to a see-through island PNG's actual non-transparent pixels)
-   was left out for the same reason: it assumes exactly those 3 fixed,
-   pre-cut island images, which a dynamic admin-managed zone list can't
-   guarantee. Hover still fades a zone's own image in over its
-   rectangle, same interaction the map already had.
+   reskinned. The canvas alpha-mask hover test IS kept (expeditions-
+   app.tsx's hitTestZone()), generalized to loop over however many
+   zones have real cutout art instead of 3 hardcoded ones — a zone
+   whose image hasn't loaded yet, or has none, falls back to its plain
+   bounding box rather than never being hoverable.
    ========================================================================== */
 .ex-h1{margin:0;font:800 30px var(--font-body);color:var(--ink)}
 .ex-intro{margin:4px 0 14px;font:700 15px/1.5 var(--font-body);color:var(--ink-soft);max-width:60ch}
@@ -1145,14 +1144,6 @@ dialog.fg .fg-foot .btn { min-width: 90px; }
 .ex-ov{position:absolute;height:auto;opacity:0;pointer-events:none;transform-origin:50% 85%;transition:opacity .15s,transform .2s,filter .2s}
 .ex-ov.is-hot,.ex-ov.is-on{opacity:.9;transform:translateY(-1.5%) scale(1.02);filter:drop-shadow(0 0 10px rgba(255,255,255,.95)) drop-shadow(0 0 3px #fff)}
 .ex-go{position:absolute;transform:translate(-50%,-50%);padding:0;background:none;border:0;line-height:1.2;cursor:pointer}
-/* One clickable/hoverable target per zone, sized to its full map_x/y/
-   width/height rectangle (not just a center point) rather than a tiny
-   pill — the hover-test tradeoff noted above (rectangle, not the
-   island's own alpha shape) needs a correspondingly generous click
-   target, not a pinpoint one. .ex-ov nests inside it filling 100%/100%
-   instead of being positioned at its own left/top/width. */
-.ex-go.ex-go-full{top:0;left:0;width:100%;height:100%;transform:none;display:flex;align-items:center;justify-content:center}
-.ex-go.ex-go-full .ex-ov{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .ex-go span{display:block;padding:4px 12px;background:#fff;border:2px solid #7a4a1f;border-radius:999px;box-shadow:0 2px 0 rgba(0,0,0,.2);font:800 13px var(--font-body);color:#4a2c0f;white-space:nowrap;opacity:0;transition:opacity .15s}
 .ex-go.is-hot span,.ex-go:focus-visible span,.ex-go.is-on span{opacity:1}
 .ex-go:focus-visible{outline:none}
