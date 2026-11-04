@@ -92,14 +92,17 @@ function wordsFormat(totalSeconds: number): string {
   return `${h ? `${h}h ` : ""}${h || m ? `${m}m ` : ""}${sec.toString().padStart(2, "0")}s left`;
 }
 
-// Self-ticking compact countdown for a busy zone's map plaque — same
-// "own timer, refresh the route when it hits zero" shape as
-// ExpeditionCountdown (components/expedition-countdown.tsx), which this
-// deliberately doesn't reuse: that one renders a sentence/bare M:SS, not
-// a wood plaque, and the planner's progress pill below needs its own
-// percentage anyway, so a single small self-contained ticker here is
-// simpler than threading render-prop callbacks through the shared one.
-function MapPlaque({ resolvesAt }: { resolvesAt: string }) {
+// Ticks down to `resolvesAt` and asks the server component to refresh
+// once it hits zero. Also keeps retrying every couple of seconds for
+// as long as it's STILL in the past after a refresh — resolvesAt being
+// elapsed on mount (not just reached while watching) means the
+// in-progress -> awaiting_claim flip hasn't happened yet, for whatever
+// reason (the player only just opened the page long after it finished,
+// a resolve_due_expeditions call that didn't go through, etc.), and a
+// single refresh attempt that doesn't change anything used to leave
+// this stuck showing "wrapping up"/"ready" forever with nothing left
+// to trigger another try — this re-arms instead of bailing out.
+function useTripCountdown(resolvesAt: string): number | null {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
 
@@ -110,15 +113,33 @@ function MapPlaque({ resolvesAt }: { resolvesAt: string }) {
       setRemainingMs(next);
       return next;
     };
-    if (tick() <= 0) return;
-    const interval = setInterval(() => {
-      if (tick() <= 0) {
-        clearInterval(interval);
-        router.refresh();
-      }
-    }, 1000);
-    return () => clearInterval(interval);
+
+    if (tick() > 0) {
+      const interval = setInterval(() => {
+        if (tick() <= 0) {
+          clearInterval(interval);
+          router.refresh();
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+
+    const retry = setInterval(() => router.refresh(), 3000);
+    return () => clearInterval(retry);
   }, [resolvesAt, router]);
+
+  return remainingMs;
+}
+
+// Self-ticking compact countdown for a busy zone's map plaque — same
+// "own timer, refresh the route when it hits zero" shape as
+// ExpeditionCountdown (components/expedition-countdown.tsx), which this
+// deliberately doesn't reuse: that one renders a sentence/bare M:SS, not
+// a wood plaque, and the planner's progress pill below needs its own
+// percentage anyway, so a single small self-contained ticker here is
+// simpler than threading render-prop callbacks through the shared one.
+function MapPlaque({ resolvesAt }: { resolvesAt: string }) {
+  const remainingMs = useTripCountdown(resolvesAt);
 
   if (remainingMs === null || remainingMs > 0) {
     return (
@@ -141,25 +162,7 @@ function MapPlaque({ resolvesAt }: { resolvesAt: string }) {
 // shape as MapPlaque/ExpeditionCountdown, plus the --p fill fraction
 // .xp-fill reads.
 function TripProgress({ startedAt, resolvesAt }: { startedAt: string; resolvesAt: string }) {
-  const router = useRouter();
-  const [remainingMs, setRemainingMs] = useState<number | null>(null);
-
-  useEffect(() => {
-    const target = new Date(resolvesAt).getTime();
-    const tick = () => {
-      const next = target - Date.now();
-      setRemainingMs(next);
-      return next;
-    };
-    if (tick() <= 0) return;
-    const interval = setInterval(() => {
-      if (tick() <= 0) {
-        clearInterval(interval);
-        router.refresh();
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [resolvesAt, router]);
+  const remainingMs = useTripCountdown(resolvesAt);
 
   const total = Math.max(1, new Date(resolvesAt).getTime() - new Date(startedAt).getTime());
   const pct = remainingMs === null ? 0 : Math.min(1, Math.max(0, 1 - remainingMs / total));

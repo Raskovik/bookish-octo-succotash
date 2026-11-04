@@ -39,7 +39,15 @@ export default async function ExpeditionsPage() {
 
   // Same lazy-resolution pattern as the profile page: settle anything
   // whose timer has already elapsed before reading current state.
-  await supabase.rpc("resolve_due_expeditions", { p_user_id: user.id });
+  const { error: resolveError } = await supabase.rpc("resolve_due_expeditions", { p_user_id: user.id });
+  if (resolveError) {
+    // Not fatal to the page load — the player just sees their
+    // expedition(s) still showing as in-progress/past-due, and
+    // useTripCountdown (expeditions-app.tsx) keeps retrying every few
+    // seconds. Logged so a real, persistent failure here is actually
+    // visible somewhere instead of silently doing nothing every load.
+    console.error("resolve_due_expeditions failed", resolveError);
+  }
 
   const [
     { data: zonesData },
