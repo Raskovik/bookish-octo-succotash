@@ -1,267 +1,527 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { PetPickerModal, ItemPickerModal, type PickerPet, type PickerItem } from "@/components/picker-modal";
-import { petImageUrl, petTypeName } from "@/lib/pet-display";
-import { CurrencyIcon } from "@/components/currency-icon";
-import type { ItemWithQuantity, ListingDurationDays, PetWithSpecies } from "@/lib/supabase/types";
 
-const DURATIONS: { value: ListingDurationDays; label: string }[] = [
-  { value: 1, label: "1 day" },
-  { value: 3, label: "3 days" },
-  { value: 7, label: "7 days" },
-  { value: 14, label: "14 days" },
-  { value: 30, label: "30 days" },
-];
+type PetTier = "" | "pt-silver" | "pt-gold" | "pt-diamond";
 
-function toPickerPets(pets: PetWithSpecies[]): PickerPet[] {
-  return pets.map((p) => ({
-    id: p.id,
-    name: p.custom_name ?? petTypeName(p),
-    imageUrl: petImageUrl(p),
-    rarity: p.rarity,
-  }));
+type PetOption = {
+  id: string;
+  name: string;
+  speciesName: string;
+  imageUrl: string | null;
+  strength: number;
+  speed: number;
+  defence: number;
+  strTier: PetTier;
+  spdTier: PetTier;
+  defTier: PetTier;
+  unavailableReason: string | null;
+};
+
+type ItemOption = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  category: string;
+  quantity: number;
+};
+
+const CATEGORY_LABEL: Record<string, string> = {
+  ingredient: "Ingredients",
+  cosmetic: "Cosmetics",
+  potion: "Potions",
+  seed: "Seeds",
+  fertilizer: "Fertilizer",
+};
+
+type Currency = "coin" | "gem" | "both";
+
+function StatPlaques({ pet }: { pet: PetOption }) {
+  return (
+    <div className="mk-st">
+      <div className={`pt-tier ${pet.strTier}`}>
+        <div className="pt-p">
+          <i />
+          <small>STR</small>
+          <b>{pet.strength}</b>
+        </div>
+      </div>
+      <div className={`pt-tier ${pet.spdTier}`}>
+        <div className="pt-p">
+          <i />
+          <small>SPD</small>
+          <b>{pet.speed}</b>
+        </div>
+      </div>
+      <div className={`pt-tier ${pet.defTier}`}>
+        <div className="pt-p">
+          <i />
+          <small>DEF</small>
+          <b>{pet.defence}</b>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function toPickerItems(inventory: ItemWithQuantity[]): PickerItem[] {
-  return inventory
-    .filter((entry) => entry.item)
-    .map((entry) => ({
-      id: entry.item!.id,
-      name: entry.item!.name,
-      imageUrl: entry.item!.image_url,
-      rarity: entry.item!.rarity,
-      maxQuantity: entry.quantity,
-    }));
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 export function SellForm({
   userId,
-  pets,
-  inventory,
+  petOptions,
+  itemOptions,
+  preselectItemId,
+  preselectPetId,
 }: {
   userId: string;
-  pets: PetWithSpecies[];
-  inventory: ItemWithQuantity[];
+  petOptions: PetOption[];
+  itemOptions: ItemOption[];
+  preselectItemId: string | null;
+  preselectPetId: string | null;
 }) {
   const router = useRouter();
-  const pickerPets = toPickerPets(pets);
-  const pickerItems = toPickerItems(inventory);
+  const [tab, setTab] = useState<"items" | "pets">(preselectPetId ? "pets" : "items");
 
-  const [selectedPetId, setSelectedPetId] = useState<string | null>(null);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [selectedItemQty, setSelectedItemQty] = useState(0);
-  const [priceCoins, setPriceCoins] = useState(0);
-  const [priceGems, setPriceGems] = useState(0);
-  const [durationDays, setDurationDays] = useState<ListingDurationDays>(7);
-  const [modalOpen, setModalOpen] = useState<"pets" | "items" | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(
+    preselectItemId && itemOptions.some((i) => i.id === preselectItemId) ? preselectItemId : null,
+  );
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(
+    preselectPetId && petOptions.some((p) => p.id === preselectPetId && !p.unavailableReason) ? preselectPetId : null,
+  );
+  const [size, setSize] = useState(1);
+  const [itemCurrency, setItemCurrency] = useState<Currency>("coin");
+  const [itemCoin, setItemCoin] = useState("");
+  const [itemGem, setItemGem] = useState("");
+  const [petCurrency, setPetCurrency] = useState<Currency>("coin");
+  const [petCoin, setPetCoin] = useState("");
+  const [petGem, setPetGem] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedPet = selectedPetId ? pickerPets.find((p) => p.id === selectedPetId) : null;
-  const selectedItem = selectedItemId ? pickerItems.find((i) => i.id === selectedItemId) : null;
+  const selectedItem = selectedItemId ? itemOptions.find((i) => i.id === selectedItemId) ?? null : null;
+  const selectedPet = selectedPetId ? petOptions.find((p) => p.id === selectedPetId) ?? null : null;
 
-  function choosePet(id: string) {
-    setSelectedItemId(null);
-    setSelectedItemQty(0);
-    setSelectedPetId((prev) => (prev === id ? null : id));
-  }
-
-  function chooseItemQuantity(id: string, qty: number, max: number) {
-    const clamped = Math.max(0, Math.min(qty, max));
-    setSelectedPetId(null);
-    if (clamped === 0) {
-      setSelectedItemId(null);
-      setSelectedItemQty(0);
-    } else {
-      setSelectedItemId(id);
-      setSelectedItemQty(clamped);
-    }
-  }
-
-  async function handleSubmit() {
+  function pickItem(item: ItemOption) {
     setError(null);
+    setSelectedItemId(item.id);
+    setSize(1);
+    setItemCoin("");
+    setItemGem("");
+  }
 
-    if (priceCoins <= 0 && priceGems <= 0) {
-      setError("Set a coin price, a gem price, or both — at least 1.");
-      return;
-    }
-    if (!selectedPetId && !selectedItemId) {
-      setError("Choose a pet or an item to sell first.");
-      return;
-    }
+  function pickPet(pet: PetOption) {
+    setError(null);
+    setSelectedPetId(pet.id);
+    setPetCoin("");
+    setPetGem("");
+  }
 
+  const itemCols = useMemo(
+    () => (itemCurrency === "both" ? (["coin", "gem"] as const) : ([itemCurrency] as const)),
+    [itemCurrency],
+  );
+  const itemCoinNum = Math.floor(Number(itemCoin));
+  const itemGemNum = Math.floor(Number(itemGem));
+  const itemCoinValid = itemCoinNum >= 1 && itemCoinNum <= 1000000;
+  const itemGemValid = itemGemNum >= 1 && itemGemNum <= 1000000;
+  const itemValid = itemCols.every((c) => (c === "coin" ? itemCoinValid : itemGemValid));
+  const itemBad = itemCols.some((c) => (c === "coin" ? itemCoin !== "" && !itemCoinValid : itemGem !== "" && !itemGemValid));
+  const itemEach = useMemo(() => {
+    if (!itemValid || size <= 1) return null;
+    return itemCols.map((c) => `${round2((c === "coin" ? itemCoinNum : itemGemNum) / size)} ${c === "gem" ? "gems" : "coins"}`).join(" or ");
+  }, [itemValid, size, itemCols, itemCoinNum, itemGemNum]);
+
+  const petCols = petCurrency === "both" ? (["coin", "gem"] as const) : ([petCurrency] as const);
+  const petCoinNum = Math.floor(Number(petCoin));
+  const petGemNum = Math.floor(Number(petGem));
+  const petCoinValid = petCoinNum >= 1 && petCoinNum <= 1000000;
+  const petGemValid = petGemNum >= 1 && petGemNum <= 1000000;
+  const petValid = petCols.every((c) => (c === "coin" ? petCoinValid : petGemValid));
+  const petBad = petCols.some((c) => (c === "coin" ? petCoin !== "" && !petCoinValid : petGem !== "" && !petGemValid));
+
+  async function submitItem() {
+    if (!selectedItem || !itemValid) return;
+    setError(null);
     setIsPending(true);
     const supabase = createClient();
-    const coinsArg = priceCoins > 0 ? priceCoins : null;
-    const gemsArg = priceGems > 0 ? priceGems : null;
-
-    const { data: listingId, error: rpcError } = selectedPetId
-      ? await supabase.rpc("create_pet_listing", {
-          p_seller_id: userId,
-          p_pet_id: selectedPetId,
-          p_price_coins: coinsArg,
-          p_price_gems: gemsArg,
-          p_duration_days: durationDays,
-        })
-      : await supabase.rpc("create_item_listing", {
-          p_seller_id: userId,
-          p_item_id: selectedItemId!,
-          p_quantity: selectedItemQty,
-          p_price_coins: coinsArg,
-          p_price_gems: gemsArg,
-          p_duration_days: durationDays,
-        });
-
+    const { error: rpcError } = await supabase.rpc("create_item_listing", {
+      p_seller_id: userId,
+      p_item_id: selectedItem.id,
+      p_quantity: size,
+      p_price_coins: itemCols.includes("coin") ? itemCoinNum : null,
+      p_price_gems: itemCols.includes("gem") ? itemGemNum : null,
+    });
     setIsPending(false);
-
-    if (rpcError || !listingId) {
-      setError(rpcError?.message ?? "Could not create the listing.");
+    if (rpcError) {
+      setError(rpcError.message);
       return;
     }
+    router.push("/marketplace/listings");
+  }
 
-    router.push("/marketplace/mine");
+  async function submitPet() {
+    if (!selectedPet || !petValid) return;
+    setError(null);
+    setIsPending(true);
+    const supabase = createClient();
+    const { error: rpcError } = await supabase.rpc("create_pet_listing", {
+      p_seller_id: userId,
+      p_pet_id: selectedPet.id,
+      p_price_coins: petCols.includes("coin") ? petCoinNum : null,
+      p_price_gems: petCols.includes("gem") ? petGemNum : null,
+    });
+    setIsPending(false);
+    if (rpcError) {
+      setError(rpcError.message);
+      return;
+    }
+    router.push("/marketplace/listings");
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">What are you selling?</span>
-        {selectedPet ? (
-          <div className="flex items-center gap-3 rounded-lg border border-green-300 p-3 dark:border-stone-700">
-            {selectedPet.imageUrl ? (
-              <Image src={selectedPet.imageUrl} alt="" width={48} height={48} className="h-12 w-12 rounded" />
-            ) : null}
-            <span className="flex-1 text-sm">{selectedPet.name}</span>
-            <button type="button" onClick={() => setSelectedPetId(null)} className="text-sm text-stone-500 hover:text-red-600">
-              Remove
-            </button>
-          </div>
-        ) : selectedItem ? (
-          <div className="flex items-center gap-3 rounded-lg border border-green-300 p-3 dark:border-stone-700">
-            {selectedItem.imageUrl ? (
-              <Image src={selectedItem.imageUrl} alt="" width={48} height={48} className="h-12 w-12 rounded" />
-            ) : null}
-            <span className="flex-1 text-sm">
-              {selectedItem.name} × {selectedItemQty}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedItemId(null);
-                setSelectedItemQty(0);
-              }}
-              className="text-sm text-stone-500 hover:text-red-600"
-            >
-              Remove
-            </button>
+    <>
+      <div className="sh-ftabs mk-tabs" role="tablist" aria-label="What to sell">
+        <button type="button" className="sh-ft" role="tab" aria-selected={tab === "items"} onClick={() => setTab("items")}>
+          Items<em>{itemOptions.length}</em>
+        </button>
+        <button type="button" className="sh-ft" role="tab" aria-selected={tab === "pets"} onClick={() => setTab("pets")}>
+          Pets<em>{petOptions.length}</em>
+        </button>
+      </div>
+
+      <div className="sh-fpage">
+        {tab === "items" ? (
+          <div className="mk-pane" id="mk-items">
+            <div className="mk-sell">
+              <div>
+                <p className="mk-lab">Pick an item</p>
+                {itemOptions.length === 0 ? (
+                  <p className="mk-none">You don&apos;t have any items.</p>
+                ) : (
+                  <ul className="mk-slots">
+                    {itemOptions.map((item) => (
+                      <li className="mk-slotli" key={item.id}>
+                        <button
+                          type="button"
+                          className="mk-slot"
+                          aria-pressed={selectedItemId === item.id}
+                          aria-label={`${item.name}, you have ${item.quantity}`}
+                          onClick={() => pickItem(item)}
+                        >
+                          {item.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- unsized catalog art, object-fit: contain per .mk-slot img
+                            <img src={item.imageUrl} alt="" />
+                          ) : (
+                            <span className="iv-ph bag blue" />
+                          )}
+                          {item.quantity > 1 ? (
+                            <span className="mk-qty" aria-hidden="true">
+                              &times;{item.quantity}
+                            </span>
+                          ) : null}
+                        </button>
+                        <span className="mk-sn">{item.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                {!selectedItem ? (
+                  <p className="mk-none">Pick an item to set a price.</p>
+                ) : (
+                  <form
+                    className="mk-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      submitItem();
+                    }}
+                  >
+                    <div className="mk-dhead">
+                      <span className="mk-dpic">
+                        {selectedItem.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- see slot picture above
+                          <img src={selectedItem.imageUrl} alt="" />
+                        ) : null}
+                      </span>
+                      <div>
+                        <span className="mk-dname">{selectedItem.name}</span>
+                        <span className="mk-dmeta">
+                          You have {selectedItem.quantity}. {CATEGORY_LABEL[selectedItem.category] ?? selectedItem.category}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mk-field">
+                      <span className="mk-sl" id="i-sl">
+                        How many to list?
+                      </span>
+                      <div className="mk-sc">
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-cream btn-round"
+                          aria-label="One fewer"
+                          onClick={() => setSize((s) => Math.max(1, s - 1))}
+                        >
+                          &minus;
+                        </button>
+                        <input
+                          type="number"
+                          min={1}
+                          max={selectedItem.quantity}
+                          value={size}
+                          aria-labelledby="i-sl"
+                          onChange={(e) =>
+                            setSize(Math.max(1, Math.min(selectedItem.quantity, Math.floor(Number(e.target.value)) || 1)))
+                          }
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-cream btn-round"
+                          aria-label="One more"
+                          onClick={() => setSize((s) => Math.min(selectedItem.quantity, s + 1))}
+                        >
+                          +
+                        </button>
+                        <button type="button" className="btn btn-sm btn-cream" onClick={() => setSize(selectedItem.quantity)}>
+                          All
+                        </button>
+                      </div>
+                      <p className="mk-hint">Listed together for one price. Buyers get them all at once.</p>
+                    </div>
+
+                    <fieldset className="mk-seg mk-seg3">
+                      <legend className="sr">Buyers pay in</legend>
+                      <label>
+                        <input
+                          type="radio"
+                          checked={itemCurrency === "coin"}
+                          onChange={() => setItemCurrency("coin")}
+                        />
+                        <span className="coin" aria-hidden="true" /> Coins
+                      </label>
+                      <label>
+                        <input type="radio" checked={itemCurrency === "gem"} onChange={() => setItemCurrency("gem")} />
+                        <span className="coin gem" aria-hidden="true" /> Gems
+                      </label>
+                      <label>
+                        <input type="radio" checked={itemCurrency === "both"} onChange={() => setItemCurrency("both")} />
+                        Both
+                      </label>
+                    </fieldset>
+                    {itemCurrency === "both" ? <p className="mk-hint">Buyers pick one of the two to pay with.</p> : null}
+
+                    {itemCols.includes("coin") ? (
+                      <div className="mk-field">
+                        <span className="mk-sl" id="i-coinl">
+                          Price in coins{size > 1 ? ` for all ${size}` : ""}
+                        </span>
+                        <div className="mk-money">
+                          <span className="coin" aria-hidden="true" />
+                          <input
+                            type="number"
+                            min={1}
+                            max={1000000}
+                            value={itemCoin}
+                            placeholder="0"
+                            aria-labelledby="i-coinl"
+                            onChange={(e) => setItemCoin(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                    {itemCols.includes("gem") ? (
+                      <div className="mk-field">
+                        <span className="mk-sl" id="i-geml">
+                          Price in gems{size > 1 ? ` for all ${size}` : ""}
+                        </span>
+                        <div className="mk-money">
+                          <span className="coin gem" aria-hidden="true" />
+                          <input
+                            type="number"
+                            min={1}
+                            max={1000000}
+                            value={itemGem}
+                            placeholder="0"
+                            aria-labelledby="i-geml"
+                            onChange={(e) => setItemGem(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <dl className="mk-sum">
+                      {itemEach ? (
+                        <div>
+                          <dt>Works out to</dt>
+                          <dd>{itemEach} each</dd>
+                        </div>
+                      ) : null}
+                      <div className="mk-big">
+                        <dt>You get when it sells</dt>
+                        <dd>
+                          {itemValid
+                            ? itemCols
+                                .map((c) => `${c === "coin" ? itemCoinNum : itemGemNum} ${c === "gem" ? "gems" : "coins"}`)
+                                .join(" or ")
+                            : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="mk-warn">{itemBad ? "Pick a price from 1 to 1,000,000." : ""}</p>
+                    <p className="mk-hint">Listings stay up for 7 days. If it doesn&apos;t sell, it comes back to you.</p>
+                    {error ? <p className="mk-warn">{error}</p> : null}
+                    <button type="submit" className="btn btn-leaf" disabled={!itemValid || isPending}>
+                      {isPending ? "Listing…" : "List for sale"}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
           </div>
         ) : (
-          <p className="text-sm italic text-stone-500">Nothing chosen yet.</p>
+          <div className="mk-pane" id="mk-pets">
+            <div className="mk-sell">
+              <div>
+                <p className="mk-lab">Pick a pet</p>
+                {petOptions.length === 0 ? (
+                  <p className="mk-none">You don&apos;t have any pets.</p>
+                ) : (
+                  <ul className="mk-mypets">
+                    {petOptions.map((pet) => (
+                      <li key={pet.id}>
+                        <button
+                          type="button"
+                          className="mk-mp"
+                          aria-pressed={selectedPetId === pet.id}
+                          disabled={Boolean(pet.unavailableReason)}
+                          onClick={() => pickPet(pet)}
+                        >
+                          {pet.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- unsized catalog art, object-fit: contain per .mk-mp img
+                            <img src={pet.imageUrl} alt="" />
+                          ) : null}
+                          {pet.name}
+                          <small>{pet.unavailableReason ?? pet.speciesName}</small>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                {!selectedPet ? (
+                  <p className="mk-none">Pick a pet to set a price.</p>
+                ) : (
+                  <form
+                    className="mk-form"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      submitPet();
+                    }}
+                  >
+                    <div className="mk-dhead">
+                      <span className="mk-dpic">
+                        {selectedPet.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- see slot picture above
+                          <img src={selectedPet.imageUrl} alt="" />
+                        ) : null}
+                      </span>
+                      <div>
+                        <span className="mk-dname">{selectedPet.name}</span>
+                        <span className="mk-dmeta">{selectedPet.speciesName}</span>
+                      </div>
+                    </div>
+                    <StatPlaques pet={selectedPet} />
+
+                    <fieldset className="mk-seg mk-seg3">
+                      <legend className="sr">Buyers pay in</legend>
+                      <label>
+                        <input type="radio" checked={petCurrency === "coin"} onChange={() => setPetCurrency("coin")} />
+                        <span className="coin" aria-hidden="true" /> Coins
+                      </label>
+                      <label>
+                        <input type="radio" checked={petCurrency === "gem"} onChange={() => setPetCurrency("gem")} />
+                        <span className="coin gem" aria-hidden="true" /> Gems
+                      </label>
+                      <label>
+                        <input type="radio" checked={petCurrency === "both"} onChange={() => setPetCurrency("both")} />
+                        Both
+                      </label>
+                    </fieldset>
+                    {petCurrency === "both" ? <p className="mk-hint">Buyers pick one of the two to pay with.</p> : null}
+
+                    {petCols.includes("coin") ? (
+                      <div className="mk-field">
+                        <span className="mk-sl" id="p-coinl">
+                          Price in coins
+                        </span>
+                        <div className="mk-money">
+                          <span className="coin" aria-hidden="true" />
+                          <input
+                            type="number"
+                            min={1}
+                            max={1000000}
+                            value={petCoin}
+                            placeholder="0"
+                            aria-labelledby="p-coinl"
+                            onChange={(e) => setPetCoin(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                    {petCols.includes("gem") ? (
+                      <div className="mk-field">
+                        <span className="mk-sl" id="p-geml">
+                          Price in gems
+                        </span>
+                        <div className="mk-money">
+                          <span className="coin gem" aria-hidden="true" />
+                          <input
+                            type="number"
+                            min={1}
+                            max={1000000}
+                            value={petGem}
+                            placeholder="0"
+                            aria-labelledby="p-geml"
+                            onChange={(e) => setPetGem(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <dl className="mk-sum">
+                      <div className="mk-big">
+                        <dt>You get when it sells</dt>
+                        <dd>
+                          {petValid
+                            ? petCols
+                                .map((c) => `${c === "coin" ? petCoinNum : petGemNum} ${c === "gem" ? "gems" : "coins"}`)
+                                .join(" or ")
+                            : "—"}
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="mk-warn">{petBad ? "Pick a price from 1 to 1,000,000." : ""}</p>
+                    <p className="mk-hint">
+                      A pet for sale can&apos;t go exploring. It stays up for 7 days, and you can take it off the
+                      Marketplace any time before it sells. If it doesn&apos;t sell, it comes back to you.
+                    </p>
+                    {error ? <p className="mk-warn">{error}</p> : null}
+                    <button type="submit" className="btn btn-leaf" disabled={!petValid || isPending}>
+                      {isPending ? "Listing…" : "List this pet"}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
         )}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setModalOpen("pets")}
-            className="rounded-md border border-green-300 px-3 py-1.5 text-xs hover:bg-green-100 dark:border-stone-700 dark:hover:bg-stone-800"
-          >
-            Choose a pet
-          </button>
-          <button
-            type="button"
-            onClick={() => setModalOpen("items")}
-            className="rounded-md border border-green-300 px-3 py-1.5 text-xs hover:bg-green-100 dark:border-stone-700 dark:hover:bg-stone-800"
-          >
-            Choose an item
-          </button>
-        </div>
       </div>
-
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Price</span>
-        <p className="text-xs text-stone-500">
-          Set a coin price, a gem price, or both — buyers pick whichever they&apos;d rather pay
-          with.
-        </p>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <CurrencyIcon kind="coin" />
-            <input
-              type="number"
-              min={0}
-              value={priceCoins}
-              onChange={(e) => setPriceCoins(Math.max(0, Number(e.target.value) || 0))}
-              className="w-24 rounded-md border border-green-300 px-2 py-1 dark:border-stone-700 dark:bg-stone-900"
-            />
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <CurrencyIcon kind="gem" />
-            <input
-              type="number"
-              min={0}
-              value={priceGems}
-              onChange={(e) => setPriceGems(Math.max(0, Number(e.target.value) || 0))}
-              className="w-24 rounded-md border border-green-300 px-2 py-1 dark:border-stone-700 dark:bg-stone-900"
-            />
-          </label>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="duration" className="text-sm font-medium">
-          Listing duration
-        </label>
-        <select
-          id="duration"
-          value={durationDays}
-          onChange={(e) => setDurationDays(Number(e.target.value) as ListingDurationDays)}
-          className="w-40 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        >
-          {DURATIONS.map((d) => (
-            <option key={d.value} value={d.value}>
-              {d.label}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-stone-500">
-          The listing automatically unlists itself if nobody buys it in time.
-        </p>
-      </div>
-
-      {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={isPending}
-        className="self-start rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-      >
-        {isPending ? "Listing…" : "List for sale"}
-      </button>
-
-      {modalOpen === "pets" ? (
-        <PetPickerModal
-          title="Choose a pet to sell"
-          pets={pickerPets}
-          selectedIds={selectedPetId ? new Set([selectedPetId]) : new Set()}
-          onToggle={choosePet}
-          onClose={() => setModalOpen(null)}
-          emptyText="You don't have any pets."
-        />
-      ) : null}
-      {modalOpen === "items" ? (
-        <ItemPickerModal
-          title="Choose an item to sell"
-          items={pickerItems}
-          quantities={selectedItemId ? { [selectedItemId]: selectedItemQty } : {}}
-          onSetQuantity={chooseItemQuantity}
-          onClose={() => setModalOpen(null)}
-          emptyText="You don't have any items."
-        />
-      ) : null}
-    </div>
+    </>
   );
 }

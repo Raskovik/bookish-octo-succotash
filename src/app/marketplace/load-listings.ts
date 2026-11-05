@@ -3,7 +3,7 @@ import type { MarketplaceListing } from "@/lib/supabase/types";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
-// Shared by /marketplace/mine (and anywhere else that already has a set
+// Shared by /marketplace/listings (and anywhere else that already has a set
 // of listing ids in hand) — resolves seller/buyer display names via the
 // public user_profiles view (same reason as load-trades.ts: `users`
 // only lets a player see their own row) and, for item listings, joins
@@ -40,13 +40,14 @@ export async function loadListings(
   const itemIds = [...new Set(listings.filter((l) => l.item_id).map((l) => l.item_id as string))];
 
   const [{ data: profilesData }, { data: itemsData }] = await Promise.all([
-    supabase.from("user_profiles").select("id, display_name").in("id", participantIds),
+    supabase.from("user_profiles").select("id, display_id, display_name").in("id", participantIds),
     itemIds.length > 0
       ? supabase.from("items").select("id, name, image_url, rarity, type").in("id", itemIds)
       : Promise.resolve({ data: [] as { id: string; name: string; image_url: string | null; rarity: string; type: string }[] }),
   ]);
 
   const nameById = new Map((profilesData ?? []).map((p) => [p.id, p.display_name]));
+  const displayIdById = new Map((profilesData ?? []).map((p) => [p.id, p.display_id]));
   const itemById = new Map((itemsData ?? []).map((i) => [i.id, i]));
 
   return listings.map((l) => {
@@ -67,8 +68,10 @@ export async function loadListings(
       expires_at: l.expires_at,
       sold_at: l.sold_at,
       sellerId: l.seller_id,
+      sellerDisplayId: displayIdById.get(l.seller_id) ?? 0,
       sellerName: nameById.get(l.seller_id) ?? "Unknown player",
       buyerId: l.buyer_id,
+      buyerDisplayId: l.buyer_id ? (displayIdById.get(l.buyer_id) ?? 0) : null,
       buyerName: l.buyer_id ? (nameById.get(l.buyer_id) ?? "Unknown player") : null,
       itemId: l.item_id,
       itemName: item?.name ?? null,

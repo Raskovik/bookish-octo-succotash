@@ -72,10 +72,6 @@ export type TradeSide = "initiator" | "recipient";
 export type ListingType = "pet" | "item";
 export type ListingStatus = "active" | "sold" | "cancelled" | "expired";
 export type ListingCurrency = "coins" | "gems";
-// Allowed listing durations — validated server-side too (see
-// 0019_marketplace_upgrades.sql), this is just for the sell form's
-// dropdown.
-export type ListingDurationDays = 1 | 3 | 7 | 14 | 30;
 
 export type SpeciesRow = {
   id: string;
@@ -667,7 +663,7 @@ export type TradeWithParticipants = Pick<
 // lets a player see their own row) and, for item listings, the item
 // catalog details joined in. One shape covers both listing types —
 // listingType says which of the pet*/item* fields are populated — so
-// /marketplace/browse and /marketplace/mine can render mixed lists
+// /marketplace and /marketplace/listings can render mixed lists
 // without two parallel types.
 export type MarketplaceListing = Pick<
   MarketplaceListingRow,
@@ -687,8 +683,10 @@ export type MarketplaceListing = Pick<
   | "sold_at"
 > & {
   sellerId: string;
+  sellerDisplayId: number;
   sellerName: string;
   buyerId: string | null;
+  buyerDisplayId: number | null;
   buyerName: string | null;
   itemId: string | null;
   itemName: string | null;
@@ -1400,7 +1398,6 @@ export type Database = {
           p_pet_id: string;
           p_price_coins: number | null;
           p_price_gems: number | null;
-          p_duration_days: ListingDurationDays;
         };
         Returns: string;
       };
@@ -1411,7 +1408,6 @@ export type Database = {
           p_quantity: number;
           p_price_coins: number | null;
           p_price_gems: number | null;
-          p_duration_days: ListingDurationDays;
         };
         Returns: string;
       };
