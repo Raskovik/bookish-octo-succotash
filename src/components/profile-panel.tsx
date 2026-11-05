@@ -103,11 +103,11 @@ export function ProfilePanel({
               My stuff
             </h2>
             <div className="stuff">
-              <Link className="btn btn-big" href={view === "owner" ? "/pets" : `/u/${profile.id}/pets`}>
+              <Link className="btn btn-big" href={view === "owner" ? "/pets" : `/u/${profile.display_id}/pets`}>
                 <i className="ic i-paw" aria-hidden="true" />
                 Pets
               </Link>
-              <Link className="btn btn-big" href={view === "owner" ? "/items" : `/u/${profile.id}/items`}>
+              <Link className="btn btn-big" href={view === "owner" ? "/items" : `/u/${profile.display_id}/items`}>
                 <i className="ic i-bag" aria-hidden="true" />
                 Items
               </Link>

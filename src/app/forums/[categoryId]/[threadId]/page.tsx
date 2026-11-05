@@ -80,7 +80,7 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
     profileIds.length > 0
       ? await supabase
           .from("user_profiles")
-          .select("id, display_name, avatar_url, is_admin, is_moderator")
+          .select("id, display_id, display_name, avatar_url, is_admin, is_moderator")
           .in("id", profileIds)
       : { data: [] };
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
@@ -98,6 +98,7 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
       is_hidden: p.is_hidden,
       hidden_at: p.hidden_at,
       authorId: p.author_id,
+      authorDisplayId: author?.display_id ?? 0,
       authorName: author?.display_name ?? "Unknown",
       authorAvatarUrl: author?.avatar_url ?? null,
       authorIsAdmin: author?.is_admin ?? false,
@@ -229,7 +230,7 @@ function PostCard({
   return (
     <article className={`fm-post${isMine ? " fm-mine" : ""}`}>
       <div className="fm-author">
-        <Link href={`/u/${post.authorId}`}>
+        <Link href={`/u/${post.authorDisplayId}`}>
           <div
             className="av-sq"
             role="img"
@@ -238,7 +239,7 @@ function PostCard({
           />
         </Link>
         <PlayerLink
-          userId={post.authorId}
+          userDisplayId={post.authorDisplayId}
           name={post.authorName}
           isAdmin={post.authorIsAdmin}
           isModerator={post.authorIsModerator}

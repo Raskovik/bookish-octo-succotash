@@ -31,7 +31,7 @@ export function SiteNewsPanel({ posts }: { posts: SiteNewsPostWithAuthor[] }) {
               <p className="byline">
                 Posted by{" "}
                 <PlayerLink
-                  userId={post.author_id}
+                  userDisplayId={post.authorDisplayId}
                   name={post.authorName}
                   isAdmin={post.authorIsAdmin}
                   isModerator={post.authorIsModerator}

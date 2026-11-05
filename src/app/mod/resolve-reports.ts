@@ -28,7 +28,7 @@ export async function resolveReportDetails(
 
   const [{ data: profilesData }, { data: postsData }, { data: messagesData }] = await Promise.all([
     userIds.length > 0
-      ? supabase.from("user_profiles").select("id, display_name").in("id", userIds)
+      ? supabase.from("user_profiles").select("id, display_id, display_name").in("id", userIds)
       : Promise.resolve({ data: [] }),
     postIds.length > 0
       ? supabase.from("forum_posts").select("id, thread_id, body_raw").in("id", postIds)
@@ -64,12 +64,17 @@ export async function resolveReportDetails(
       resolution_note: r.resolution_note,
       created_at: r.created_at,
       reporterId: r.reporter_id,
+      reporterDisplayId: profileById.get(r.reporter_id)?.display_id ?? 0,
       reporterName: profileById.get(r.reporter_id)?.display_name ?? "Unknown",
       targetUserId: r.target_user_id,
+      targetUserDisplayId: r.target_user_id ? (profileById.get(r.target_user_id)?.display_id ?? 0) : null,
       targetUserName: r.target_user_id ? (profileById.get(r.target_user_id)?.display_name ?? "Unknown") : null,
       targetPostId: r.target_post_id,
       targetPostBody: post?.body_raw ?? null,
       targetPostAuthorId: r.target_post_author_id,
+      targetPostAuthorDisplayId: r.target_post_author_id
+        ? (profileById.get(r.target_post_author_id)?.display_id ?? 0)
+        : null,
       targetPostAuthorName: r.target_post_author_id
         ? (profileById.get(r.target_post_author_id)?.display_name ?? "Unknown")
         : null,
@@ -78,6 +83,9 @@ export async function resolveReportDetails(
       targetMessageId: r.target_message_id,
       targetMessageBody: message?.body ?? null,
       targetMessageSenderId: r.target_message_sender_id,
+      targetMessageSenderDisplayId: r.target_message_sender_id
+        ? (profileById.get(r.target_message_sender_id)?.display_id ?? 0)
+        : null,
       targetMessageSenderName: r.target_message_sender_id
         ? (profileById.get(r.target_message_sender_id)?.display_name ?? "Unknown")
         : null,

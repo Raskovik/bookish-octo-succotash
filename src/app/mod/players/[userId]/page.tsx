@@ -93,7 +93,7 @@ export default async function ModPlayerPage(props: PageProps<"/mod/players/[user
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{profile.display_name}</h1>
           <p className="text-xs text-stone-500">Joined {joined}</p>
-          <Link href={`/u/${profile.id}`} className="text-xs underline">
+          <Link href={`/u/${profile.display_id}`} className="text-xs underline">
             View public profile
           </Link>
         </div>

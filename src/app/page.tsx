@@ -88,7 +88,10 @@ export default async function Home(props: PageProps<"/">) {
   const authorIds = [...new Set([...newsRows.map((n) => n.author_id), ...threadRows.map((t) => t.author_id)])];
   const { data: profiles } =
     authorIds.length > 0
-      ? await supabase.from("user_profiles").select("id, display_name, is_admin, is_moderator").in("id", authorIds)
+      ? await supabase
+          .from("user_profiles")
+          .select("id, display_id, display_name, is_admin, is_moderator")
+          .in("id", authorIds)
       : { data: [] };
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
@@ -96,6 +99,7 @@ export default async function Home(props: PageProps<"/">) {
     const author = profileById.get(post.author_id);
     return {
       ...post,
+      authorDisplayId: author?.display_id ?? 0,
       authorName: author?.display_name ?? "Unknown",
       authorIsAdmin: author?.is_admin ?? false,
       authorIsModerator: author?.is_moderator ?? false,

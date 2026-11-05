@@ -26,15 +26,23 @@ export default async function PlayerItemsPage(props: PageProps<"/u/[id]/items">)
 
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: inventoryData }] = await Promise.all([
-    supabase.from("user_profiles").select("id, display_name").eq("id", id).maybeSingle(),
-    supabase
-      .from("user_inventory")
-      .select("quantity, item:items(id, name, image_url, rarity, type)")
-      .eq("user_id", id)
-      .gt("quantity", 0)
-      .order("item_id", { ascending: true }),
-  ]);
+  // The URL segment is the public display_id, not the real uuid — see
+  // 0065_user_display_id.sql / src/app/u/[id]/page.tsx. Resolve to the
+  // real id before querying user_inventory, which keys on that.
+  const displayId = Number(id);
+  const { data: profile } =
+    Number.isInteger(displayId) && displayId >= 1
+      ? await supabase.from("user_profiles").select("id, display_name").eq("display_id", displayId).maybeSingle()
+      : { data: null };
+
+  const { data: inventoryData } = profile
+    ? await supabase
+        .from("user_inventory")
+        .select("quantity, item:items(id, name, image_url, rarity, type)")
+        .eq("user_id", profile.id)
+        .gt("quantity", 0)
+        .order("item_id", { ascending: true })
+    : { data: null };
 
   const allItems = (inventoryData ?? []) as unknown as ItemWithQuantity[];
   const items = activeTab === "all" ? allItems : allItems.filter((entry) => entry.item?.type === activeTab);

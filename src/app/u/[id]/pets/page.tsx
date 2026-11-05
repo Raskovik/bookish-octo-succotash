@@ -13,14 +13,21 @@ export default async function PlayerPetsPage(props: PageProps<"/u/[id]/pets">) {
   const { id } = await props.params;
   const supabase = await createClient();
 
-  const [{ data: profile }, { data: petsData }] = await Promise.all([
-    supabase.from("user_profiles").select("id, display_name").eq("id", id).maybeSingle(),
-    supabase
-      .from("pets")
-      .select("id, rarity, color_variant, custom_name, is_for_trade, created_at, species(name, image_url)")
-      .eq("owner_id", id)
-      .order("created_at", { ascending: true }),
-  ]);
+  // The URL segment is the public display_id, not the real uuid — see
+  // 0065_user_display_id.sql / src/app/u/[id]/page.tsx.
+  const displayId = Number(id);
+  const { data: profile } =
+    Number.isInteger(displayId) && displayId >= 1
+      ? await supabase.from("user_profiles").select("id, display_name").eq("display_id", displayId).maybeSingle()
+      : { data: null };
+
+  const { data: petsData } = profile
+    ? await supabase
+        .from("pets")
+        .select("id, rarity, color_variant, custom_name, is_for_trade, created_at, species(name, image_url)")
+        .eq("owner_id", profile.id)
+        .order("created_at", { ascending: true })
+    : { data: null };
 
   const pets = (petsData ?? []) as unknown as PetWithSpecies[];
 

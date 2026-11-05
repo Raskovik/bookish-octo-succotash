@@ -70,7 +70,7 @@ export async function updateProfileSettings(
     }
   }
 
-  const { error } = await supabase
+  const { data: updated, error } = await supabase
     .from("users")
     .update({
       bio: bio.length > 0 ? bio : null,
@@ -79,13 +79,15 @@ export async function updateProfileSettings(
       ...(removeAvatar ? { avatar_url: null } : {}),
       ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
     })
-    .eq("id", user.id);
+    .eq("id", user.id)
+    .select("display_id")
+    .single();
 
   if (error) {
     return { error: "Could not save your changes. Please try again." };
   }
 
   revalidatePath("/settings");
-  revalidatePath(`/u/${user.id}`);
+  revalidatePath(`/u/${updated.display_id}`);
   return { success: true };
 }

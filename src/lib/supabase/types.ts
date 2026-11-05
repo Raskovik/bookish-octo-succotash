@@ -2,6 +2,10 @@ export type WhoCanMessage = "everyone" | "friends" | "nobody";
 
 export type UserRow = {
   id: string;
+  // Sequential, public-facing profile number (1 = first account) — see
+  // 0065_user_display_id.sql. URL/display only; every foreign key and
+  // internal lookup still goes through `id`.
+  display_id: number;
   google_sub: string | null;
   email: string;
   display_name: string;
@@ -35,6 +39,7 @@ export type UserRow = {
 export type PublicUserProfile = Pick<
   UserRow,
   | "id"
+  | "display_id"
   | "display_name"
   | "avatar_url"
   | "bio"
@@ -835,6 +840,7 @@ export type ForumThreadListItem = Pick<
   "id" | "title" | "is_pinned" | "is_locked" | "reply_count" | "view_count" | "created_at" | "last_post_at"
 > & {
   authorId: string;
+  authorDisplayId: number;
   authorName: string;
   authorIsAdmin: boolean;
   authorIsModerator: boolean;
@@ -850,6 +856,7 @@ export type ForumPostWithAuthor = Pick<
   "id" | "body_raw" | "body_html" | "created_at" | "edited_at" | "edit_count" | "is_hidden" | "hidden_at"
 > & {
   authorId: string;
+  authorDisplayId: number;
   authorName: string;
   authorAvatarUrl: string | null;
   authorIsAdmin: boolean;
@@ -911,18 +918,22 @@ export type ReportWithDetails = Pick<
   "id" | "target_type" | "category" | "details" | "status" | "resolved_at" | "resolution_note" | "created_at"
 > & {
   reporterId: string;
+  reporterDisplayId: number;
   reporterName: string;
   targetUserId: string | null;
+  targetUserDisplayId: number | null;
   targetUserName: string | null;
   targetPostId: string | null;
   targetPostBody: string | null;
   targetPostAuthorId: string | null;
+  targetPostAuthorDisplayId: number | null;
   targetPostAuthorName: string | null;
   targetThreadId: string | null;
   targetCategoryId: string | null;
   targetMessageId: string | null;
   targetMessageBody: string | null;
   targetMessageSenderId: string | null;
+  targetMessageSenderDisplayId: number | null;
   targetMessageSenderName: string | null;
   targetMessageConversationId: string | null;
   resolvedByName: string | null;
@@ -957,6 +968,7 @@ export type SiteNewsPostRow = {
 // row — same pattern as TradeWithParticipants) — shown on the
 // homepage and in /admin/news.
 export type SiteNewsPostWithAuthor = SiteNewsPostRow & {
+  authorDisplayId: number;
   authorName: string;
   authorIsAdmin: boolean;
   authorIsModerator: boolean;

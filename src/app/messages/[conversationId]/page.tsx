@@ -60,10 +60,14 @@ export default async function ConversationPage(
     conversation.user_one_id === user.id ? conversation.user_one_last_read_at : conversation.user_two_last_read_at;
 
   const [{ data: myProfile }, { data: otherProfile }, { count }] = await Promise.all([
-    supabase.from("user_profiles").select("id, display_name, avatar_url, is_admin, is_moderator").eq("id", user.id).single(),
     supabase
       .from("user_profiles")
-      .select("id, display_name, avatar_url, is_admin, is_moderator")
+      .select("id, display_id, display_name, avatar_url, is_admin, is_moderator")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("user_profiles")
+      .select("id, display_id, display_name, avatar_url, is_admin, is_moderator")
       .eq("id", otherUserId)
       .single(),
     supabase
@@ -137,12 +141,12 @@ export default async function ConversationPage(
               <span className="sect-ico ico-mail" />
               Conversation with{" "}
               <PlayerLink
-                userId={otherUserId}
+                userDisplayId={otherProfile?.display_id ?? 0}
                 name={otherName}
                 isAdmin={otherProfile?.is_admin ?? false}
                 isModerator={otherProfile?.is_moderator ?? false}
               />
-              <Link className="btn btn-sm btn-cream fm-new" href={`/u/${otherUserId}`}>
+              <Link className="btn btn-sm btn-cream fm-new" href={`/u/${otherProfile?.display_id ?? 0}`}>
                 View profile
               </Link>
             </h2>
@@ -160,6 +164,7 @@ export default async function ConversationPage(
                       key={message.id}
                       messageId={message.id}
                       authorId={author?.id ?? message.sender_id}
+                      authorDisplayId={author?.display_id ?? 0}
                       authorName={authorName}
                       authorAvatarUrl={author?.avatar_url ?? null}
                       authorIsAdmin={!isMine && (author?.is_admin ?? false)}
@@ -202,6 +207,7 @@ export default async function ConversationPage(
 function MessageCard({
   messageId,
   authorId,
+  authorDisplayId,
   authorName,
   authorAvatarUrl,
   authorIsAdmin,
@@ -214,6 +220,7 @@ function MessageCard({
 }: {
   messageId: string;
   authorId: string;
+  authorDisplayId: number;
   authorName: string;
   authorAvatarUrl: string | null;
   authorIsAdmin: boolean;
@@ -229,7 +236,7 @@ function MessageCard({
   return (
     <article className={`fm-post${isMine ? " fm-mine" : ""}${isStaffStyled ? " fm-staff" : ""}`}>
       <div className="fm-author">
-        <Link href={`/u/${authorId}`}>
+        <Link href={`/u/${authorDisplayId}`}>
           <div
             className="av-sq"
             role="img"
@@ -237,7 +244,7 @@ function MessageCard({
             style={authorAvatarUrl ? { backgroundImage: `url(${authorAvatarUrl})` } : undefined}
           />
         </Link>
-        <PlayerLink userId={authorId} name={authorName} isAdmin={authorIsAdmin} isModerator={authorIsModerator} className="fm-name" />
+        <PlayerLink userDisplayId={authorDisplayId} name={authorName} isAdmin={authorIsAdmin} isModerator={authorIsModerator} className="fm-name" />
         {isFromStaffAccount ? (
           <span className="fm-official">
             <ShieldAlert size={12} />

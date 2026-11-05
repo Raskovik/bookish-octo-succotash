@@ -33,8 +33,8 @@ export default async function ModConversationPage(
   }
 
   const [{ data: userOneProfile }, { data: userTwoProfile }, { data: messagesData }] = await Promise.all([
-    supabase.from("user_profiles").select("id, display_name, avatar_url").eq("id", conversation.user_one_id).single(),
-    supabase.from("user_profiles").select("id, display_name, avatar_url").eq("id", conversation.user_two_id).single(),
+    supabase.from("user_profiles").select("id, display_id, display_name, avatar_url").eq("id", conversation.user_one_id).single(),
+    supabase.from("user_profiles").select("id, display_id, display_name, avatar_url").eq("id", conversation.user_two_id).single(),
     supabase
       .from("dm_messages")
       .select("id, conversation_id, sender_id, body, created_at")
@@ -82,7 +82,7 @@ export default async function ModConversationPage(
                     ) : (
                       <div className="h-14 w-14 rounded-md border-2 border-dashed border-green-300" />
                     )}
-                    <Link href={`/u/${message.sender_id}`} className="text-sm font-semibold hover:underline">
+                    <Link href={`/u/${author?.display_id ?? ""}`} className="text-sm font-semibold hover:underline">
                       {author?.display_name ?? "Unknown"}
                     </Link>
                     {isFromStaffAccount ? (

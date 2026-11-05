@@ -25,5 +25,6 @@ export default async function ProfilePage() {
   // there's no background job in this phase, so this runs on every load.
   await supabase.rpc("resolve_due_expeditions", { p_user_id: user.id });
 
-  redirect(`/u/${user.id}`);
+  const { data: profile } = await supabase.from("users").select("display_id").eq("id", user.id).single();
+  redirect(`/u/${profile?.display_id ?? ""}`);
 }

@@ -20,13 +20,15 @@ export function staffNameColorClass(isAdmin: boolean, isModerator: boolean): str
  * staff-only pages.
  */
 export function PlayerLink({
-  userId,
+  userDisplayId,
   name,
   isAdmin = false,
   isModerator = false,
   className = "",
 }: {
-  userId: string;
+  // The public display_id (see 0065_user_display_id.sql), not the
+  // real uuid — profile URLs are keyed on that now.
+  userDisplayId: number;
   name: string;
   isAdmin?: boolean;
   isModerator?: boolean;
@@ -35,7 +37,7 @@ export function PlayerLink({
   const roleClass = staffNameColorClass(isAdmin, isModerator);
 
   return (
-    <Link href={`/u/${userId}`} className={`${roleClass} ${className}`.trim()}>
+    <Link href={`/u/${userDisplayId}`} className={`${roleClass} ${className}`.trim()}>
       {name}
     </Link>
   );

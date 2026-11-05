@@ -47,7 +47,7 @@ export async function SiteHeader() {
   const [{ data: profile }, { data: conversationsData }, { data: notificationRows }] = await Promise.all([
     supabase
       .from("users")
-      .select("display_name, avatar_url, coin_balance, gem_balance, is_admin, is_moderator")
+      .select("display_id, display_name, avatar_url, coin_balance, gem_balance, is_admin, is_moderator")
       .eq("id", user.id)
       .single(),
     supabase
@@ -86,7 +86,7 @@ export async function SiteHeader() {
     <header className="hero">
       <div className="scene">
         <div className="player">
-          <Link href={`/u/${user.id}`}>
+          <Link href={`/u/${profile?.display_id ?? ""}`}>
             <div
               className="av"
               role="img"
@@ -96,7 +96,7 @@ export async function SiteHeader() {
           </Link>
           <div>
             <p className="pname">
-              <Link href={`/u/${user.id}`}>{profile?.display_name ?? "Player"}</Link>
+              <Link href={`/u/${profile?.display_id ?? ""}`}>{profile?.display_name ?? "Player"}</Link>
               <small>Welcome back!</small>
             </p>
           </div>

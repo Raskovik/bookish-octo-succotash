@@ -39,7 +39,7 @@ export default async function ReportHandlingPage(props: PageProps<"/mod/reports/
 
   const [{ data: offendingProfile }, { data: noteRows }, { data: pastReportsData }] = await Promise.all([
     offendingUserId
-      ? supabase.from("user_profiles").select("id, display_name, avatar_url, created_at").eq("id", offendingUserId).maybeSingle()
+      ? supabase.from("user_profiles").select("id, display_id, display_name, avatar_url, created_at").eq("id", offendingUserId).maybeSingle()
       : Promise.resolve({ data: null }),
     offendingUserId
       ? supabase.from("player_notes").select("*").eq("user_id", offendingUserId).order("created_at", { ascending: false })
@@ -99,7 +99,7 @@ export default async function ReportHandlingPage(props: PageProps<"/mod/reports/
                 {offendingProfile.display_name}
               </Link>
               <p className="text-xs text-stone-500">Joined {joined}</p>
-              <Link href={`/u/${offendingProfile.id}`} className="text-xs underline">
+              <Link href={`/u/${offendingProfile.display_id}`} className="text-xs underline">
                 View public profile
               </Link>
             </div>
@@ -149,7 +149,7 @@ export default async function ReportHandlingPage(props: PageProps<"/mod/reports/
           <section className="flex flex-col gap-2 rounded-lg border border-green-200 p-4 dark:border-stone-800">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-500">Report</h2>
             <p className="text-sm">
-              <Link href={`/u/${report.reporterId}`} className="font-medium hover:underline">
+              <Link href={`/u/${report.reporterDisplayId}`} className="font-medium hover:underline">
                 {report.reporterName}
               </Link>{" "}
               reported <span className="font-medium">{CATEGORY_LABELS[report.category] ?? report.category}</span> on{" "}

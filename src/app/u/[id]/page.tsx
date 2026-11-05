@@ -4,6 +4,16 @@ import { ProfilePanel } from "@/components/profile-panel";
 
 export default async function PublicProfilePage(props: PageProps<"/u/[id]">) {
   const { id } = await props.params;
+  // The URL segment is the sequential, public-facing display_id (see
+  // 0065_user_display_id.sql) — "1" for the first account — not the
+  // real uuid primary key. Anything that isn't a plain positive
+  // integer (including an old /u/<uuid> link from before this
+  // migration) 404s rather than erroring on the numeric comparison.
+  const displayId = Number(id);
+  if (!Number.isInteger(displayId) || displayId < 1) {
+    notFound();
+  }
+
   const supabase = await createClient();
   const {
     data: { user: viewer },
@@ -12,7 +22,7 @@ export default async function PublicProfilePage(props: PageProps<"/u/[id]">) {
   const { data: profile } = await supabase
     .from("user_profiles")
     .select("*")
-    .eq("id", id)
+    .eq("display_id", displayId)
     .maybeSingle();
 
   if (!profile) {

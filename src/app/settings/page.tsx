@@ -21,7 +21,9 @@ export default async function SettingsPage() {
 
   const { data: profile, error } = await supabase
     .from("users")
-    .select("display_name, display_name_changed_at, bio, gem_balance, avatar_url, who_can_message, allow_friend_requests")
+    .select(
+      "display_id, display_name, display_name_changed_at, bio, gem_balance, avatar_url, who_can_message, allow_friend_requests",
+    )
     .eq("id", user.id)
     .single();
 
@@ -46,7 +48,7 @@ export default async function SettingsPage() {
                 nextChangeAvailableAt={nextChangeAvailableAt}
               />
             }
-            profileUrl={`/u/${user.id}`}
+            profileUrl={`/u/${profile.display_id}`}
             avatarUrl={profile.avatar_url}
             bio={profile.bio ?? ""}
             whoCanMessage={profile.who_can_message}

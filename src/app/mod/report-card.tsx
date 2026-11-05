@@ -44,7 +44,7 @@ export function ReportCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm">
-            <Link href={`/u/${report.reporterId}`} className="font-medium hover:underline">
+            <Link href={`/u/${report.reporterDisplayId}`} className="font-medium hover:underline">
               {report.reporterName}
             </Link>{" "}
             reported {TARGET_TYPE_LABELS[report.target_type] ?? report.target_type} —{" "}
@@ -68,7 +68,7 @@ export function ReportCard({
         <p className="text-sm">
           Target:{" "}
           {report.targetUserId ? (
-            <Link href={`/u/${report.targetUserId}`} className="font-medium hover:underline">
+            <Link href={`/u/${report.targetUserDisplayId}`} className="font-medium hover:underline">
               {report.targetUserName}
             </Link>
           ) : (
@@ -80,7 +80,7 @@ export function ReportCard({
           <p className="text-xs text-stone-500">
             Post by{" "}
             {report.targetPostAuthorId ? (
-              <Link href={`/u/${report.targetPostAuthorId}`} className="font-medium hover:underline">
+              <Link href={`/u/${report.targetPostAuthorDisplayId}`} className="font-medium hover:underline">
                 {report.targetPostAuthorName}
               </Link>
             ) : (
@@ -107,7 +107,7 @@ export function ReportCard({
           <p className="text-xs text-stone-500">
             Message from{" "}
             {report.targetMessageSenderId ? (
-              <Link href={`/u/${report.targetMessageSenderId}`} className="font-medium hover:underline">
+              <Link href={`/u/${report.targetMessageSenderDisplayId}`} className="font-medium hover:underline">
                 {report.targetMessageSenderName}
               </Link>
             ) : (

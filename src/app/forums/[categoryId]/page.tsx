@@ -81,7 +81,10 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
   const authorIds = [...new Set([...pinnedRows, ...threadRows].map((t) => t.author_id))];
   const { data: profiles } =
     authorIds.length > 0
-      ? await supabase.from("user_profiles").select("id, display_name, is_admin, is_moderator").in("id", authorIds)
+      ? await supabase
+          .from("user_profiles")
+          .select("id, display_id, display_name, is_admin, is_moderator")
+          .in("id", authorIds)
       : { data: [] };
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
@@ -97,6 +100,7 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
       created_at: t.created_at,
       last_post_at: t.last_post_at,
       authorId: t.author_id,
+      authorDisplayId: author?.display_id ?? 0,
       authorName: author?.display_name ?? "Unknown",
       authorIsAdmin: author?.is_admin ?? false,
       authorIsModerator: author?.is_moderator ?? false,
@@ -213,7 +217,7 @@ function ThreadRow({
         <p className="fm-sub">
           Posted by{" "}
           <PlayerLink
-            userId={thread.authorId}
+            userDisplayId={thread.authorDisplayId}
             name={thread.authorName}
             isAdmin={thread.authorIsAdmin}
             isModerator={thread.authorIsModerator}
