@@ -1387,7 +1387,7 @@ dialog.fg.mk-dlg{width:min(400px,100vw - 28px)}
 @media(max-width:700px){.mk-tiles .mk-line{grid-template-columns:1fr}.mk-tiles .mk-line .mk-nm,.mk-tiles .mk-line .mk-by,.mk-tiles .mk-line .mk-pp,.mk-tiles .mk-line .btn{grid-column:1;grid-row:auto}}
 .mk-sum>div[hidden]{display:none}
 .mk-field[hidden]{display:none}
-.mk-both{display:grid;gap:1px}
+.mk-both{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 .mk-both>span{display:flex;align-items:center;gap:2px}
 .mk-or{margin-right:4px;font:700 11px var(--font-body);font-style:normal;color:var(--ink-soft)}
 .mk-exp{display:block;font:700 11.5px var(--font-body);color:var(--ink-soft)}
