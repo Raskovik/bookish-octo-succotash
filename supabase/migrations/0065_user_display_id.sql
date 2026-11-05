@@ -65,10 +65,26 @@ $$;
 
 -- Public via user_profiles (same reasoning as every other public field
 -- on this view): profile links are built from this everywhere.
-create or replace view public.user_profiles as
-  select id, display_name, avatar_url, bio, created_at, is_admin, is_moderator,
-         coin_balance, gem_balance, den_size, who_can_message, allow_friend_requests, display_id
+--
+-- Dropped and recreated rather than create or replace: that only
+-- allows appending a new column at the very end and otherwise
+-- requires every existing column to stay in the exact same name/order
+-- it already has, which errors (42P16) the moment the live view's
+-- actual current column order doesn't match what's assumed here —
+-- already hit twice now, so rather than keep guessing the live order,
+-- this sidesteps the constraint entirely. The explicit select list
+-- below is deliberately exhaustive (not select *) so this stays
+-- correct regardless of what order the underlying table's columns
+-- are actually in. Grants don't survive a drop, so select is
+-- re-granted after (same as the view's original grant, 0001).
+drop view if exists public.user_profiles;
+
+create view public.user_profiles as
+  select id, display_id, display_name, avatar_url, bio, created_at, is_admin, is_moderator,
+         coin_balance, gem_balance, den_size, who_can_message, allow_friend_requests
   from public.users;
+
+grant select on public.user_profiles to anon, authenticated;
 
 -- notify_on_friend_request/notify_on_friend_accepted (0056) each bake
 -- a '/u/' || <uuid> link straight into the notifications row at insert
