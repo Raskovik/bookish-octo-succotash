@@ -66,8 +66,8 @@ $$;
 -- Public via user_profiles (same reasoning as every other public field
 -- on this view): profile links are built from this everywhere.
 create or replace view public.user_profiles as
-  select id, display_id, display_name, avatar_url, bio, created_at, is_admin, is_moderator,
-         coin_balance, gem_balance, den_size, who_can_message, allow_friend_requests
+  select id, display_name, avatar_url, bio, created_at, is_admin, is_moderator,
+         coin_balance, gem_balance, den_size, who_can_message, allow_friend_requests, display_id
   from public.users;
 
 -- notify_on_friend_request/notify_on_friend_accepted (0056) each bake
