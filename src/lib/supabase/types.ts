@@ -1418,6 +1418,13 @@ export type Database = {
         };
         Returns: null;
       };
+      dismiss_listing: {
+        Args: {
+          p_user_id: string;
+          p_listing_id: string;
+        };
+        Returns: null;
+      };
       resolve_expired_listings: {
         Args: Record<string, never>;
         Returns: null;

@@ -13,6 +13,7 @@ export default async function SellPage(props: PageProps<"/marketplace/sell">) {
   const searchParams = await props.searchParams;
   const preselectItemId = first(searchParams.item) ?? null;
   const preselectPetId = first(searchParams.pet) ?? null;
+  const relistListingId = first(searchParams.relist) ?? null;
 
   const supabase = await createClient();
   const {
@@ -99,6 +100,7 @@ export default async function SellPage(props: PageProps<"/marketplace/sell">) {
             itemOptions={itemOptions}
             preselectItemId={preselectItemId}
             preselectPetId={preselectPetId}
+            relistListingId={relistListingId}
           />
         </div>
       </div>

@@ -263,7 +263,11 @@ export function ListingsApp({ userId, listings }: { userId: string; listings: Ma
                         </span>
                         <Link
                           className="btn btn-sm btn-cream"
-                          href={kindOf(l) === "pet" ? `/marketplace/sell?pet=${l.pet_id}` : `/marketplace/sell?item=${l.itemId}`}
+                          href={
+                            kindOf(l) === "pet"
+                              ? `/marketplace/sell?pet=${l.pet_id}&relist=${l.id}`
+                              : `/marketplace/sell?item=${l.itemId}&relist=${l.id}`
+                          }
                         >
                           List again
                         </Link>

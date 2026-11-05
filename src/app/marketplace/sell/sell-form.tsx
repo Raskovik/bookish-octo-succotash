@@ -76,12 +76,14 @@ export function SellForm({
   itemOptions,
   preselectItemId,
   preselectPetId,
+  relistListingId,
 }: {
   userId: string;
   petOptions: PetOption[];
   itemOptions: ItemOption[];
   preselectItemId: string | null;
   preselectPetId: string | null;
+  relistListingId: string | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"items" | "pets">(preselectPetId ? "pets" : "items");
@@ -143,6 +145,15 @@ export function SellForm({
   const petValid = petCols.every((c) => (c === "coin" ? petCoinValid : petGemValid));
   const petBad = petCols.some((c) => (c === "coin" ? petCoin !== "" && !petCoinValid : petGem !== "" && !petGemValid));
 
+  // Best-effort: the new listing is already live either way, so a
+  // dismiss failure (stale relist id, already cleared, etc.) shouldn't
+  // block the player from moving on.
+  async function dismissRelisted() {
+    if (!relistListingId) return;
+    const supabase = createClient();
+    await supabase.rpc("dismiss_listing", { p_user_id: userId, p_listing_id: relistListingId });
+  }
+
   async function submitItem() {
     if (!selectedItem || !itemValid) return;
     setError(null);
@@ -155,11 +166,13 @@ export function SellForm({
       p_price_coins: itemCols.includes("coin") ? itemCoinNum : null,
       p_price_gems: itemCols.includes("gem") ? itemGemNum : null,
     });
-    setIsPending(false);
     if (rpcError) {
+      setIsPending(false);
       setError(rpcError.message);
       return;
     }
+    await dismissRelisted();
+    setIsPending(false);
     router.push("/marketplace/listings");
   }
 
@@ -174,11 +187,13 @@ export function SellForm({
       p_price_coins: petCols.includes("coin") ? petCoinNum : null,
       p_price_gems: petCols.includes("gem") ? petGemNum : null,
     });
-    setIsPending(false);
     if (rpcError) {
+      setIsPending(false);
       setError(rpcError.message);
       return;
     }
+    await dismissRelisted();
+    setIsPending(false);
     router.push("/marketplace/listings");
   }
 
@@ -291,7 +306,6 @@ export function SellForm({
                           All
                         </button>
                       </div>
-                      <p className="mk-hint">Listed together for one price. Buyers get them all at once.</p>
                     </div>
 
                     <fieldset className="mk-seg mk-seg3">
