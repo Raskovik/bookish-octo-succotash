@@ -1225,6 +1225,7 @@ dialog.fg .fg-foot .btn { min-width: 90px; }
 .mk-wal{display:inline-flex;align-items:center;gap:4px;line-height:1}
 .mk-sub .coin{width:22px;height:22px}
 .mk-sub b{color:var(--ink)}
+.mk-price{display:inline-flex;align-items:center;gap:4px}
 .mk-price .coin.gem,.mk-wal .coin.gem{flex:none;position:relative;top:-2px}
 .mk-act{display:flex;gap:8px}
 .mk-tabs{margin-bottom:0}
