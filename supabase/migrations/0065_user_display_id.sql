@@ -77,6 +77,15 @@ $$;
 -- correct regardless of what order the underlying table's columns
 -- are actually in. Grants don't survive a drop, so select is
 -- re-granted after (same as the view's original grant, 0001).
+--
+-- dm_messages' own insert policy (0057) reads through this view
+-- inside its WITH CHECK, so Postgres refuses the drop outright
+-- (2BP01, "other objects depend on it") unless that policy goes too —
+-- dropped here and recreated verbatim (0057's own text, unchanged)
+-- right after the view exists again, rather than DROP ... CASCADE,
+-- which would take the policy down with it and never put it back.
+drop policy if exists "Participants can send messages" on public.dm_messages;
+
 drop view if exists public.user_profiles;
 
 create view public.user_profiles as
@@ -85,6 +94,35 @@ create view public.user_profiles as
   from public.users;
 
 grant select on public.user_profiles to anon, authenticated;
+
+create policy "Participants can send messages"
+  on public.dm_messages for insert
+  with check (
+    sender_id = auth.uid()
+    and not public.user_has_active_ban(sender_id, 'dm')
+    and exists (
+      select 1 from public.dm_conversations c
+      where c.id = conversation_id
+        and auth.uid() in (c.user_one_id, c.user_two_id)
+        and not public.user_has_active_ban(
+          case when c.user_one_id = sender_id then c.user_two_id else c.user_one_id end,
+          'dm'
+        )
+        and not public.is_blocked_by(
+          sender_id,
+          case when c.user_one_id = sender_id then c.user_two_id else c.user_one_id end
+        )
+        and coalesce((
+          select case who_can_message
+            when 'nobody' then false
+            when 'friends' then public.are_friends(sender_id, id)
+            else true
+          end
+          from public.user_profiles
+          where id = case when c.user_one_id = sender_id then c.user_two_id else c.user_one_id end
+        ), false)
+    )
+  );
 
 -- notify_on_friend_request/notify_on_friend_accepted (0056) each bake
 -- a '/u/' || <uuid> link straight into the notifications row at insert
