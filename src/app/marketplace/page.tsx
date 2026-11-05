@@ -65,15 +65,6 @@ function buildPriceOrFilter(
   return null;
 }
 
-function timeLeftLabel(expiresAt: string): { label: string; soon: boolean } {
-  const msLeft = new Date(expiresAt).getTime() - Date.now();
-  if (msLeft <= 0) return { label: "Expiring…", soon: true };
-  const hours = Math.ceil(msLeft / (60 * 60 * 1000));
-  if (hours < 24) return { label: `${hours} hour${hours === 1 ? "" : "s"} left`, soon: true };
-  const days = Math.ceil(hours / 24);
-  return { label: `${days} day${days === 1 ? "" : "s"} left`, soon: false };
-}
-
 export default async function MarketplacePage(props: PageProps<"/marketplace">) {
   const searchParams = await props.searchParams;
   const tab = first(searchParams.tab) === "pets" ? "pets" : "items";
@@ -392,8 +383,7 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
                 filters={{ q, cat: cat?.value ?? "", cur, min: hasMin ? minPrice : "", max: hasMax ? maxPrice : "", sort: itemSort }}
                 page={page}
                 totalPages={totalPages}
-                pageHref={(p) => qs({ page: p })}
-                timeLeftLabel={timeLeftLabel}
+                tab={tab}
               />
             ) : (
               <MarketplacePetsPane
@@ -404,8 +394,7 @@ export default async function MarketplacePage(props: PageProps<"/marketplace">) 
                 filters={{ q, cur, min: hasMin ? minPrice : "", max: hasMax ? maxPrice : "", sort: petSort }}
                 page={page}
                 totalPages={totalPages}
-                pageHref={(p) => qs({ page: p })}
-                timeLeftLabel={timeLeftLabel}
+                tab={tab}
               />
             )}
           </div>

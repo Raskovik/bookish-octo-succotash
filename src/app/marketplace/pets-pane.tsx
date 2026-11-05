@@ -5,6 +5,8 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { timeLeftLabel } from "./time-left";
+import { buildPageHref } from "./query-string";
 import type { ListingCurrency } from "@/lib/supabase/types";
 
 export type PetListingRow = {
@@ -90,8 +92,7 @@ export function MarketplacePetsPane({
   filters,
   page,
   totalPages,
-  pageHref,
-  timeLeftLabel,
+  tab,
 }: {
   rows: PetListingRow[];
   userId: string;
@@ -100,8 +101,7 @@ export function MarketplacePetsPane({
   filters: Filters;
   page: number;
   totalPages: number;
-  pageHref: (page: number) => string;
-  timeLeftLabel: (expiresAt: string) => { label: string; soon: boolean };
+  tab: "items" | "pets";
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -298,13 +298,13 @@ export function MarketplacePetsPane({
 
       {totalPages > 1 ? (
         <nav className="mk-pager" aria-label="Pet pages">
-          {page > 1 ? <Link href={pageHref(page - 1)}>Previous</Link> : null}
+          {page > 1 ? <Link href={buildPageHref(tab, filters, page - 1)}>Previous</Link> : null}
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <Link key={p} href={pageHref(p)} aria-current={p === page ? "page" : undefined}>
+            <Link key={p} href={buildPageHref(tab, filters, p)} aria-current={p === page ? "page" : undefined}>
               {p}
             </Link>
           ))}
-          {page < totalPages ? <Link href={pageHref(page + 1)}>Next</Link> : null}
+          {page < totalPages ? <Link href={buildPageHref(tab, filters, page + 1)}>Next</Link> : null}
         </nav>
       ) : null}
 
