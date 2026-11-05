@@ -14,7 +14,6 @@ function toPickerPets(pets: PetWithSpecies[]): PickerPet[] {
     id: p.id,
     name: p.custom_name ?? petTypeName(p),
     imageUrl: petImageUrl(p),
-    rarity: p.rarity,
   }));
 }
 

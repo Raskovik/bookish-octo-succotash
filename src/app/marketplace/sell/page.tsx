@@ -28,7 +28,7 @@ export default async function SellPage(props: PageProps<"/marketplace/sell">) {
     supabase
       .from("pets")
       .select(
-        "id, rarity, color_variant, folder_id, custom_name, is_for_trade, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
+        "id, color_variant, folder_id, custom_name, is_for_trade, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
       )
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true }),

@@ -54,11 +54,10 @@ export type PublicUserProfile = Pick<
 >;
 
 // Named rarity_tier in Postgres (renamed from pet_rarity once items also
-// needed it — see 0005_items_and_inventory.sql). Kept as PetRarity here
-// since that's what most call sites already import; ItemRarity is just an
-// alias for the item-shaped call sites.
-export type PetRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
-export type ItemRarity = PetRarity;
+// needed it — see 0005_items_and_inventory.sql). Pets dropped rarity
+// entirely in 0068_breeds_and_model_numbers_drop_pet_rarity.sql, so this
+// is an item-only concept again now — ItemRarity is the only name for it.
+export type ItemRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export type ExpeditionStatus = "in_progress" | "awaiting_claim" | "completed";
 export type ItemType = "ingredient" | "cosmetic" | "potion" | "seed" | "fertilizer";
 export type PotionEffectType =
@@ -73,12 +72,24 @@ export type ListingType = "pet" | "item";
 export type ListingStatus = "active" | "sold" | "cancelled" | "expired";
 export type ListingCurrency = "coins" | "gems";
 
+// name is derived server-side from model_number (or "Custom" when null)
+// by a trigger, not admin-typed — see 0068_breeds_and_model_numbers_
+// drop_pet_rarity.sql. breed_id is the lineart/animal group (what
+// players call "species" — not the same thing as this row, which is a
+// specific named model/variant within a breed); see BreedRow.
 export type SpeciesRow = {
   id: string;
   name: string;
-  rarity: PetRarity;
+  breed_id: string;
+  model_number: number | null;
   image_url: string | null;
   is_active: boolean;
+  created_at: string;
+};
+
+export type BreedRow = {
+  id: string;
+  name: string;
   created_at: string;
 };
 
@@ -90,7 +101,6 @@ export type PetRow = {
   owner_id: string;
   species_id: string;
   color_variant: string | null;
-  rarity: PetRarity;
   folder_id: string | null;
   custom_name: string | null;
   is_for_trade: boolean;
@@ -338,7 +348,6 @@ export type MarketplaceListingRow = {
   pet_id: string | null;
   pet_species_name: string | null;
   pet_species_image_url: string | null;
-  pet_rarity: PetRarity | null;
   pet_custom_name: string | null;
   item_id: string | null;
   item_quantity: number | null;
@@ -374,7 +383,6 @@ export type ExpeditionRow = {
 export type PetWithSpecies = Pick<
   PetRow,
   | "id"
-  | "rarity"
   | "color_variant"
   | "folder_id"
   | "custom_name"
@@ -430,7 +438,7 @@ export type FeedPetResult = {
 // visible to any signed-in player (folder_id is deliberately left out;
 // it's not for-trade-relevant and it's the new owner's to set anyway
 // once a trade completes).
-export type ForTradePet = Pick<PetRow, "id" | "rarity" | "custom_name"> & {
+export type ForTradePet = Pick<PetRow, "id" | "custom_name"> & {
   ownerId: string;
   ownerName: string;
   speciesName: string;
@@ -473,7 +481,7 @@ export type ExpeditionRewardReveal = {
   pending_species_id: string | null;
   pending_item_id: string | null;
   coins_reward: number;
-  species: Pick<SpeciesRow, "name" | "image_url" | "rarity"> | null;
+  species: Pick<SpeciesRow, "name" | "image_url"> | null;
   items: Pick<ItemRow, "name" | "image_url" | "rarity"> | null;
 };
 
@@ -570,13 +578,15 @@ export type BuyListingResult =
 
 // A zone's pool preview ("what you might get") — pets and items are drawn
 // from the same weighted roll server-side (pick_weighted_zone_reward), so
-// this is one kind-tagged list rather than two separate ones.
+// this is one kind-tagged list rather than two separate ones. rarity is
+// null for a "pet" entry (pets dropped rarity entirely) and always set
+// for an "item" entry.
 export type ZonePoolEntry = {
   kind: "pet" | "item";
   id: string;
   name: string;
   image_url: string | null;
-  rarity: PetRarity;
+  rarity: ItemRarity | null;
 };
 
 // A recipe as shown on /brewing: the output potion, its ingredients (each
@@ -624,7 +634,6 @@ export type TradePetLine = {
   petId: string;
   speciesName: string;
   imageUrl: string | null;
-  rarity: PetRarity;
   customName: string | null;
 };
 
@@ -675,7 +684,6 @@ export type MarketplaceListing = Pick<
   | "pet_id"
   | "pet_species_name"
   | "pet_species_image_url"
-  | "pet_rarity"
   | "pet_custom_name"
   | "item_quantity"
   | "created_at"
@@ -1091,8 +1099,9 @@ export type Database = {
         Partial<UserRow> & { id: string; email: string },
         Partial<Omit<UserRow, "id">>
       >;
-      species: TableOf<SpeciesRow, Partial<SpeciesRow> & { name: string }>;
-      pets: TableOf<PetRow, Partial<PetRow> & { owner_id: string; rarity: PetRarity }>;
+      breeds: TableOf<BreedRow, Partial<BreedRow> & { name: string }>;
+      species: TableOf<SpeciesRow, Partial<SpeciesRow> & { breed_id: string }>;
+      pets: TableOf<PetRow, Partial<PetRow> & { owner_id: string }>;
       pet_folders: TableOf<
         PetFolderRow,
         Partial<PetFolderRow> & { owner_id: string; name: string }

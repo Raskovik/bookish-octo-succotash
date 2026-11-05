@@ -24,7 +24,7 @@ export default async function PlayerPetsPage(props: PageProps<"/u/[id]/pets">) {
   const { data: petsData } = profile
     ? await supabase
         .from("pets")
-        .select("id, rarity, color_variant, custom_name, is_for_trade, created_at, species(name, image_url)")
+        .select("id, color_variant, custom_name, is_for_trade, created_at, species(name, image_url)")
         .eq("owner_id", profile.id)
         .order("created_at", { ascending: true })
     : { data: null };

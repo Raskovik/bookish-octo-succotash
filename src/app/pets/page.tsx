@@ -31,7 +31,7 @@ export default async function PetsPage() {
     supabase
       .from("pets")
       .select(
-        "id, rarity, color_variant, folder_id, custom_name, is_for_trade, level, last_fed_at, created_at, species(name, image_url)",
+        "id, color_variant, folder_id, custom_name, is_for_trade, level, last_fed_at, created_at, species(name, image_url)",
       )
       .eq("owner_id", userId)
       .order("created_at", { ascending: true }),

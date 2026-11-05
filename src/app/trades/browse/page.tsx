@@ -4,12 +4,12 @@ import { notFound, redirect } from "next/navigation";
 import { TRADING_ENABLED } from "@/lib/feature-flags";
 import { createClient } from "@/lib/supabase/server";
 import { petImageUrl, petTypeName } from "@/lib/pet-display";
-import type { PetRarity } from "@/lib/supabase/types";
+import type { ItemRarity } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 24;
-const RARITIES: PetRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
+const RARITIES: ItemRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
-function isRarity(value: string): value is PetRarity {
+function isRarity(value: string): value is ItemRarity {
   return (RARITIES as string[]).includes(value);
 }
 
@@ -26,7 +26,8 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
   const tab = first(searchParams.tab) === "items" ? "items" : "pets";
   const q = (first(searchParams.q) ?? "").trim();
   const rarityParam = first(searchParams.rarity);
-  const rarity = rarityParam && isRarity(rarityParam) ? rarityParam : null;
+  // Rarity is an item-only concept now — pets dropped it entirely.
+  const rarity = tab === "items" && rarityParam && isRarity(rarityParam) ? rarityParam : null;
   const owner = (first(searchParams.owner) ?? "").trim();
   const pageParam = Number(first(searchParams.page) ?? "1");
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
@@ -55,24 +56,22 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
 
   let petRows: {
     id: string;
-    rarity: PetRarity;
     custom_name: string | null;
     owner_id: string;
     species: { name: string; image_url: string | null } | null;
   }[] = [];
-  let itemRows: { item_id: string; owner_id: string; quantity: number; items: { name: string; image_url: string | null; rarity: PetRarity; type: string } | null }[] = [];
+  let itemRows: { item_id: string; owner_id: string; quantity: number; items: { name: string; image_url: string | null; rarity: ItemRarity; type: string } | null }[] = [];
   let totalCount = 0;
 
   if (tab === "pets") {
     let query = supabase
       .from("pets")
-      .select("id, rarity, custom_name, owner_id, species(name, image_url)", {
+      .select("id, custom_name, owner_id, species(name, image_url)", {
         count: "exact",
       })
       .eq("is_for_trade", true)
       .neq("owner_id", user.id);
 
-    if (rarity) query = query.eq("rarity", rarity);
     if (ownerIds) query = query.in("owner_id", ownerIds);
     if (q.length > 0) query = query.ilike("species.name", `%${q}%`);
 
@@ -173,18 +172,20 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
           placeholder="Owner username"
           className="rounded-md border border-green-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
         />
-        <select
-          name="rarity"
-          defaultValue={rarity ?? ""}
-          className="rounded-md border border-green-300 px-2 py-1.5 text-sm capitalize dark:border-stone-700 dark:bg-stone-900"
-        >
-          <option value="">All rarities</option>
-          {RARITIES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
+        {tab === "items" ? (
+          <select
+            name="rarity"
+            defaultValue={rarity ?? ""}
+            className="rounded-md border border-green-300 px-2 py-1.5 text-sm capitalize dark:border-stone-700 dark:bg-stone-900"
+          >
+            <option value="">All rarities</option>
+            {RARITIES.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        ) : null}
         <button
           type="submit"
           className="rounded-md border border-green-300 px-3 py-1.5 text-sm hover:bg-green-100 dark:border-stone-700 dark:hover:bg-stone-800"
@@ -215,9 +216,7 @@ export default async function BrowseTradesPage(props: PageProps<"/trades/browse"
                   <div className="h-16 w-16 rounded bg-green-200 dark:bg-stone-800" />
                 )}
                 <p className="text-xs font-medium">{pet.custom_name ?? petTypeName(pet)}</p>
-                <p className="text-[10px] capitalize text-stone-500">
-                  {petTypeName(pet)} · {pet.rarity}
-                </p>
+                <p className="text-[10px] capitalize text-stone-500">{petTypeName(pet)}</p>
                 <Link
                   href={`/trades/new?to=${encodeURIComponent(nameById.get(pet.owner_id) ?? "")}&petId=${pet.id}`}
                   className="text-xs text-green-800 hover:underline dark:text-green-300"

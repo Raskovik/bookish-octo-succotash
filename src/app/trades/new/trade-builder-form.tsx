@@ -17,7 +17,6 @@ function toPickerPets(pets: PetWithSpecies[]): PickerPet[] {
     id: p.id,
     name: p.custom_name ?? petTypeName(p),
     imageUrl: petImageUrl(p),
-    rarity: p.rarity,
   }));
 }
 
@@ -166,7 +165,7 @@ export function TradeBuilderForm({
     const [{ data: theirPetsData }, { data: theirItemsData }] = await Promise.all([
       supabase
         .from("pets")
-        .select("id, rarity, custom_name, species(name, image_url)")
+        .select("id, custom_name, species(name, image_url)")
         .eq("owner_id", profile.id)
         .eq("is_for_trade", true),
       supabase

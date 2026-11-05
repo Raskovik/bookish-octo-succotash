@@ -15,7 +15,7 @@ import type {
 // PetWithSpecies in lib/supabase/types.ts.
 type ZonePetPoolJoinRow = {
   zone_id: string;
-  species: { id: string; name: string; image_url: string | null; rarity: string } | null;
+  species: { id: string; name: string; image_url: string | null } | null;
 };
 type ZoneLootTableJoinRow = {
   zone_id: string;
@@ -64,12 +64,12 @@ export default async function ExpeditionsPage() {
       .eq("is_active", true)
       .eq("is_tutorial", false)
       .order("tier", { ascending: true }),
-    supabase.from("zone_pet_pool").select("zone_id, species(id, name, image_url, rarity)"),
+    supabase.from("zone_pet_pool").select("zone_id, species(id, name, image_url)"),
     supabase.from("zone_loot_table").select("zone_id, items(id, name, image_url, rarity)"),
     supabase
       .from("pets")
       .select(
-        "id, rarity, color_variant, folder_id, custom_name, is_for_trade, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
+        "id, color_variant, folder_id, custom_name, is_for_trade, level, roll_strength, roll_speed, roll_defence, last_fed_at, created_at, species(name, image_url)",
       )
       .eq("owner_id", user.id)
       .order("created_at", { ascending: true }),
@@ -103,7 +103,7 @@ export default async function ExpeditionsPage() {
       id: row.species.id,
       name: row.species.name,
       image_url: row.species.image_url,
-      rarity: row.species.rarity as ExplorableZone["pool"][number]["rarity"],
+      rarity: null,
     });
     poolByZone.set(row.zone_id, list);
   }

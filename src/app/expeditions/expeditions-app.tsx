@@ -321,7 +321,7 @@ export function ExpeditionsApp({
     supabase
       .from("expeditions")
       .select(
-        "pending_species_id, pending_item_id, coins_reward, species(name, image_url, rarity), items!expeditions_pending_item_id_fkey(name, image_url, rarity)",
+        "pending_species_id, pending_item_id, coins_reward, species(name, image_url), items!expeditions_pending_item_id_fkey(name, image_url, rarity)",
       )
       .eq("id", selectedZoneActive.id)
       .single()
@@ -571,7 +571,7 @@ export function ExpeditionsApp({
                               <div>
                                 <p className="xp-lname">{reveal.species?.name ?? reveal.items?.name}</p>
                                 <p className="xp-ldesc">
-                                  {reveal.species ? `A ${reveal.species.rarity} pet.` : `A ${reveal.items?.rarity} item.`}
+                                  {reveal.species ? "A new pet!" : `A ${reveal.items?.rarity} item.`}
                                 </p>
                               </div>
                             </div>

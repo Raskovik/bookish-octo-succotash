@@ -2,35 +2,46 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import type { PetRarity } from "@/lib/supabase/types";
+import type { ItemRarity } from "@/lib/supabase/types";
 
 // Normalized shapes the modal renders — callers adapt whatever query
 // result they have (own collection vs. another player's pool) into
 // these before opening the picker, so the modal itself doesn't need to
 // know which source it's browsing. Originally built for trading (see
 // src/app/trades/, currently hidden behind TRADING_ENABLED), reused by
-// the marketplace's sell flow — kept here rather than under either
-// feature's folder so neither depends on the other.
+// the marketplace's sell flow — kept here rather than either feature's
+// folder so neither depends on the other.
 export type PickerPet = {
   id: string;
   name: string;
   imageUrl: string | null;
-  rarity: PetRarity;
 };
 
 export type PickerItem = {
   id: string;
   name: string;
   imageUrl: string | null;
-  rarity: PetRarity;
+  rarity: ItemRarity;
   maxQuantity: number;
 };
 
-const RARITIES: PetRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
+const RARITIES: ItemRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
-function useFilteredList<T extends { name: string; rarity: PetRarity }>(list: T[]) {
+function useSearch<T extends { name: string }>(list: T[]) {
   const [search, setSearch] = useState("");
-  const [rarity, setRarity] = useState<PetRarity | "all">("all");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (q.length === 0) return list;
+    return list.filter((entry) => entry.name.toLowerCase().includes(q));
+  }, [list, search]);
+
+  return { search, setSearch, filtered };
+}
+
+function useFilteredItemList<T extends { name: string; rarity: ItemRarity }>(list: T[]) {
+  const [search, setSearch] = useState("");
+  const [rarity, setRarity] = useState<ItemRarity | "all">("all");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -44,7 +55,18 @@ function useFilteredList<T extends { name: string; rarity: PetRarity }>(list: T[
   return { search, setSearch, rarity, setRarity, filtered };
 }
 
-function FilterBar({
+function SearchBar({ search, setSearch }: { search: string; setSearch: (v: string) => void }) {
+  return (
+    <input
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Search by name…"
+      className="flex-1 rounded-md border border-green-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
+    />
+  );
+}
+
+function ItemFilterBar({
   search,
   setSearch,
   rarity,
@@ -52,20 +74,15 @@ function FilterBar({
 }: {
   search: string;
   setSearch: (v: string) => void;
-  rarity: PetRarity | "all";
-  setRarity: (v: PetRarity | "all") => void;
+  rarity: ItemRarity | "all";
+  setRarity: (v: ItemRarity | "all") => void;
 }) {
   return (
     <div className="flex gap-2">
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by name…"
-        className="flex-1 rounded-md border border-green-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
-      />
+      <SearchBar search={search} setSearch={setSearch} />
       <select
         value={rarity}
-        onChange={(e) => setRarity(e.target.value as PetRarity | "all")}
+        onChange={(e) => setRarity(e.target.value as ItemRarity | "all")}
         className="rounded-md border border-green-300 px-2 py-1.5 text-sm capitalize dark:border-stone-700 dark:bg-stone-900"
       >
         <option value="all">All rarities</option>
@@ -127,7 +144,7 @@ export function PetPickerModal({
   onClose: () => void;
   emptyText: string;
 }) {
-  const { search, setSearch, rarity, setRarity, filtered } = useFilteredList(pets);
+  const { search, setSearch, filtered } = useSearch(pets);
 
   return (
     <ModalShell
@@ -147,7 +164,7 @@ export function PetPickerModal({
       }
     >
       <div className="flex flex-col gap-3">
-        <FilterBar search={search} setSearch={setSearch} rarity={rarity} setRarity={setRarity} />
+        <SearchBar search={search} setSearch={setSearch} />
         {filtered.length === 0 ? (
           <p className="py-6 text-center text-sm italic text-stone-500">{emptyText}</p>
         ) : (
@@ -177,7 +194,6 @@ export function PetPickerModal({
                       <div className="h-14 w-14 rounded bg-green-200 dark:bg-stone-800" />
                     )}
                     <span className="text-xs">{pet.name}</span>
-                    <span className="text-[10px] capitalize text-stone-500">{pet.rarity}</span>
                   </button>
                 </li>
               );
@@ -204,7 +220,7 @@ export function ItemPickerModal({
   onClose: () => void;
   emptyText: string;
 }) {
-  const { search, setSearch, rarity, setRarity, filtered } = useFilteredList(items);
+  const { search, setSearch, rarity, setRarity, filtered } = useFilteredItemList(items);
   const selectedCount = Object.values(quantities).filter((q) => q > 0).length;
 
   return (
@@ -225,7 +241,7 @@ export function ItemPickerModal({
       }
     >
       <div className="flex flex-col gap-3">
-        <FilterBar search={search} setSearch={setSearch} rarity={rarity} setRarity={setRarity} />
+        <ItemFilterBar search={search} setSearch={setSearch} rarity={rarity} setRarity={setRarity} />
         {filtered.length === 0 ? (
           <p className="py-6 text-center text-sm italic text-stone-500">{emptyText}</p>
         ) : (

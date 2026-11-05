@@ -41,7 +41,7 @@ export async function loadTrades(
       supabase.from("user_profiles").select("id, display_name").in("id", participantIds),
       supabase
         .from("trade_pets")
-        .select("trade_id, side, pet_id, pets(rarity, custom_name, species(name, image_url))")
+        .select("trade_id, side, pet_id, pets(custom_name, species(name, image_url))")
         .in("trade_id", tradeIds),
       supabase
         .from("trade_items")
@@ -57,7 +57,6 @@ export async function loadTrades(
     side: TradePetLine["side"];
     pet_id: string;
     pets: {
-      rarity: TradePetLine["rarity"];
       custom_name: string | null;
       species: { name: string; image_url: string | null } | null;
     } | null;
@@ -68,7 +67,6 @@ export async function loadTrades(
       petId: row.pet_id,
       speciesName: row.pets ? petTypeName(row.pets) : "Unknown pet",
       imageUrl: row.pets ? petImageUrl(row.pets) : null,
-      rarity: row.pets?.rarity ?? "common",
       customName: row.pets?.custom_name ?? null,
     });
     petsByTrade.set(row.trade_id, list);

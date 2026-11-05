@@ -22,7 +22,7 @@ export async function loadListings(
   const { data: listingsData } = await supabase
     .from("marketplace_listings")
     .select(
-      "id, listing_type, status, price_coins, price_gems, seller_id, buyer_id, pet_id, pet_species_name, pet_species_image_url, pet_rarity, pet_custom_name, item_id, item_quantity, created_at, expires_at, sold_at",
+      "id, listing_type, status, price_coins, price_gems, seller_id, buyer_id, pet_id, pet_species_name, pet_species_image_url, pet_custom_name, item_id, item_quantity, created_at, expires_at, sold_at",
     )
     .in("id", listingIds)
     .order("created_at", { ascending: false });
@@ -61,7 +61,6 @@ export async function loadListings(
       pet_id: l.pet_id,
       pet_species_name: l.pet_species_name,
       pet_species_image_url: l.pet_species_image_url,
-      pet_rarity: l.pet_rarity,
       pet_custom_name: l.pet_custom_name,
       item_quantity: l.item_quantity,
       created_at: l.created_at,

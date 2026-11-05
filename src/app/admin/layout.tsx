@@ -25,8 +25,11 @@ export default async function AdminLayout({
           <Link href="/admin/items" className="hover:underline">
             Items
           </Link>
+          <Link href="/admin/breeds" className="hover:underline">
+            Breeds
+          </Link>
           <Link href="/admin/species" className="hover:underline">
-            Species
+            Models
           </Link>
           <Link href="/admin/shop-listings" className="hover:underline">
             Shop listings
