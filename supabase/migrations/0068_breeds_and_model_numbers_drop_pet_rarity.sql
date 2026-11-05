@@ -30,6 +30,20 @@
 --    items) is untouched; the enum type itself stays for that.
 
 -- ── Breeds ────────────────────────────────────────────────────────────
+-- 0042_remove_traits_and_breeding.sql already tried to drop patterns,
+-- eye_types, colors, and breeds (in that order, for their FK chain) as
+-- part of retiring the old trait/mold-based breeding system — but per
+-- this project's track record of migrations not always fully applying
+-- live, at least the old `breeds` table (id, name, description,
+-- rarity_weight — one seed row, "Fernback") survived on this database.
+-- Finish that cleanup here before creating the real thing: a small
+-- managed list of lineart groups (Cat, Dog, …), unrelated to the old
+-- trait system's breeds.
+drop table if exists public.patterns cascade;
+drop table if exists public.eye_types cascade;
+drop table if exists public.colors cascade;
+drop table if exists public.breeds cascade;
+
 create table public.breeds (
   id uuid primary key default gen_random_uuid(),
   name text not null unique,
