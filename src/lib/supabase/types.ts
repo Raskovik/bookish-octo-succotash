@@ -108,14 +108,19 @@ export type PetRow = {
   // only through set_pet_bio() (0034_pet_bio.sql), never a direct
   // client UPDATE (pets has never had one; see custom_name/folder_id).
   bio: string | null;
-  // Pet Stats and 1v1 Combat Spec (0045_pet_stats.sql) — level grows
-  // over time (no mechanic for that yet), the three rolls are permanent
-  // birth values set once by the column's own DEFAULT. Strength/Speed/
-  // Defence are never stored; see calcPetStats() in lib/pet-combat.ts.
-  level: number;
+  // Pet Stats and 1v1 Combat Spec (0045_pet_stats.sql) — the three
+  // rolls are permanent birth values set once by the column's own
+  // DEFAULT. Strength/Speed/Defence are never stored; see
+  // calcPetStats() in lib/pet-combat.ts.
   roll_strength: number;
   roll_speed: number;
   roll_defence: number;
+  // Total lifetime XP, earned per completed (non-tutorial) trip — see
+  // 0069_stats_driven_adventuring_and_leveling.sql. level is derived
+  // from this automatically by a DB trigger and should never be set
+  // directly; it's still the number calcPetStats() reads.
+  xp: number;
+  level: number;
   // Energy decay clock (0046_pet_energy.sql) — see calcPetEnergy() in
   // lib/pet-energy.ts. Reset to now() only by feed_pet().
   last_fed_at: string;
@@ -366,10 +371,24 @@ export type ExpeditionRow = {
   started_at: string;
   resolves_at: string;
   result_pet_id: string | null;
-  result_item_id: string | null;
   pending_species_id: string | null;
-  pending_item_id: string | null;
   coins_reward: number;
+  // XP this trip granted its pet — already applied to pets.xp at
+  // resolve time, stored here only so the reveal screen can show it.
+  xp_reward: number;
+  created_at: string;
+};
+
+// The haul of items a single non-tutorial trip brought back — replaces
+// the old single pending_item_id/result_item_id slot. Written only by
+// resolve_due_expeditions; one row per distinct item, quantity already
+// summed across every draw (and doubled, if the trip rolled a double
+// haul). See 0069_stats_driven_adventuring_and_leveling.sql.
+export type ExpeditionLootItemRow = {
+  id: string;
+  expedition_id: string;
+  item_id: string;
+  quantity: number;
   created_at: string;
 };
 
@@ -476,22 +495,29 @@ export type ActiveExpeditionSummary = Pick<
 // The revealed reward for a single awaiting_claim expedition, fetched
 // only when the player explicitly opens the claim popup — deliberately
 // not part of the map's initial data load, so the reward stays a
-// surprise until then.
+// surprise until then. Items/coins/XP were already credited the moment
+// the trip resolved (same as coins always were) — this is purely a
+// "here's what you got" readout. Only the optional friend
+// (pending_species_id) still needs a keep-or-release decision, since
+// den capacity is a real constraint items/coins/XP never were.
 export type ExpeditionRewardReveal = {
   pending_species_id: string | null;
-  pending_item_id: string | null;
   coins_reward: number;
+  xp_reward: number;
+  is_double_reward: boolean | null;
   species: Pick<SpeciesRow, "name" | "image_url"> | null;
-  items: Pick<ItemRow, "name" | "image_url" | "rarity"> | null;
+  expedition_loot_items: {
+    item_id: string;
+    quantity: number;
+    items: Pick<ItemRow, "name" | "image_url" | "rarity"> | null;
+  }[];
 };
 
-// What claim_expedition_reward returns: the granted pet id (if a pet was
-// kept), plus an optional bonus from a double_reward_chance potion.
+// What claim_expedition_reward returns: the granted pet id, if the
+// player kept an offered friend (null otherwise — including when no
+// friend was offered this trip at all).
 export type ClaimExpeditionResult = {
   granted_pet_id: string | null;
-  bonus_kind?: "pet" | "item";
-  bonus_name?: string;
-  bonus_image_url?: string | null;
 };
 
 // What expand_den returns after a successful purchase.
@@ -1135,6 +1161,10 @@ export type Database = {
           zone_id: string;
           resolves_at: string;
         }
+      >;
+      expedition_loot_items: TableOf<
+        ExpeditionLootItemRow,
+        Partial<ExpeditionLootItemRow> & { expedition_id: string; item_id: string; quantity: number }
       >;
       admin_audit_log: TableOf<AdminAuditLogRow>;
       trades: TableOf<TradeRow>;

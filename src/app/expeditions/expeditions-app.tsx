@@ -207,7 +207,6 @@ export function ExpeditionsApp({
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
-  const [bonus, setBonus] = useState<ClaimExpeditionResult | null>(null);
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -294,7 +293,6 @@ export function ExpeditionsApp({
     setRevealError(null);
     setConfirmLeave(false);
     setClaimError(null);
-    setBonus(null);
     const firstAvailable = pets.find((p) => !busyPetIds.has(p.id));
     setSelectedPetId(firstAvailable?.id ?? "");
   }
@@ -321,7 +319,7 @@ export function ExpeditionsApp({
     supabase
       .from("expeditions")
       .select(
-        "pending_species_id, pending_item_id, coins_reward, species(name, image_url), items!expeditions_pending_item_id_fkey(name, image_url, rarity)",
+        "pending_species_id, coins_reward, xp_reward, is_double_reward, species(name, image_url), expedition_loot_items(item_id, quantity, items(name, image_url, rarity))",
       )
       .eq("id", selectedZoneActive.id)
       .single()
@@ -383,12 +381,7 @@ export function ExpeditionsApp({
     router.refresh();
 
     const result = data as ClaimExpeditionResult | null;
-    if (result?.bonus_kind) {
-      setBonus(result);
-      return;
-    }
-
-    toast(keep && reveal?.items ? `${reveal.items.name} added to your items.` : "Done!");
+    toast(keep && result?.granted_pet_id ? `${reveal?.species?.name ?? "Your new friend"} joined your den!` : "Done!");
     closePanel();
   }
 
@@ -509,7 +502,8 @@ export function ExpeditionsApp({
                           <p className="xp-coins">
                             <span className="coin" aria-hidden="true" />
                             <b>+{reveal.coins_reward} coins</b>
-                            <small>added to your wallet</small>
+                            <span>+{reveal.xp_reward} XP</span>
+                            {reveal.is_double_reward ? <small>🍀 Double haul!</small> : null}
                           </p>
                         ) : null}
                       </div>
@@ -517,97 +511,99 @@ export function ExpeditionsApp({
                     <div className="xp-loot">
                       {revealError ? (
                         <p className="xp-none">{revealError}</p>
-                      ) : bonus?.bonus_kind ? (
-                        <>
-                          <h4 className="xp-lab">Double reward! Also found:</h4>
-                          <div className="xp-lootrow">
-                            {bonus.bonus_image_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element -- unsized, object-fit: contain
-                              <img src={bonus.bonus_image_url} alt="" />
-                            ) : null}
-                            <div>
-                              <p className="xp-lname">{bonus.bonus_name}</p>
-                            </div>
-                          </div>
-                          <div className="xp-ask">
-                            <button type="button" className="btn btn-leaf" onClick={closePanel}>
-                              Nice!
-                            </button>
-                          </div>
-                        </>
                       ) : !reveal ? (
                         <p className="xp-none">Opening…</p>
-                      ) : reveal.species || reveal.items ? (
-                        confirmLeave ? (
-                          <>
-                            <p className="xp-sure">
-                              Leave the {reveal.species?.name ?? reveal.items?.name} behind for good?
-                            </p>
-                            {claimError ? <p className="xp-none">{claimError}</p> : null}
-                            <div className="xp-ask">
-                              <button
-                                type="button"
-                                className="btn btn-red"
-                                disabled={isClaiming}
-                                onClick={() => handleClaim(false)}
-                              >
-                                {isClaiming ? "…" : "Yes, leave it"}
-                              </button>
-                              <button type="button" className="btn btn-cream" onClick={() => setConfirmLeave(false)}>
-                                Go back
-                              </button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <h4 className="xp-lab">
-                              {activePet?.custom_name ?? "Your pet"} found something
-                            </h4>
-                            <div className="xp-lootrow">
-                              {(reveal.species?.image_url ?? reveal.items?.image_url) ? (
-                                // eslint-disable-next-line @next/next/no-img-element -- unsized, object-fit: contain
-                                <img src={reveal.species?.image_url ?? reveal.items?.image_url ?? ""} alt="" />
-                              ) : null}
-                              <div>
-                                <p className="xp-lname">{reveal.species?.name ?? reveal.items?.name}</p>
-                                <p className="xp-ldesc">
-                                  {reveal.species ? "A new pet!" : `A ${reveal.items?.rarity} item.`}
-                                </p>
-                              </div>
-                            </div>
-                            {claimError ? <p className="xp-none">{claimError}</p> : null}
-                            <div className="xp-ask">
-                              <button
-                                type="button"
-                                className="btn btn-leaf"
-                                disabled={isClaiming}
-                                onClick={() => handleClaim(true)}
-                              >
-                                {isClaiming ? "…" : "Keep it"}
-                              </button>
-                              <button type="button" className="btn btn-cream" onClick={() => setConfirmLeave(true)}>
-                                Leave it
-                              </button>
-                            </div>
-                          </>
-                        )
                       ) : (
                         <>
-                          <p className="xp-lname">Nothing else this time</p>
-                          <p className="xp-ldesc">
-                            {activePet?.custom_name ?? "Your pet"} had a nice trip. Maybe next time.
-                          </p>
-                          {claimError ? <p className="xp-none">{claimError}</p> : null}
-                          <div className="xp-ask">
-                            <button
-                              type="button"
-                              className="btn btn-leaf"
-                              disabled={isClaiming}
-                              onClick={() => handleClaim(false)}
-                            >
-                              {isClaiming ? "…" : "Done"}
-                            </button>
-                          </div>
+                          {reveal.expedition_loot_items.length > 0 ? (
+                            <>
+                              <h4 className="xp-lab">
+                                {activePet?.custom_name ?? "Your pet"} brought back
+                              </h4>
+                              <ul className="xp-haul">
+                                {reveal.expedition_loot_items.map((entry) => (
+                                  <li key={entry.item_id} className="xp-lootrow">
+                                    {entry.items?.image_url ? (
+                                      // eslint-disable-next-line @next/next/no-img-element -- unsized, object-fit: contain
+                                      <img src={entry.items.image_url} alt="" />
+                                    ) : null}
+                                    <div>
+                                      <p className="xp-lname">
+                                        {entry.items?.name ?? "Unknown item"} × {entry.quantity}
+                                      </p>
+                                      <p className="xp-ldesc">{entry.items?.rarity}</p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            </>
+                          ) : null}
+
+                          {reveal.pending_species_id ? (
+                            confirmLeave ? (
+                              <>
+                                <p className="xp-sure">Leave {reveal.species?.name ?? "the new friend"} behind for good?</p>
+                                {claimError ? <p className="xp-none">{claimError}</p> : null}
+                                <div className="xp-ask">
+                                  <button
+                                    type="button"
+                                    className="btn btn-red"
+                                    disabled={isClaiming}
+                                    onClick={() => handleClaim(false)}
+                                  >
+                                    {isClaiming ? "…" : "Yes, leave it"}
+                                  </button>
+                                  <button type="button" className="btn btn-cream" onClick={() => setConfirmLeave(false)}>
+                                    Go back
+                                  </button>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <h4 className="xp-lab">
+                                  {activePet?.custom_name ?? "Your pet"} also made a friend!
+                                </h4>
+                                <div className="xp-lootrow">
+                                  {reveal.species?.image_url ? (
+                                    // eslint-disable-next-line @next/next/no-img-element -- unsized, object-fit: contain
+                                    <img src={reveal.species.image_url} alt="" />
+                                  ) : null}
+                                  <div>
+                                    <p className="xp-lname">{reveal.species?.name}</p>
+                                    <p className="xp-ldesc">A new pet!</p>
+                                  </div>
+                                </div>
+                                {claimError ? <p className="xp-none">{claimError}</p> : null}
+                                <div className="xp-ask">
+                                  <button
+                                    type="button"
+                                    className="btn btn-leaf"
+                                    disabled={isClaiming}
+                                    onClick={() => handleClaim(true)}
+                                  >
+                                    {isClaiming ? "…" : "Keep it"}
+                                  </button>
+                                  <button type="button" className="btn btn-cream" onClick={() => setConfirmLeave(true)}>
+                                    Leave it
+                                  </button>
+                                </div>
+                              </>
+                            )
+                          ) : (
+                            <>
+                              {claimError ? <p className="xp-none">{claimError}</p> : null}
+                              <div className="xp-ask">
+                                <button
+                                  type="button"
+                                  className="btn btn-leaf"
+                                  disabled={isClaiming}
+                                  onClick={() => handleClaim(true)}
+                                >
+                                  {isClaiming ? "…" : "Done"}
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
                     </div>
