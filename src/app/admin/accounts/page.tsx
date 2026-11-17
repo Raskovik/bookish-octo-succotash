@@ -16,20 +16,23 @@ export default async function AdminAccountsPage(props: PageProps<"/admin/account
   // Matches on email too, not just display_name — a test account
   // abandoned mid-onboarding (see 0070) has no username yet at all, so
   // searching by username alone would never find the exact accounts
-  // this page exists to clean up.
-  const { data: users } =
-    q.length > 0
-      ? await supabase
-          .from("users")
-          .select("id, display_id, display_name, email, is_admin, created_at")
-          .or(`display_name.ilike.%${q}%,email.ilike.%${q}%`)
-          .order("created_at", { ascending: false })
-          .limit(RESULT_LIMIT)
-      : { data: [] };
+  // this page exists to clean up. With no search term, just show the
+  // most recently created accounts (almost always exactly the test
+  // accounts this page gets used for) rather than an empty page.
+  let usersQuery = supabase
+    .from("users")
+    .select("id, display_id, display_name, email, is_admin, created_at")
+    .order("created_at", { ascending: false })
+    .limit(RESULT_LIMIT);
+  if (q.length > 0) {
+    usersQuery = usersQuery.or(`display_name.ilike.%${q}%,email.ilike.%${q}%`);
+  }
+  const { data: users } = await usersQuery;
 
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold tracking-tight">Accounts</h2>
+      <p className="text-sm text-stone-500">Most recently created accounts, or search by username/email.</p>
 
       <form className="flex gap-2">
         <input
@@ -72,17 +75,10 @@ export default async function AdminAccountsPage(props: PageProps<"/admin/account
                 </td>
               </tr>
             ))}
-            {q.length > 0 && (users ?? []).length === 0 ? (
+            {(users ?? []).length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-6 text-center text-stone-500">
-                  No accounts match &ldquo;{q}&rdquo;.
-                </td>
-              </tr>
-            ) : null}
-            {q.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-stone-500">
-                  Search for a username to see matching accounts.
+                  {q.length > 0 ? <>No accounts match &ldquo;{q}&rdquo;.</> : "No accounts yet."}
                 </td>
               </tr>
             ) : null}
