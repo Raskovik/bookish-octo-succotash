@@ -9,7 +9,7 @@ import { ReportButton } from "@/components/report-button";
 import { PlayerLink } from "@/components/player-link";
 import { FmPager } from "@/components/forums/fm-pager";
 import { formatForumDate } from "@/lib/format-forum-date";
-import { unhidePost, testHidePost } from "../../actions";
+import { unhidePost } from "../../actions";
 import type { ForumPostWithAuthor } from "@/lib/supabase/types";
 
 const PAGE_SIZE = 10;
@@ -299,21 +299,6 @@ function PostCard({
             Last edited by {editedByLabel} at {formatForumDate(post.edited_at)}. This post has been edited{" "}
             {post.edit_count} time{post.edit_count === 1 ? "" : "s"}.
           </p>
-        ) : null}
-
-        {canModerate && !post.is_hidden ? (
-          <form action={testHidePost}>
-            <input type="hidden" name="category_id" value={categoryId} />
-            <input type="hidden" name="thread_id" value={threadId} />
-            <input type="hidden" name="post_id" value={post.id} />
-            <button
-              type="submit"
-              className="btn btn-sm btn-cream fm-mod"
-              title="Manually hides this post as if 5 players had reported it — for visually testing the auto-hide feature"
-            >
-              Hide (test)
-            </button>
-          </form>
         ) : null}
       </div>
     </article>
