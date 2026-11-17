@@ -54,6 +54,9 @@ export default async function AdminLayout({
           <Link href="/admin/audit-log" className="hover:underline">
             Audit log
           </Link>
+          <Link href="/admin/accounts" className="hover:underline">
+            Accounts
+          </Link>
         </nav>
       </div>
       {children}
