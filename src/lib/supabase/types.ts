@@ -830,7 +830,9 @@ export type ForumCategoryRow = {
 export type ForumThreadRow = {
   id: string;
   category_id: string;
-  author_id: string;
+  // Null when the author's account has been deleted (see 0075) — the
+  // thread survives, it just loses the attribution.
+  author_id: string | null;
   title: string;
   is_pinned: boolean;
   is_locked: boolean;
@@ -843,7 +845,9 @@ export type ForumThreadRow = {
 export type ForumPostRow = {
   id: string;
   thread_id: string;
-  author_id: string;
+  // Null when the author's account has been deleted (see 0075) — the
+  // post survives, it just loses the attribution.
+  author_id: string | null;
   body_raw: string;
   body_html: string;
   created_at: string;
@@ -880,7 +884,9 @@ export type ForumThreadListItem = Pick<
   ForumThreadRow,
   "id" | "title" | "is_pinned" | "is_locked" | "reply_count" | "view_count" | "created_at" | "last_post_at"
 > & {
-  authorId: string;
+  // Null when the author's account has been deleted (see 0075) —
+  // authorName already falls back to "Unknown" in that case.
+  authorId: string | null;
   authorDisplayId: number;
   authorName: string;
   authorIsAdmin: boolean;
@@ -896,7 +902,9 @@ export type ForumPostWithAuthor = Pick<
   ForumPostRow,
   "id" | "body_raw" | "body_html" | "created_at" | "edited_at" | "edit_count" | "is_hidden" | "hidden_at"
 > & {
-  authorId: string;
+  // Null when the author's account has been deleted (see 0075) —
+  // authorName already falls back to "Unknown" in that case.
+  authorId: string | null;
   authorDisplayId: number;
   authorName: string;
   authorAvatarUrl: string | null;
@@ -996,7 +1004,9 @@ export type CannedStaffMessageRow = {
 // (see 0043_site_news.sql).
 export type SiteNewsPostRow = {
   id: string;
-  author_id: string;
+  // Null when the author's account has been deleted (see 0075) — the
+  // post survives, it just loses the attribution.
+  author_id: string | null;
   title: string;
   body: string;
   is_active: boolean;
@@ -1063,7 +1073,9 @@ export type BanRow = {
   user_id: string;
   ban_type: BanType;
   reason: string | null;
-  issued_by: string;
+  // Null when the issuing staff account has been deleted (see 0075) —
+  // the ban itself still applies, it just loses the attribution.
+  issued_by: string | null;
   issued_at: string;
   expires_at: string;
   lifted_at: string | null;
@@ -1105,7 +1117,10 @@ export type FriendshipRow = {
 export type PlayerNoteRow = {
   id: string;
   user_id: string;
-  author_id: string;
+  // Null when the staff account that wrote this note has been deleted
+  // (see 0075) — the note survives (it's about user_id, which still
+  // cascades normally), it just loses who wrote it.
+  author_id: string | null;
   body: string;
   // Null until the first edit — set in 0033_claiming_and_note_edits.sql,
   // which also lets the author (only) edit body. A note has exactly one
@@ -1115,7 +1130,7 @@ export type PlayerNoteRow = {
 };
 
 export type PlayerNoteWithAuthor = Pick<PlayerNoteRow, "id" | "body" | "created_at" | "edited_at"> & {
-  authorId: string;
+  authorId: string | null;
   authorName: string;
 };
 

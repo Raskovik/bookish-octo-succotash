@@ -51,7 +51,9 @@ export default async function ModPlayerPage(props: PageProps<"/mod/players/[user
 
   const reports = await resolveReportDetails(supabase, (reportsData ?? []) as ReportRow[]);
 
-  const issuerIds = [...new Set((bansData ?? []).map((b) => b.issued_by))];
+  const issuerIds = [
+    ...new Set((bansData ?? []).map((b) => b.issued_by).filter((id): id is string => id !== null)),
+  ];
   const { data: issuerProfiles } =
     issuerIds.length > 0
       ? await supabase.from("user_profiles").select("id, display_name").in("id", issuerIds)
@@ -64,7 +66,7 @@ export default async function ModPlayerPage(props: PageProps<"/mod/players/[user
     issued_at: b.issued_at,
     expires_at: b.expires_at,
     lifted_at: b.lifted_at,
-    issuedByName: issuerNameById.get(b.issued_by) ?? "Unknown",
+    issuedByName: (b.issued_by ? issuerNameById.get(b.issued_by) : null) ?? "Unknown",
   }));
 
   const conversations = conversationsData ?? [];

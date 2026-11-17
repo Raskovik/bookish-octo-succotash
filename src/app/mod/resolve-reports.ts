@@ -103,7 +103,7 @@ export async function resolvePlayerNotes(
   supabase: SupabaseClient<Database>,
   notes: PlayerNoteRow[],
 ): Promise<PlayerNoteWithAuthor[]> {
-  const authorIds = [...new Set(notes.map((n) => n.author_id))];
+  const authorIds = [...new Set(notes.map((n) => n.author_id).filter((id): id is string => id !== null))];
   const { data: profilesData } =
     authorIds.length > 0
       ? await supabase.from("user_profiles").select("id, display_name").in("id", authorIds)
@@ -116,6 +116,6 @@ export async function resolvePlayerNotes(
     created_at: n.created_at,
     edited_at: n.edited_at,
     authorId: n.author_id,
-    authorName: nameById.get(n.author_id) ?? "Unknown",
+    authorName: (n.author_id ? nameById.get(n.author_id) : null) ?? "Unknown",
   }));
 }

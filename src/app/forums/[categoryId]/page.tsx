@@ -78,7 +78,9 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
 
   const pinnedRows = pinnedData ?? [];
   const threadRows = threadsData ?? [];
-  const authorIds = [...new Set([...pinnedRows, ...threadRows].map((t) => t.author_id))];
+  const authorIds = [
+    ...new Set([...pinnedRows, ...threadRows].map((t) => t.author_id).filter((id): id is string => id !== null)),
+  ];
   const { data: profiles } =
     authorIds.length > 0
       ? await supabase
@@ -89,7 +91,7 @@ export default async function ForumCategoryPage(props: PageProps<"/forums/[categ
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   function toListItem(t: (typeof threadRows)[number]): ForumThreadListItem {
-    const author = profileById.get(t.author_id);
+    const author = t.author_id ? profileById.get(t.author_id) : undefined;
     return {
       id: t.id,
       title: t.title,

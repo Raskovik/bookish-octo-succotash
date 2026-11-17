@@ -86,7 +86,7 @@ export default async function ForumThreadPage(props: PageProps<"/forums/[categor
   const profileById = new Map((profiles ?? []).map((p) => [p.id, p]));
 
   const postsWithAuthor: ForumPostWithAuthor[] = posts.map((p) => {
-    const author = profileById.get(p.author_id);
+    const author = p.author_id ? profileById.get(p.author_id) : undefined;
     const editor = p.last_edited_by ? profileById.get(p.last_edited_by) : null;
     return {
       id: p.id,
@@ -261,7 +261,7 @@ function PostCard({
               <ReportButton
                 targetType="forum_post"
                 targetId={post.id}
-                offendingUserId={post.authorId}
+                offendingUserId={post.authorId ?? undefined}
                 triggerClassName="btn btn-sm btn-red"
               />
             ) : null}
