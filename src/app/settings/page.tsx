@@ -43,7 +43,7 @@ export default async function SettingsPage() {
             usernameCard={
               <UsernameCard
                 userId={user.id}
-                displayName={profile.display_name}
+                displayName={profile.display_name ?? ""}
                 gemBalance={profile.gem_balance}
                 nextChangeAvailableAt={nextChangeAvailableAt}
               />

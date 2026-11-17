@@ -71,7 +71,7 @@ export function ProfilePanel({
             <ProfileActions
               initialView={view}
               profileId={profile.id}
-              profileName={profile.display_name}
+              profileName={profile.display_name ?? "Unknown player"}
               viewerSignedIn={viewerSignedIn}
               viewerId={viewerId}
               allowFriendRequests={profile.allow_friend_requests}

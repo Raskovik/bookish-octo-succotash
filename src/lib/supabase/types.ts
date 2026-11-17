@@ -8,7 +8,10 @@ export type UserRow = {
   display_id: number;
   google_sub: string | null;
   email: string;
-  display_name: string;
+  // Null until the player finishes the "pick a username" step on
+  // /welcome — see 0070_account_setup_onboarding.sql. Gate onboarding
+  // state on this being null, not on any other column.
+  display_name: string | null;
   display_name_changed_at: string;
   avatar_url: string | null;
   bio: string | null;
@@ -84,6 +87,12 @@ export type SpeciesRow = {
   model_number: number | null;
   image_url: string | null;
   is_active: boolean;
+  // Starter-pet picker flags — see 0070_account_setup_onboarding.sql.
+  // starter_label/starter_blurb are only meaningful when
+  // is_starter_option is true.
+  is_starter_option: boolean;
+  starter_label: string | null;
+  starter_blurb: string | null;
   created_at: string;
 };
 
@@ -1234,9 +1243,22 @@ export type Database = {
       };
     };
     Functions: {
-      grant_starter_pet_and_tutorial: {
-        Args: { p_user_id: string };
+      create_player_account: {
+        Args: {
+          p_user_id: string;
+          p_display_name: string;
+          p_avatar_url: string | null;
+          p_agreed: boolean;
+        };
         Returns: null;
+      };
+      adopt_starter_pet: {
+        Args: {
+          p_user_id: string;
+          p_species_id: string;
+          p_custom_name: string | null;
+        };
+        Returns: string;
       };
       resolve_due_expeditions: {
         Args: { p_user_id: string };

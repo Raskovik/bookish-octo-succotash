@@ -44,6 +44,33 @@ export async function SiteHeader() {
     );
   }
 
+  // Mid-onboarding (hasn't picked a username on /welcome yet): same
+  // minimal header as signed-out, just with a sign-out link instead of
+  // sign-in — never the full player-card/nav header, since the player
+  // has no name/balances worth showing yet and /welcome handles its
+  // own navigation.
+  const { data: onboarding } = await supabase.from("users").select("display_name").eq("id", user.id).single();
+
+  if (!onboarding?.display_name) {
+    return (
+      <header className="hero">
+        <div className="scene">
+          <div />
+          <Link className="wordmark" href="/" title="Clicking this returns player to home">
+            {SITE_NAME}
+          </Link>
+          <div className="walletcard" style={{ display: "grid", placeItems: "center" }}>
+            <form action="/auth/sign-out" method="post">
+              <button className="btn" type="submit">
+                Sign out
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   const [{ data: profile }, { data: conversationsData }, { data: notificationRows }] = await Promise.all([
     supabase
       .from("users")

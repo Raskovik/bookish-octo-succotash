@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { needsOnboarding } from "@/lib/onboarding";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
 export default async function LoginPage() {
@@ -9,7 +10,7 @@ export default async function LoginPage() {
   } = await supabase.auth.getUser();
 
   if (user) {
-    redirect("/profile");
+    redirect((await needsOnboarding(supabase, user.id)) ? "/welcome" : "/profile");
   }
 
   return (

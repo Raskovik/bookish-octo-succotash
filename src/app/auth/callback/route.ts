@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { needsOnboarding } from "@/lib/onboarding";
 
 /**
  * Exchanges the OAuth `code` Supabase redirects back with for a session,
@@ -47,6 +48,10 @@ export async function GET(request: Request) {
           const params = new URLSearchParams({ banned: "account", until: ban?.expires_at ?? "" });
           if (ban?.reason) params.set("reason", ban.reason);
           return NextResponse.redirect(`${origin}/?${params.toString()}`);
+        }
+
+        if (await needsOnboarding(supabase, user.id)) {
+          return NextResponse.redirect(`${origin}/welcome`);
         }
       }
 

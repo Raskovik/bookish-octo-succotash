@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { needsOnboarding } from "@/lib/onboarding";
 
 // /profile has no page of its own anymore — profiles are unified (see
 // ProfilePanel), so "my profile" is just /u/[my own id] viewed with
@@ -17,10 +18,10 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  // First-ever visit: grants the free starter pet + starts its one-time,
-  // fixed-length tutorial expedition. A no-op on every later visit
-  // (guarded server-side by users.starter_granted).
-  await supabase.rpc("grant_starter_pet_and_tutorial", { p_user_id: user.id });
+  if (await needsOnboarding(supabase, user.id)) {
+    redirect("/welcome");
+  }
+
   // Lazily resolves any expedition whose timer has already elapsed —
   // there's no background job in this phase, so this runs on every load.
   await supabase.rpc("resolve_due_expeditions", { p_user_id: user.id });

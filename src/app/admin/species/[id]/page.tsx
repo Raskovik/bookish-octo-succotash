@@ -10,7 +10,9 @@ export default async function EditSpeciesPage(props: PageProps<"/admin/species/[
   const [{ data: species }, { data: breeds }] = await Promise.all([
     supabase
       .from("species")
-      .select("id, name, breed_id, model_number, image_url, is_active, created_at")
+      .select(
+        "id, name, breed_id, model_number, image_url, is_active, is_starter_option, starter_label, starter_blurb, created_at",
+      )
       .eq("id", id)
       .maybeSingle(),
     supabase.from("breeds").select("id, name").order("name"),

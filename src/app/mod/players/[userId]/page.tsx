@@ -101,7 +101,7 @@ export default async function ModPlayerPage(props: PageProps<"/mod/players/[user
 
       <WarningDmForm
         targetUserId={profile.id}
-        targetName={profile.display_name}
+        targetName={profile.display_name ?? "Unknown player"}
         cannedMessages={cannedData ?? []}
       />
 

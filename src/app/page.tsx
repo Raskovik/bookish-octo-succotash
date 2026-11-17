@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { needsOnboarding } from "@/lib/onboarding";
 import { SiteNewsPanel } from "@/components/site-news-panel";
 import { ForumActivityPanel } from "@/components/forum-activity-panel";
 import type { RecentForumThread, SiteNewsPostWithAuthor } from "@/lib/supabase/types";
@@ -47,6 +49,14 @@ export default async function Home(props: PageProps<"/">) {
   const banned = first(searchParams.banned);
   const until = first(searchParams.until);
   const reason = first(searchParams.reason);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user && (await needsOnboarding(supabase, user.id))) {
+    redirect("/welcome");
+  }
 
   if (banned === "account") {
     return (
