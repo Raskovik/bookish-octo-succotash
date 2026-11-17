@@ -92,6 +92,30 @@ function wordsFormat(totalSeconds: number): string {
   return `${h ? `${h}h ` : ""}${h || m ? `${m}m ` : ""}${sec.toString().padStart(2, "0")}s left`;
 }
 
+function minutesLabel(totalMinutes: number): string {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m} min`;
+  if (m === 0) return `${h} hr`;
+  return `${h} hr ${m} min`;
+}
+
+// Mirrors start_expedition's duration roll (0069/0071, duration =
+// 60 + 120 * random()^k, k = 1 + 2*stat_saturation(speed)) so the
+// pre-send estimate on the right-hand pet panel is an actual range
+// for THIS pet's stats, not a leftover static guess from the old
+// 2-3 minute tutorial-era trips. Shows the 10th-90th percentile band,
+// rounded to the nearest 5 minutes, as "about X to Y".
+function estimatedTripRange(level: number, rollSpeed: number): [number, number] {
+  const speed = level * 2 * (rollSpeed / 10);
+  const gp = speed / (speed + 30);
+  const k = 1 + 2 * gp;
+  const low = 60 + 120 * Math.pow(0.1, k);
+  const high = 60 + 120 * Math.pow(0.9, k);
+  const round5 = (n: number) => Math.max(5, Math.round(n / 5) * 5);
+  return [round5(low), round5(high)];
+}
+
 // Ticks down to `resolvesAt` and asks the server component to refresh
 // once it hits zero. Also keeps retrying every couple of seconds for
 // as long as it's STILL in the past after a refresh — resolvesAt being
@@ -181,6 +205,7 @@ export function ExpeditionsApp({
   folders,
   activeExpeditions,
   ownedPotions,
+  isFirstTrip,
 }: {
   userId: string;
   zones: ExplorableZone[];
@@ -188,6 +213,11 @@ export function ExpeditionsApp({
   folders: PetFolderRow[];
   activeExpeditions: ActiveExpeditionSummary[];
   ownedPotions: OwnedPotion[];
+  // Whether the player's NEXT trip is their first-ever — start_expedition
+  // (0071) always caps that one at exactly 10 minutes regardless of
+  // Speed, so the duration estimate below shows that fixed number
+  // instead of the normal Speed-driven range.
+  isFirstTrip: boolean;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -726,7 +756,16 @@ export function ExpeditionsApp({
                           </div>
                           <p className="xp-range">
                             Back in
-                            <b>about 2 to 3 minutes</b>
+                            <b>
+                              {isFirstTrip
+                                ? "about 10 min"
+                                : (() => {
+                                    const [low, high] = estimatedTripRange(selectedPet.level, selectedPet.roll_speed);
+                                    return low === high
+                                      ? `about ${minutesLabel(low)}`
+                                      : `about ${minutesLabel(low)} to ${minutesLabel(high)}`;
+                                  })()}
+                            </b>
                           </p>
                           {ownedPotions.length > 0 ? (
                             <select

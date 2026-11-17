@@ -57,6 +57,7 @@ export default async function ExpeditionsPage() {
     { data: foldersData },
     { data: activeData },
     { data: potionsData },
+    { count: expeditionCount },
   ] = await Promise.all([
     supabase
       .from("zones")
@@ -89,6 +90,11 @@ export default async function ExpeditionsPage() {
       .eq("user_id", user.id)
       .eq("items.type", "potion")
       .gt("quantity", 0),
+    // Cheap existence check, not a count — just enough to know whether
+    // the player's NEXT trip is the one start_expedition (0071) always
+    // caps at 10 minutes, so the duration estimate below can reflect
+    // that instead of the normal Speed-driven 60-180 minute range.
+    supabase.from("expeditions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
   ]);
 
   // Pets and items are drawn from the same weighted roll server-side (see
@@ -148,6 +154,7 @@ export default async function ExpeditionsPage() {
             folders={folders}
             activeExpeditions={activeExpeditions}
             ownedPotions={ownedPotions}
+            isFirstTrip={(expeditionCount ?? 0) === 0}
           />
         </div>
       </div>
