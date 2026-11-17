@@ -1,33 +1,27 @@
 import { requireAdmin } from "@/lib/admin";
 import { DeleteAccountButton } from "./delete-account-button";
 
-const RESULT_LIMIT = 25;
-
 // Search-by-username + delete, admin-only — the easier-to-find
 // counterpart to the same admin_delete_account() tool that also lives
 // on a player's /mod/players/[userId] staff page. Mainly for clearing
 // out test accounts while exercising onboarding (0070) repeatedly.
 export default async function AdminAccountsPage(props: PageProps<"/admin/accounts">) {
-  const { supabase } = await requireAdmin();
+  const { supabase, user } = await requireAdmin();
   const searchParams = await props.searchParams;
   const qRaw = searchParams.q;
   const q = (Array.isArray(qRaw) ? qRaw[0] : qRaw)?.trim() ?? "";
 
-  // Matches on email too, not just display_name — a test account
-  // abandoned mid-onboarding (see 0070) has no username yet at all, so
-  // searching by username alone would never find the exact accounts
-  // this page exists to clean up. With no search term, just show the
-  // most recently created accounts (almost always exactly the test
-  // accounts this page gets used for) rather than an empty page.
-  let usersQuery = supabase
-    .from("users")
-    .select("id, display_id, display_name, email, is_admin, created_at")
-    .order("created_at", { ascending: false })
-    .limit(RESULT_LIMIT);
-  if (q.length > 0) {
-    usersQuery = usersQuery.or(`display_name.ilike.%${q}%,email.ilike.%${q}%`);
-  }
-  const { data: users } = await usersQuery;
+  // users' own RLS only ever allows auth.uid() = id — querying the
+  // table directly through the normal client, even as an admin, only
+  // ever returns the signed-in admin's own row. admin_list_accounts()
+  // (0074) is a security-definer RPC built exactly for this page:
+  // admin-gated, and matches on email too (not just display_name — a
+  // test account abandoned mid-onboarding, see 0070, has no username
+  // yet at all, so searching by username alone would never find it).
+  const { data: users } = await supabase.rpc("admin_list_accounts", {
+    p_admin_user_id: user.id,
+    p_query: q.length > 0 ? q : null,
+  });
 
   return (
     <div className="flex flex-col gap-4">

@@ -1264,6 +1264,17 @@ export type Database = {
         Args: { p_admin_user_id: string; p_target_user_id: string };
         Returns: null;
       };
+      admin_list_accounts: {
+        Args: { p_admin_user_id: string; p_query: string | null };
+        Returns: {
+          id: string;
+          display_id: number;
+          display_name: string | null;
+          email: string;
+          is_admin: boolean;
+          created_at: string;
+        }[];
+      };
       resolve_due_expeditions: {
         Args: { p_user_id: string };
         Returns: null;
