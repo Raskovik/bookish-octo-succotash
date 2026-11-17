@@ -28,18 +28,18 @@ export function SiteNav({
 }) {
   const groups: NavGroup[] = [
     {
+      label: "My Stuff",
+      links: [
+        { href: "/pets", label: "Pets" },
+        { href: "/items", label: "Items" },
+      ],
+    },
+    {
       label: "Play",
       links: [
         { href: "/expeditions", label: "Expeditions" },
         ...(BREWING_ENABLED ? [{ href: "/brewing", label: "Brewing" }] : []),
         ...(GARDEN_ENABLED ? [{ href: "/garden", label: "Garden" }] : []),
-      ],
-    },
-    {
-      label: "My Stuff",
-      links: [
-        { href: "/pets", label: "Pets" },
-        { href: "/items", label: "Items" },
       ],
     },
     {
