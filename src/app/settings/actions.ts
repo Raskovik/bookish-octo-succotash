@@ -91,3 +91,28 @@ export async function updateProfileSettings(
   revalidatePath(`/u/${updated.display_id}`);
   return { success: true };
 }
+
+// Self-only, like every other privileged RPC in this project (see
+// delete_own_account's own comment in 0071) — deletes the signed-in
+// player's own account and everything that cascades from it, then
+// signs them out. Mainly here so the account-setup flow (0070) can be
+// tested repeatedly: delete a test account, sign in with the same
+// Google account again, and onboarding starts fresh.
+export async function deleteOwnAccount(): Promise<{ error: string } | never> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { error } = await supabase.rpc("delete_own_account", { p_user_id: user.id });
+  if (error) {
+    return { error: error.message };
+  }
+
+  await supabase.auth.signOut();
+  redirect("/");
+}

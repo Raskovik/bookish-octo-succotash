@@ -265,7 +265,6 @@ export function WelcomeApp({
               </div>
               <ul className="ob-rules">
                 <li>3 to 16 letters, numbers or underscores.</li>
-                <li>It can&rsquo;t be changed later.</li>
               </ul>
             </section>
             <section className="ob-sec" aria-labelledby="ob-h2">

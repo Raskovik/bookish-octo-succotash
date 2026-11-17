@@ -1469,7 +1469,7 @@ dialog.fg.mk-dlg{width:min(400px,100vw - 28px)}
 .ob-hint { margin: 0 0 12px; font: 700 14px/1.4 var(--font-body); color: var(--ink-soft); }
 .ob-screen[hidden] { display: none !important; }
 .ob-win { text-align: center; padding: 6px 0 4px; }
-.ob-win .ob-pp { width: 170px; height: 170px; object-fit: contain; }
+.ob-win .ob-pp { display: block; width: 170px; height: 170px; margin: 0 auto; object-fit: contain; }
 .ob-win h2 { margin: 0; font: var(--fw) 32px/1.1 var(--font-display); letter-spacing: .8px; color: var(--orange-text); }
 .ob-win p { margin: 4px 0 14px; color: var(--ink-soft); font-weight: 700; }
 .ob-adv { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 16px; align-items: center; margin: 0; padding: 12px; text-align: left; background: var(--paper-2); border: 2px solid var(--tan-line); border-radius: 14px; }
