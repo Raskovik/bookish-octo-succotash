@@ -1260,8 +1260,8 @@ export type Database = {
         };
         Returns: string;
       };
-      delete_own_account: {
-        Args: { p_user_id: string };
+      admin_delete_account: {
+        Args: { p_admin_user_id: string; p_target_user_id: string };
         Returns: null;
       };
       resolve_due_expeditions: {

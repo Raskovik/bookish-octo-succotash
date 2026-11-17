@@ -8,6 +8,7 @@ import { ReportCard } from "../../report-card";
 import { WarningDmForm } from "./warning-dm-form";
 import { BanForm } from "./ban-form";
 import { BansList } from "./bans-list";
+import { DeleteAccountForm } from "./delete-account-form";
 import { formatShortDate } from "@/lib/format-forum-date";
 import type { BanWithIssuer, ReportRow } from "@/lib/supabase/types";
 
@@ -110,6 +111,13 @@ export default async function ModPlayerPage(props: PageProps<"/mod/players/[user
         <BanForm targetUserId={profile.id} isAdmin={viewerProfile?.is_admin ?? false} />
         <BansList bans={bans} targetUserId={profile.id} />
       </section>
+
+      {viewerProfile?.is_admin ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">Danger zone</h2>
+          <DeleteAccountForm targetUserId={profile.id} targetName={profile.display_name ?? "Unknown player"} />
+        </section>
+      ) : null}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-semibold tracking-tight">Conversations</h2>

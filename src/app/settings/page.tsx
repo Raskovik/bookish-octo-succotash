@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { needsOnboarding } from "@/lib/onboarding";
 import { UsernameCard } from "./username-card";
 import { EditProfileForm } from "./edit-profile-form";
-import { DeleteAccountSection } from "./delete-account-section";
 
 const NAME_CHANGE_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
 
@@ -60,7 +59,6 @@ export default async function SettingsPage() {
             whoCanMessage={profile.who_can_message}
             allowFriendRequests={profile.allow_friend_requests}
           />
-          <DeleteAccountSection displayName={profile.display_name ?? ""} />
         </div>
       </div>
     </main>

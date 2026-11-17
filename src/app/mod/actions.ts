@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireModerator } from "@/lib/moderation";
+import { requireAdmin } from "@/lib/admin";
 import type { BanType, ReportStatus } from "@/lib/supabase/types";
 
 const BAN_TYPES: BanType[] = ["dm", "sales", "forums", "account"];
@@ -457,4 +458,37 @@ export async function updatePlayerNote(
     revalidatePath(`/mod/players/${targetUserId}`);
   }
   return { success: true };
+}
+
+export type DeleteAccountState = { error: string } | null;
+
+// Admin-only (requireAdmin(), not requireModerator() — this is the one
+// truly irreversible action anywhere in /mod) — deletes a player's
+// account and everything that cascades from it. See
+// admin_delete_account's own comment in 0072: mainly here so the
+// onboarding flow (0070) can be tested repeatedly by clearing out a
+// test account and reusing the same Google sign-in. Redirects to /mod
+// on success since the page this was submitted from (the now-deleted
+// player's own) no longer exists.
+export async function deleteAccount(
+  _prevState: DeleteAccountState,
+  formData: FormData,
+): Promise<DeleteAccountState> {
+  const { supabase, user } = await requireAdmin();
+
+  const targetUserId = String(formData.get("target_user_id") ?? "");
+  if (targetUserId.length === 0) {
+    return { error: "Missing target player." };
+  }
+
+  const { error } = await supabase.rpc("admin_delete_account", {
+    p_admin_user_id: user.id,
+    p_target_user_id: targetUserId,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  redirect("/mod");
 }
