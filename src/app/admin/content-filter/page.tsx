@@ -21,10 +21,10 @@ export default async function AdminContentFilterPage() {
         <h2 className="text-lg font-semibold tracking-tight">Content filter</h2>
         <p className="text-sm text-stone-500">
           Blocks any submission — usernames, bios, pet names/bios, forum posts, DMs, trade notes, and more —
-          that contains one of these words/phrases or links. Matching ignores spacing, punctuation and common
-          leetspeak substitutions, so entries should be the plain word (e.g. &ldquo;fuck&rdquo;, not
-          &ldquo;f*ck&rdquo;). Short fragments can also match inside unrelated words (e.g. banning
-          &ldquo;ass&rdquo; would also catch &ldquo;assassin&rdquo;) — prefer whole words.
+          that contains one of these words/phrases or links. Words/phrases match whole words only, so
+          &ldquo;ass&rdquo; won&apos;t catch &ldquo;assassinate&rdquo; — but punctuation (&ldquo;a.s.s&rdquo;)
+          and common leetspeak (&ldquo;a55&rdquo;) are still caught. Entries should be the plain word (e.g.
+          &ldquo;fuck&rdquo;, not &ldquo;f*ck&rdquo;).
         </p>
       </div>
 
