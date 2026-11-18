@@ -3,65 +3,52 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin";
+import { uploadGameImage } from "@/lib/game-image-upload";
 
 export type ZoneFormState = { error: string } | null;
 
 // is_tutorial is deliberately never read from form input here — it's set
 // once by the seed migration for the single tutorial zone and isn't meant
-// to be reassignable from the admin panel.
+// to be reassignable from the admin panel. Map position (map_x/y/width/
+// height) is likewise never read here — per the admin redesign, a new
+// zone's map hotspot is positioned directly in the database by whoever
+// adds it, not through this form; see ZoneRow's comment in types.ts.
 function readZoneFields(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
-  const tierRaw = String(formData.get("tier") ?? "");
   const descriptionRaw = String(formData.get("description") ?? "").trim();
   const imageUrlRaw = String(formData.get("image_url") ?? "").trim();
-  const unlockRequirementRaw = String(formData.get("unlock_requirement") ?? "").trim();
+  const rewardCoinsBaseRaw = String(formData.get("reward_coins_base") ?? "");
+  const rewardCoinsVarianceRaw = String(formData.get("reward_coins_variance") ?? "");
+  const rewardXpRaw = String(formData.get("reward_xp") ?? "");
   const isActive = formData.get("is_active") === "on";
-  const mapXRaw = String(formData.get("map_x") ?? "");
-  const mapYRaw = String(formData.get("map_y") ?? "");
-  const mapWidthRaw = String(formData.get("map_width") ?? "");
-  const mapHeightRaw = String(formData.get("map_height") ?? "");
 
   if (name.length === 0) return { ok: false as const, error: "Name can't be empty." };
 
-  const tier = Number(tierRaw);
-  if (!Number.isInteger(tier) || tier < 1) {
-    return { ok: false as const, error: "Tier must be a whole number of 1 or more." };
+  const rewardCoinsBase = Number(rewardCoinsBaseRaw);
+  if (!Number.isInteger(rewardCoinsBase) || rewardCoinsBase < 0) {
+    return { ok: false as const, error: "Base coin reward must be a non-negative whole number." };
   }
 
-  const mapFields: Record<string, number | null> = {};
-  for (const [key, raw] of [
-    ["map_x", mapXRaw],
-    ["map_y", mapYRaw],
-    ["map_width", mapWidthRaw],
-    ["map_height", mapHeightRaw],
-  ] as const) {
-    if (raw.trim().length === 0) {
-      mapFields[key] = null;
-      continue;
-    }
-    const value = Number(raw);
-    if (!Number.isFinite(value) || value < 0 || value > 100) {
-      return {
-        ok: false as const,
-        error: `${key.replace("map_", "Map ")} must be a percentage between 0 and 100.`,
-      };
-    }
-    mapFields[key] = value;
+  const rewardCoinsVariance = Number(rewardCoinsVarianceRaw);
+  if (!Number.isInteger(rewardCoinsVariance) || rewardCoinsVariance < 0) {
+    return { ok: false as const, error: "Coin variance must be a non-negative whole number." };
+  }
+
+  const rewardXp = Number(rewardXpRaw);
+  if (!Number.isInteger(rewardXp) || rewardXp < 0) {
+    return { ok: false as const, error: "XP reward must be a non-negative whole number." };
   }
 
   return {
     ok: true as const,
     fields: {
       name,
-      tier,
       description: descriptionRaw.length > 0 ? descriptionRaw : null,
       image_url: imageUrlRaw.length > 0 ? imageUrlRaw : null,
-      unlock_requirement: unlockRequirementRaw.length > 0 ? unlockRequirementRaw : null,
+      reward_coins_base: rewardCoinsBase,
+      reward_coins_variance: rewardCoinsVariance,
+      reward_xp: rewardXp,
       is_active: isActive,
-      map_x: mapFields.map_x,
-      map_y: mapFields.map_y,
-      map_width: mapFields.map_width,
-      map_height: mapFields.map_height,
     },
   };
 }
@@ -85,6 +72,22 @@ export async function createZone(
     return { error: `Could not create zone: ${error?.message ?? "unknown error"}` };
   }
 
+  const imageFile = formData.get("image_file");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      const uploadedUrl = await uploadGameImage(supabase, "zones", data.id, imageFile);
+      if (uploadedUrl) {
+        await supabase.from("zones").update({ image_url: uploadedUrl }).eq("id", data.id);
+      }
+    } catch (uploadError) {
+      return {
+        error: `Zone created, but the image upload failed: ${
+          uploadError instanceof Error ? uploadError.message : "unknown error"
+        }`,
+      };
+    }
+  }
+
   revalidatePath("/admin/zones");
   redirect(`/admin/zones/${data.id}`);
 }
@@ -100,6 +103,20 @@ export async function updateZone(
 
   const parsed = readZoneFields(formData);
   if (!parsed.ok) return { error: parsed.error };
+
+  const imageFile = formData.get("image_file");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      const uploadedUrl = await uploadGameImage(supabase, "zones", zoneId, imageFile);
+      if (uploadedUrl) {
+        parsed.fields.image_url = uploadedUrl;
+      }
+    } catch (uploadError) {
+      return {
+        error: uploadError instanceof Error ? uploadError.message : "Image upload failed.",
+      };
+    }
+  }
 
   const { error } = await supabase.from("zones").update(parsed.fields).eq("id", zoneId);
   if (error) {
@@ -143,21 +160,28 @@ export async function removePoolEntry(formData: FormData) {
   revalidatePath(`/admin/zones/${zoneId}`);
 }
 
+// Loot entries key on (zone_id, item_id, amount) — the same item can
+// appear in the pool more than once at different amounts (e.g. "10
+// Blueberries" and "5 Blueberries" as two independently-weighted rows).
+// Adding the same item+amount pair again upserts onto that exact row
+// (updating its weight) instead of erroring or creating a duplicate.
 export async function addLootEntry(formData: FormData) {
   const { supabase } = await requireAdmin();
 
   const zoneId = String(formData.get("zone_id") ?? "");
   const itemId = String(formData.get("item_id") ?? "");
+  const amount = Number(formData.get("amount") ?? "1");
   const dropWeight = Number(formData.get("drop_weight") ?? "1");
 
   if (zoneId.length === 0 || itemId.length === 0) return;
+  if (!Number.isInteger(amount) || amount < 1) return;
   if (!Number.isInteger(dropWeight) || dropWeight < 1) return;
 
   await supabase
     .from("zone_loot_table")
     .upsert(
-      { zone_id: zoneId, item_id: itemId, drop_weight: dropWeight },
-      { onConflict: "zone_id,item_id" },
+      { zone_id: zoneId, item_id: itemId, amount, drop_weight: dropWeight },
+      { onConflict: "zone_id,item_id,amount" },
     );
 
   revalidatePath(`/admin/zones/${zoneId}`);
@@ -168,9 +192,15 @@ export async function removeLootEntry(formData: FormData) {
 
   const zoneId = String(formData.get("zone_id") ?? "");
   const itemId = String(formData.get("item_id") ?? "");
-  if (zoneId.length === 0 || itemId.length === 0) return;
+  const amount = Number(formData.get("amount") ?? "");
+  if (zoneId.length === 0 || itemId.length === 0 || !Number.isInteger(amount)) return;
 
-  await supabase.from("zone_loot_table").delete().eq("zone_id", zoneId).eq("item_id", itemId);
+  await supabase
+    .from("zone_loot_table")
+    .delete()
+    .eq("zone_id", zoneId)
+    .eq("item_id", itemId)
+    .eq("amount", amount);
 
   revalidatePath(`/admin/zones/${zoneId}`);
 }

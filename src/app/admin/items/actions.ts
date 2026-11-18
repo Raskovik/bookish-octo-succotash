@@ -18,9 +18,7 @@ function readItemFields(formData: FormData) {
   const imageUrlRaw = String(formData.get("image_url") ?? "").trim();
   const descriptionRaw = String(formData.get("description") ?? "").trim();
   const sellValueRaw = String(formData.get("sell_value") ?? "");
-  const shopPriceRaw = String(formData.get("shop_price") ?? "").trim();
   const foodValueRaw = String(formData.get("food_value") ?? "").trim();
-  const isActive = formData.get("is_active") === "on";
 
   if (name.length === 0) return { ok: false as const, error: "Name can't be empty." };
   if (!ITEM_TYPES.includes(type as ItemType))
@@ -31,14 +29,6 @@ function readItemFields(formData: FormData) {
   const sellValue = Number(sellValueRaw);
   if (!Number.isInteger(sellValue) || sellValue < 0) {
     return { ok: false as const, error: "Sell value must be a non-negative whole number." };
-  }
-
-  let shopPrice: number | null = null;
-  if (shopPriceRaw.length > 0) {
-    shopPrice = Number(shopPriceRaw);
-    if (!Number.isInteger(shopPrice) || shopPrice < 0) {
-      return { ok: false as const, error: "Shop price must be a non-negative whole number, or blank." };
-    }
   }
 
   let foodValue: number | null = null;
@@ -58,9 +48,7 @@ function readItemFields(formData: FormData) {
       image_url: imageUrlRaw.length > 0 ? imageUrlRaw : null,
       description: descriptionRaw.length > 0 ? descriptionRaw : null,
       sell_value: sellValue,
-      shop_price: shopPrice,
       food_value: foodValue,
-      is_active: isActive,
     },
   };
 }

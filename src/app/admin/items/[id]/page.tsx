@@ -11,6 +11,7 @@ import {
   removeFertilizerEffect,
 } from "../actions";
 import type { FertilizerEffectType } from "@/lib/supabase/types";
+import { getObtainableSources } from "@/lib/admin-obtainable";
 
 type PoolRow = { plant_id: string; drop_weight: number; garden_plants: { name: string; image_stage1_url: string | null } | null };
 type EffectRow = { effect_type: FertilizerEffectType; effect_magnitude: number };
@@ -25,22 +26,48 @@ export default async function EditItemPage(props: PageProps<"/admin/items/[id]">
   const { id } = await props.params;
   const { supabase } = await requireAdmin();
 
-  const { data: item } = await supabase
-    .from("items")
-    .select("id, name, type, rarity, image_url, description, sell_value, shop_price, food_value, is_active, created_at")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: item }, sources] = await Promise.all([
+    supabase
+      .from("items")
+      .select("id, name, type, rarity, image_url, description, sell_value, food_value, created_at")
+      .eq("id", id)
+      .maybeSingle(),
+    getObtainableSources(supabase, "item", id),
+  ]);
 
   if (!item) {
     notFound();
   }
 
+  const obtainable = sources.some((s) => s.live);
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold tracking-tight">Edit item</h2>
-        <ItemForm action={updateItem} item={item} submitLabel="Save changes" />
+        <ItemForm action={updateItem} item={item} isNew={false} cancelHref="/admin/items" />
       </div>
+
+      <section className="flex flex-col gap-2">
+        <h3 className="text-base font-semibold tracking-tight">
+          Where it can be obtained — {obtainable ? "Obtainable" : "Not obtainable"}
+        </h3>
+        {sources.length === 0 ? (
+          <p className="text-sm text-stone-500">Not in any zone&apos;s pool or shop listing.</p>
+        ) : (
+          <ul className="flex flex-col gap-1 text-sm">
+            {sources.map((s, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span className={s.live ? "text-green-700 dark:text-green-400" : "text-stone-500"}>
+                  {s.live ? "●" : "○"}
+                </span>
+                <span>{s.label}</span>
+                {s.reason ? <span className="text-xs text-stone-500">({s.reason})</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {item.type === "seed" ? <SeedPoolEditor seedItemId={item.id} /> : null}
       {item.type === "fertilizer" ? <FertilizerEffectsEditor itemId={item.id} /> : null}

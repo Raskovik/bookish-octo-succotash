@@ -3,143 +3,130 @@
 import { useActionState } from "react";
 import type { ZoneFormState } from "./actions";
 import type { ZoneRow } from "@/lib/supabase/types";
+import { ImageField } from "@/components/admin/image-field";
+import { SaveBar } from "@/components/admin/save-bar";
 
 const initialState: ZoneFormState = null;
 
 export function ZoneForm({
   action,
   zone,
-  submitLabel,
+  isNew,
+  cancelHref,
 }: {
   action: (prevState: ZoneFormState, formData: FormData) => Promise<ZoneFormState>;
-  zone?: ZoneRow;
-  submitLabel: string;
+  zone?: Pick<
+    ZoneRow,
+    "id" | "name" | "description" | "image_url" | "is_active" | "reward_coins_base" | "reward_coins_variance" | "reward_xp"
+  >;
+  isNew: boolean;
+  cancelHref: string;
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
+  const formId = "zone-form";
 
   return (
-    <form action={formAction} className="flex max-w-md flex-col gap-5">
-      {zone ? <input type="hidden" name="zone_id" value={zone.id} /> : null}
+    <>
+      <form id={formId} action={formAction} className="flex max-w-md flex-col gap-5">
+        {zone ? <input type="hidden" name="zone_id" value={zone.id} /> : null}
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="name" className="text-sm font-medium">
-          Name
-        </label>
-        <input
-          id="name"
-          name="name"
-          defaultValue={zone?.name ?? ""}
-          required
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="name" className="text-sm font-medium">
+            Name
+          </label>
+          <input
+            id="name"
+            name="name"
+            defaultValue={zone?.name ?? ""}
+            required
+            className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="tier" className="text-sm font-medium">
-          Tier
-        </label>
-        <input
-          id="tier"
-          name="tier"
-          type="number"
-          min={1}
-          step={1}
-          defaultValue={zone?.tier ?? 1}
-          required
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="description" className="text-sm font-medium">
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            defaultValue={zone?.description ?? ""}
+            rows={3}
+            className="resize-y rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+          />
+        </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="description" className="text-sm font-medium">
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          defaultValue={zone?.description ?? ""}
-          rows={3}
-          className="resize-y rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-      </div>
+        <ImageField fileFieldName="image_file" urlFieldName="image_url" defaultUrl={zone?.image_url} label="Zone image" />
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="image_url" className="text-sm font-medium">
-          Image URL
-        </label>
-        <input
-          id="image_url"
-          name="image_url"
-          defaultValue={zone?.image_url ?? ""}
-          placeholder="https://…"
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="unlock_requirement" className="text-sm font-medium">
-          Unlock requirement
-        </label>
-        <input
-          id="unlock_requirement"
-          name="unlock_requirement"
-          defaultValue={zone?.unlock_requirement ?? ""}
-          placeholder="Shown to players — not enforced yet"
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-      </div>
-
-      <fieldset className="flex flex-col gap-3 rounded-md border border-green-200 p-3 dark:border-stone-800">
-        <legend className="px-1 text-sm font-medium">Map hotspot (% of map image)</legend>
-        <div className="grid grid-cols-2 gap-3">
-          {(
-            [
-              ["map_x", "X"],
-              ["map_y", "Y"],
-              ["map_width", "Width"],
-              ["map_height", "Height"],
-            ] as const
-          ).map(([field, label]) => (
-            <div key={field} className="flex flex-col gap-1.5">
-              <label htmlFor={field} className="text-xs text-stone-500">
-                {label}
+        <fieldset className="flex flex-col gap-3 rounded-md border border-green-200 p-3 dark:border-stone-800">
+          <legend className="px-1 text-sm font-medium">Expedition rewards</legend>
+          <p className="text-xs text-stone-500">
+            Each trip pays a random amount of coins between the base and base+variance, plus a flat amount of XP.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="reward_coins_base" className="text-xs text-stone-500">
+                Base coins
               </label>
               <input
-                id={field}
-                name={field}
+                id="reward_coins_base"
+                name="reward_coins_base"
                 type="number"
                 min={0}
-                max={100}
-                step={0.1}
-                defaultValue={zone?.[field] ?? ""}
+                step={1}
+                defaultValue={zone?.reward_coins_base ?? 10}
+                required
                 className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
               />
             </div>
-          ))}
-        </div>
-      </fieldset>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="reward_coins_variance" className="text-xs text-stone-500">
+                Coin variance
+              </label>
+              <input
+                id="reward_coins_variance"
+                name="reward_coins_variance"
+                type="number"
+                min={0}
+                step={1}
+                defaultValue={zone?.reward_coins_variance ?? 10}
+                required
+                className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="reward_xp" className="text-xs text-stone-500">
+                XP per trip
+              </label>
+              <input
+                id="reward_xp"
+                name="reward_xp"
+                type="number"
+                min={0}
+                step={1}
+                defaultValue={zone?.reward_xp ?? 10}
+                required
+                className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+              />
+            </div>
+          </div>
+        </fieldset>
 
-      <label className="flex items-center gap-2 text-sm font-medium">
-        <input
-          type="checkbox"
-          name="is_active"
-          defaultChecked={zone?.is_active ?? true}
-          className="h-4 w-4 rounded border-green-300 dark:border-stone-700"
-        />
-        Active (visible on the expeditions map)
-      </label>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="is_active"
+            defaultChecked={zone?.is_active ?? true}
+            className="h-4 w-4 rounded border-green-300 dark:border-stone-700"
+          />
+          Active (visible on the expeditions map)
+        </label>
 
-      {state?.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={isPending}
-        className="self-start rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-      >
-        {isPending ? "Saving…" : submitLabel}
-      </button>
-    </form>
+        {state?.error ? (
+          <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+        ) : null}
+      </form>
+      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
+    </>
   );
 }

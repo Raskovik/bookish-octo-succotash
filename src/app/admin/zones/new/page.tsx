@@ -11,7 +11,7 @@ export default async function NewZonePage() {
       <p className="text-sm text-stone-500">
         You&apos;ll be able to add pets and items to this zone&apos;s pool after creating it.
       </p>
-      <ZoneForm action={createZone} submitLabel="Create zone" />
+      <ZoneForm action={createZone} isNew cancelHref="/admin/zones" />
     </div>
   );
 }
