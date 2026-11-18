@@ -176,6 +176,23 @@ export async function updateForumPost(
     return { error: "You can only edit your own posts." };
   }
 
+  // Title is only present in the form when EditPostForm determined this
+  // post is the thread's first one (see rename_thread_for_first_post's
+  // own comment, 0079) — the RPC re-validates that server-side too, this
+  // isn't relying on the client telling the truth about it.
+  const title = String(formData.get("title") ?? "").trim();
+  if (title.length > 0) {
+    const { error: titleError } = await supabase.rpc("rename_thread_for_first_post", {
+      p_user_id: user.id,
+      p_thread_id: threadId,
+      p_post_id: postId,
+      p_title: title,
+    });
+    if (titleError) {
+      return { error: `Post saved, but the title couldn't be updated: ${titleError.message}` };
+    }
+  }
+
   revalidatePath(`/forums/${categoryId}/${threadId}`);
   redirect(`/forums/${categoryId}/${threadId}`);
 }
@@ -235,6 +252,19 @@ export async function deletePost(formData: FormData): Promise<void> {
 
   await supabase.from("forum_posts").delete().eq("id", postId);
 
+  // A thread that just lost its last post is gone too — see
+  // sync_forum_thread_stats' auto-delete branch
+  // (0079_edit_thread_title_and_auto_delete_empty_threads.sql) — so
+  // redirecting back to the (now 404ing) thread page would be wrong.
+  const { count: remainingPosts } = await supabase
+    .from("forum_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("thread_id", threadId);
+
+  revalidatePath(`/forums/${categoryId}`);
+  if ((remainingPosts ?? 0) === 0) {
+    redirect(`/forums/${categoryId}`);
+  }
   revalidatePath(`/forums/${categoryId}/${threadId}`);
   redirect(`/forums/${categoryId}/${threadId}`);
 }

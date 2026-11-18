@@ -33,6 +33,23 @@ export default async function EditForumPostPage(
     redirect(`/forums/${categoryId}/${threadId}`);
   }
 
+  // Editing a thread's own first post also offers a title field — see
+  // rename_thread_for_first_post, 0079_edit_thread_title_and_auto_
+  // delete_empty_threads.sql. Only shown for the author themselves (not
+  // staff editing someone else's opening post), matching the RPC's own
+  // "only the post's own author" rule.
+  const [{ data: firstPost }, { data: thread }] = await Promise.all([
+    supabase
+      .from("forum_posts")
+      .select("id")
+      .eq("thread_id", threadId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase.from("forum_threads").select("title").eq("id", threadId).maybeSingle(),
+  ]);
+  const isFirstPost = firstPost?.id === post.id && post.author_id === user.id;
+
   return (
     <main id="main">
       <div className="sheet">
@@ -53,7 +70,13 @@ export default async function EditForumPostPage(
               <span className="sect-ico ico-forum" />
               Edit post
             </h2>
-            <EditPostForm categoryId={categoryId} threadId={threadId} postId={post.id} defaultBody={post.body_raw} />
+            <EditPostForm
+              categoryId={categoryId}
+              threadId={threadId}
+              postId={post.id}
+              defaultBody={post.body_raw}
+              defaultTitle={isFirstPost ? (thread?.title ?? "") : null}
+            />
           </section>
         </div>
       </div>

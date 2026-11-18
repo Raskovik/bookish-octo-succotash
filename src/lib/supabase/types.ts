@@ -1438,6 +1438,15 @@ export type Database = {
         };
         Returns: ChangeDisplayNameResult;
       };
+      rename_thread_for_first_post: {
+        Args: {
+          p_user_id: string;
+          p_thread_id: string;
+          p_post_id: string;
+          p_title: string;
+        };
+        Returns: null;
+      };
       create_trade: {
         Args: {
           p_initiator_id: string;

@@ -11,11 +11,17 @@ export function EditPostForm({
   threadId,
   postId,
   defaultBody,
+  defaultTitle,
 }: {
   categoryId: string;
   threadId: string;
   postId: string;
   defaultBody: string;
+  // Null when this isn't the thread's first post (or isn't your own) —
+  // no title field shown at all in that case. See
+  // rename_thread_for_first_post, 0079_edit_thread_title_and_auto_
+  // delete_empty_threads.sql.
+  defaultTitle: string | null;
 }) {
   const [state, formAction, isPending] = useActionState(updateForumPost, initialState);
 
@@ -24,6 +30,13 @@ export function EditPostForm({
       <input type="hidden" name="category_id" value={categoryId} />
       <input type="hidden" name="thread_id" value={threadId} />
       <input type="hidden" name="post_id" value={postId} />
+
+      {defaultTitle !== null ? (
+        <label>
+          Thread title
+          <input name="title" type="text" maxLength={200} required defaultValue={defaultTitle} />
+        </label>
+      ) : null}
 
       <GardenBBCodeField defaultValue={defaultBody} placeholder="Write your post..." />
 
