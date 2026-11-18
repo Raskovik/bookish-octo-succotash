@@ -28,47 +28,22 @@ export function CategoryForm({
   const parentOptions = topLevelCategories.filter((c) => c.id !== category?.id);
 
   return (
-    <form action={formAction} className="flex max-w-md flex-col gap-5">
+    <form action={formAction} className="form">
       {category ? <input type="hidden" name="category_id" value={category.id} /> : null}
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="name" className="text-sm font-medium">
-          Name
-        </label>
-        <input
-          id="name"
-          name="name"
-          defaultValue={category?.name ?? ""}
-          required
-          maxLength={80}
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
+      <div className="fld">
+        <label htmlFor="name">Name</label>
+        <input id="name" name="name" defaultValue={category?.name ?? ""} required maxLength={80} className="in" />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="description" className="text-sm font-medium">
-          Description
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          defaultValue={category?.description ?? ""}
-          maxLength={300}
-          rows={3}
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
+      <div className="fld">
+        <label htmlFor="description">Description</label>
+        <textarea id="description" name="description" defaultValue={category?.description ?? ""} maxLength={300} rows={3} className="in" />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="parent_id" className="text-sm font-medium">
-          Parent category
-        </label>
-        <select
-          id="parent_id"
-          name="parent_id"
-          defaultValue={category?.parent_id ?? ""}
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        >
+      <div className="fld">
+        <label htmlFor="parent_id">Parent category</label>
+        <select id="parent_id" name="parent_id" defaultValue={category?.parent_id ?? ""} className="in">
           <option value="">— Top-level category —</option>
           {parentOptions.map((c) => (
             <option key={c.id} value={c.id}>
@@ -76,26 +51,21 @@ export function CategoryForm({
             </option>
           ))}
         </select>
-        <p className="text-xs text-stone-500">
-          Leave as top-level, or nest this under one of the existing top-level categories as a
-          subcategory.
-        </p>
+        <p className="hint">Leave as top-level, or nest this under one of the existing top-level categories as a subcategory.</p>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Icon</span>
-        <div className="flex items-center gap-3">
+      <div className="fld">
+        <span className="lbl">Icon</span>
+        <div className="imgf">
           {previewUrl || category?.icon_url ? (
-            // eslint-disable-next-line @next/next/no-img-element -- previewUrl is a local blob: URL, which next/image can't optimize
-            <img
-              src={previewUrl ?? category!.icon_url!}
-              alt=""
-              className="h-16 w-16 rounded border border-green-300 object-cover dark:border-stone-700"
-            />
+            <div className="th lg">
+              {/* eslint-disable-next-line @next/next/no-img-element -- previewUrl is a local blob: URL, which next/image can't optimize */}
+              <img src={previewUrl ?? category!.icon_url!} alt="" />
+            </div>
           ) : (
-            <div className="h-16 w-16 rounded border border-dashed border-green-300 dark:border-stone-700" />
+            <div className="th lg dash" />
           )}
-          <div className="flex flex-col gap-1">
+          <div className="imgc">
             <input
               id="icon_file"
               name="icon_file"
@@ -105,56 +75,35 @@ export function CategoryForm({
                 const file = e.target.files?.[0];
                 setPreviewUrl(file ? URL.createObjectURL(file) : null);
               }}
-              className="text-sm"
             />
-            <p className="text-xs text-stone-500">PNG, JPEG, WebP, or GIF — up to 5 MB.</p>
+            <p className="hint">PNG, JPEG, WebP, or GIF — up to 5 MB.</p>
           </div>
         </div>
-        <label htmlFor="icon_url" className="mt-1 text-xs text-stone-500">
+        <label htmlFor="icon_url" className="hint" style={{ marginTop: 6, display: "block" }}>
           Or paste an image URL instead (used only if no file is uploaded above)
         </label>
-        <input
-          id="icon_url"
-          name="icon_url"
-          defaultValue={category?.icon_url ?? ""}
-          placeholder="https://…"
-          className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
+        <input id="icon_url" name="icon_url" defaultValue={category?.icon_url ?? ""} placeholder="https://…" className="in" />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="sort_order" className="text-sm font-medium">
-          Sort order
+      <div className="fld">
+        <label htmlFor="sort_order">Sort order</label>
+        <input id="sort_order" name="sort_order" type="number" defaultValue={category?.sort_order ?? 0} className="in num" />
+        <p className="hint">Lower numbers are listed first.</p>
+      </div>
+
+      <div className="fld">
+        <label className="chk">
+          <input type="checkbox" name="is_active" defaultChecked={category?.is_active ?? true} />
+          <span>
+            <b>Active</b>
+            <small>Visible on the forums, and can hold new threads</small>
+          </span>
         </label>
-        <input
-          id="sort_order"
-          name="sort_order"
-          type="number"
-          defaultValue={category?.sort_order ?? 0}
-          className="w-32 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-        <p className="text-xs text-stone-500">Lower numbers are listed first.</p>
       </div>
 
-      <label className="flex items-center gap-2 text-sm font-medium">
-        <input
-          type="checkbox"
-          name="is_active"
-          defaultChecked={category?.is_active ?? true}
-          className="h-4 w-4 rounded border-green-300 dark:border-stone-700"
-        />
-        Active (visible on the forums, and can hold new threads)
-      </label>
+      {state?.error ? <p className="err">{state.error}</p> : null}
 
-      {state?.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
-      ) : null}
-
-      <button
-        type="submit"
-        disabled={isPending}
-        className="self-start rounded-md bg-green-800 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-      >
+      <button type="submit" disabled={isPending} className="btn pri" style={{ marginTop: 14 }}>
         {isPending ? "Saving…" : submitLabel}
       </button>
     </form>

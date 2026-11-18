@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { CategoryForm } from "../category-form";
@@ -21,14 +22,23 @@ export default async function EditForumCategoryPage(props: PageProps<"/admin/for
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Edit forum category</h2>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/forums">Forums</Link>
+        <i>/</i>
+        <span>{category.name}</span>
+      </div>
+      <div className="ph">
+        <h1>Edit forum category</h1>
+      </div>
       <CategoryForm
         action={updateForumCategory}
         category={category}
         topLevelCategories={topLevelCategories ?? []}
         submitLabel="Save changes"
       />
-    </div>
+    </>
   );
 }

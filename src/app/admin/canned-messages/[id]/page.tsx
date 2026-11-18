@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { CannedMessageForm } from "../canned-message-form";
@@ -18,9 +19,18 @@ export default async function EditCannedMessagePage(props: PageProps<"/admin/can
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Edit canned message</h2>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/canned-messages">Canned messages</Link>
+        <i>/</i>
+        <span>{message.label}</span>
+      </div>
+      <div className="ph">
+        <h1>Edit canned message</h1>
+      </div>
       <CannedMessageForm action={updateCannedMessage} message={message} submitLabel="Save changes" />
-    </div>
+    </>
   );
 }

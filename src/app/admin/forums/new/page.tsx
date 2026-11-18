@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { CategoryForm } from "../category-form";
 import { createForumCategory } from "../actions";
@@ -12,13 +13,18 @@ export default async function NewForumCategoryPage() {
     .order("name");
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">New forum category</h2>
-      <CategoryForm
-        action={createForumCategory}
-        topLevelCategories={topLevelCategories ?? []}
-        submitLabel="Create category"
-      />
-    </div>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/forums">Forums</Link>
+        <i>/</i>
+        <span>New</span>
+      </div>
+      <div className="ph">
+        <h1>New forum category</h1>
+      </div>
+      <CategoryForm action={createForumCategory} topLevelCategories={topLevelCategories ?? []} submitLabel="Create category" />
+    </>
   );
 }
