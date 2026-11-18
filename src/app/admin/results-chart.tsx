@@ -60,7 +60,7 @@ export function ResultsChart({ days }: { days: DailyResults[] }) {
 
   return (
     <div className="card pad">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div>
           <h3 className="hint" style={{ margin: 0 }}>
             Last {days.length} days
@@ -78,13 +78,13 @@ export function ResultsChart({ days }: { days: DailyResults[] }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div style={{ overflowX: "auto" }}>
         <svg
           role="img"
           aria-labelledby={titleId}
           width={width + 40}
           height={CHART_HEIGHT + TOP_PAD + 36}
-          className="max-w-none"
+          style={{ maxWidth: "none" }}
         >
           <g transform={`translate(0, ${TOP_PAD})`}>
           {/* gridlines + y ticks */}
@@ -173,7 +173,7 @@ export function ResultsChart({ days }: { days: DailyResults[] }) {
           </g>
         </svg>
       </div>
-      <p className="text-xs text-stone-400">
+      <p className="hint" style={{ fontSize: 12 }}>
         Hover or tab through a bar for that day&apos;s exact count. Tutorial trips aren&apos;t counted.
       </p>
     </div>
