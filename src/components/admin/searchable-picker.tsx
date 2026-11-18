@@ -6,6 +6,10 @@ export type PickerOption = {
   id: string;
   label: string;
   imageUrl?: string | null;
+  // Carries extra data a parent might want back via onSelect (e.g. the
+  // shop listing form's live description preview) — unused by this
+  // component itself beyond passing it through.
+  description?: string | null;
 };
 
 /**
@@ -23,6 +27,7 @@ export function SearchablePicker({
   options,
   placeholder = "Search…",
   defaultSelected = null,
+  onSelect,
 }: {
   name: string;
   options: PickerOption[];
@@ -32,6 +37,10 @@ export function SearchablePicker({
   // every other use of this component so far, which only ever adds new
   // entries to a list and so always starts empty.
   defaultSelected?: PickerOption | null;
+  // Fires with the picked option (or null on "Change") — for a parent
+  // that needs to react to the selection, e.g. the shop listing form's
+  // live description preview.
+  onSelect?: (option: PickerOption | null) => void;
 }) {
   const inputId = useId();
   const [query, setQuery] = useState("");
@@ -60,6 +69,7 @@ export function SearchablePicker({
             onClick={() => {
               setSelected(null);
               setQuery("");
+              onSelect?.(null);
             }}
             className="text-xs text-stone-500 hover:underline"
           >
@@ -103,6 +113,7 @@ export function SearchablePicker({
                   onClick={() => {
                     setSelected(option);
                     setIsOpen(false);
+                    onSelect?.(option);
                   }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-green-100 dark:hover:bg-stone-800"
                 >

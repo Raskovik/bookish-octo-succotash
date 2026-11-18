@@ -10,7 +10,6 @@ export type SpeciesFormState = { error: string } | null;
 function readSpeciesFields(formData: FormData) {
   const breedId = String(formData.get("breed_id") ?? "").trim();
   const imageUrlRaw = String(formData.get("image_url") ?? "").trim();
-  const isActive = formData.get("is_active") === "on";
 
   if (breedId.length === 0) return { ok: false as const, error: "Choose a breed." };
 
@@ -19,7 +18,6 @@ function readSpeciesFields(formData: FormData) {
     fields: {
       breed_id: breedId,
       image_url: imageUrlRaw.length > 0 ? imageUrlRaw : null,
-      is_active: isActive,
     },
   };
 }

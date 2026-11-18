@@ -3,14 +3,26 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin";
-import type { ShopListingType, ShopSection } from "@/lib/supabase/types";
+import type { ItemType, ShopListingType, ShopSection } from "@/lib/supabase/types";
 
-const SHOP_SECTIONS: ShopSection[] = ["pets", "food", "den", "specials"];
+const SHOP_SECTIONS: ShopSection[] = ["pets", "food", "specials"];
 const LISTING_TYPES: ShopListingType[] = ["item", "pet"];
 
 export type ShopListingFormState = { error: string } | null;
 
-function readShopListingFields(formData: FormData) {
+// <input type="date"> gives/wants "YYYY-MM-DD" — stored as that date at
+// midnight UTC. Good enough for a shop arrival/departure date, which is
+// never shown or compared at sub-day precision.
+function parseDateInput(raw: string): Date | null {
+  if (raw.length === 0) return null;
+  const parsed = new Date(`${raw}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+async function readShopListingFields(
+  formData: FormData,
+  getItemType: (itemId: string) => Promise<ItemType | null>,
+) {
   const section = String(formData.get("section") ?? "");
   const listingType = String(formData.get("listing_type") ?? "");
   const itemId = String(formData.get("item_id") ?? "").trim();
@@ -18,9 +30,8 @@ function readShopListingFields(formData: FormData) {
   const descriptionRaw = String(formData.get("description") ?? "").trim();
   const priceCoinsRaw = String(formData.get("price_coins") ?? "").trim();
   const priceGemsRaw = String(formData.get("price_gems") ?? "").trim();
+  const startsAtRaw = String(formData.get("starts_at") ?? "").trim();
   const endsAtRaw = String(formData.get("ends_at") ?? "").trim();
-  const isNew = formData.get("is_new") === "on";
-  const isActive = formData.get("is_active") === "on";
 
   if (!SHOP_SECTIONS.includes(section as ShopSection)) {
     return { ok: false as const, error: "Invalid shop section." };
@@ -33,6 +44,21 @@ function readShopListingFields(formData: FormData) {
   }
   if (listingType === "pet" && speciesId.length === 0) {
     return { ok: false as const, error: "Pick a species to sell." };
+  }
+
+  // Section/target consistency — pet models only go in Pets, and Food
+  // is reserved for items that are actually food.
+  if (listingType === "pet" && section !== "pets") {
+    return { ok: false as const, error: "Pet models go in the Pets section." };
+  }
+  if (listingType === "item" && section === "pets") {
+    return { ok: false as const, error: "Pets is only for pet models. Use Food or Special for items." };
+  }
+  if (listingType === "item" && section === "food") {
+    const itemType = await getItemType(itemId);
+    if (itemType !== "ingredient") {
+      return { ok: false as const, error: "Food is only for food items. Use Special for other items." };
+    }
   }
 
   let priceCoins: number | null = null;
@@ -51,17 +77,17 @@ function readShopListingFields(formData: FormData) {
     }
   }
 
-  if (priceCoins === null && priceGems === null) {
-    return { ok: false as const, error: "Set a coin price, a gem price, or both." };
+  if (!(priceCoins && priceCoins > 0) && !(priceGems && priceGems > 0)) {
+    return { ok: false as const, error: "Set a coin price, a gem price, or both — at least one above zero." };
   }
 
-  let endsAt: string | null = null;
-  if (endsAtRaw.length > 0) {
-    const parsed = new Date(endsAtRaw);
-    if (Number.isNaN(parsed.getTime())) {
-      return { ok: false as const, error: "Invalid expiry date/time." };
-    }
-    endsAt = parsed.toISOString();
+  const startsAt = parseDateInput(startsAtRaw) ?? new Date();
+  const endsAt = parseDateInput(endsAtRaw);
+  if (endsAtRaw.length > 0 && !endsAt) {
+    return { ok: false as const, error: "Invalid leave date." };
+  }
+  if (endsAt && endsAt.getTime() < startsAt.getTime()) {
+    return { ok: false as const, error: "The leave date can't be before the arrival date." };
   }
 
   return {
@@ -74,9 +100,8 @@ function readShopListingFields(formData: FormData) {
       description: descriptionRaw.length > 0 ? descriptionRaw : null,
       price_coins: priceCoins,
       price_gems: priceGems,
-      is_new: isNew,
-      ends_at: endsAt,
-      is_active: isActive,
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt ? endsAt.toISOString() : null,
     },
   };
 }
@@ -87,7 +112,10 @@ export async function createShopListing(
 ): Promise<ShopListingFormState> {
   const { supabase } = await requireAdmin();
 
-  const parsed = readShopListingFields(formData);
+  const parsed = await readShopListingFields(formData, async (itemId) => {
+    const { data } = await supabase.from("items").select("type").eq("id", itemId).maybeSingle();
+    return data?.type ?? null;
+  });
   if (!parsed.ok) return { error: parsed.error };
 
   const { error } = await supabase.from("shop_listings").insert(parsed.fields);
@@ -109,7 +137,10 @@ export async function updateShopListing(
   const listingId = String(formData.get("listing_id") ?? "");
   if (listingId.length === 0) return { error: "Missing listing." };
 
-  const parsed = readShopListingFields(formData);
+  const parsed = await readShopListingFields(formData, async (itemId) => {
+    const { data } = await supabase.from("items").select("type").eq("id", itemId).maybeSingle();
+    return data?.type ?? null;
+  });
   if (!parsed.ok) return { error: parsed.error };
 
   const { error } = await supabase.from("shop_listings").update(parsed.fields).eq("id", listingId);

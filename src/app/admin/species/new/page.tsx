@@ -10,7 +10,7 @@ export default async function NewSpeciesPage() {
   return (
     <div className="flex flex-col gap-4">
       <h2 className="text-lg font-semibold tracking-tight">New model</h2>
-      <SpeciesForm action={createSpecies} breeds={breeds ?? []} submitLabel="Create model" />
+      <SpeciesForm action={createSpecies} breeds={breeds ?? []} isNew cancelHref="/admin/species" />
     </div>
   );
 }

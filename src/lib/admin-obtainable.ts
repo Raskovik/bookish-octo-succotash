@@ -64,16 +64,18 @@ export async function getObtainableSources(
 ): Promise<ObtainableSource[]> {
   const idColumn = idColumnFor(target);
 
+  // Both tables' queries vary their column name by `target`, which the
+  // generated Supabase types can't express generically — cast to `any`
+  // for these two calls rather than duplicating this function per target.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const [{ data: poolRows }, { data: listingRows }] = await Promise.all([
-    (supabase.from(poolTableFor(target)) as unknown as { select: (c: string) => { eq: (col: string, v: string) => PromiseLike<{ data: unknown }> } })
-      .select("zone_id, zones(name, is_active)")
-      .eq(idColumn, id),
-    supabase
-      .from("shop_listings")
+    (supabase.from(poolTableFor(target)) as any).select("zone_id, zones(name, is_active)").eq(idColumn, id),
+    (supabase.from("shop_listings") as any)
       .select("id, starts_at, ends_at")
       .eq("listing_type", target === "item" ? "item" : "pet")
-      .eq(idColumn, id as never),
+      .eq(idColumn, id),
   ]);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   const sources: ObtainableSource[] = [];
   const seenZones = new Set<string>();
