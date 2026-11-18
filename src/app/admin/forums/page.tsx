@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
+import { ActiveBadge } from "@/components/admin/badges";
 import type { ForumCategoryRow, ForumCategoryWithChildren } from "@/lib/supabase/types";
 
 function groupByParent(categories: ForumCategoryRow[]): ForumCategoryWithChildren[] {
@@ -88,7 +89,9 @@ function CategoryRow({ category, indent }: { category: ForumCategoryRow; indent?
         </Link>
       </td>
       <td className="px-4 py-2">{category.sort_order}</td>
-      <td className="px-4 py-2">{category.is_active ? "Yes" : "No"}</td>
+      <td className="px-4 py-2">
+        <ActiveBadge active={category.is_active} />
+      </td>
     </tr>
   );
 }

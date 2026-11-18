@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
+import { ActiveBadge } from "@/components/admin/badges";
 
 export default async function AdminCannedMessagesPage() {
   const { supabase } = await requireAdmin();
@@ -47,7 +48,9 @@ export default async function AdminCannedMessagesPage() {
                   </Link>
                 </td>
                 <td className="px-4 py-2">{m.sort_order}</td>
-                <td className="px-4 py-2">{m.is_active ? "Yes" : "No"}</td>
+                <td className="px-4 py-2">
+                  <ActiveBadge active={m.is_active} />
+                </td>
               </tr>
             ))}
             {(messages ?? []).length === 0 ? (

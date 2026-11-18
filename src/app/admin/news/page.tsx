@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
+import { ActiveBadge } from "@/components/admin/badges";
 
 export default async function AdminNewsPage() {
   const { supabase } = await requireAdmin();
@@ -49,7 +50,9 @@ export default async function AdminNewsPage() {
                 <td className="px-4 py-2 text-stone-500">
                   {new Date(post.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-4 py-2">{post.is_active ? "Yes" : "No"}</td>
+                <td className="px-4 py-2">
+                  <ActiveBadge active={post.is_active} />
+                </td>
               </tr>
             ))}
             {(posts ?? []).length === 0 ? (
