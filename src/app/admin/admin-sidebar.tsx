@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { AdminToastProvider } from "@/components/admin/toast";
 
 type NavGroup = { label: string; items: { href: string; label: string }[] };
 
@@ -45,6 +46,13 @@ const NAV: NavGroup[] = [
 
 const ALL_PAGES = NAV.flatMap((g) => g.items);
 
+// Full admin chrome: dark-green sticky sidebar + sticky top bar with
+// a "jump to page" search box, matching the furgarden-admin-panel
+// prototype's .app/.side/.mainwrap/.top structure. One client
+// component because the mobile hamburger (in the top bar) and the
+// sidebar's open/closed state are the same piece of UI, and because
+// the jump-search's live filtering/keyboard nav needs client state —
+// same architecture the original redesign used, just restyled.
 export function AdminSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -71,113 +79,118 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          className="rounded-md border border-green-300 px-3 py-1.5 text-sm font-medium md:hidden dark:border-stone-700"
-          aria-expanded={navOpen}
-          aria-controls="admin-nav"
-          onClick={() => setNavOpen((o) => !o)}
-        >
-          ☰ Menu
-        </button>
-        <div className="relative w-full max-w-sm">
-          <input
-            ref={jumpInputRef}
-            type="search"
-            value={jumpQuery}
-            onChange={(e) => {
-              setJumpQuery(e.target.value);
-              setSelectedIndex(0);
-              setJumpOpen(true);
-            }}
-            onFocus={() => setJumpOpen(true)}
-            onBlur={() => setTimeout(() => setJumpOpen(false), 150)}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown") {
-                setSelectedIndex((i) => Math.min(matches.length - 1, i + 1));
-                e.preventDefault();
-              } else if (e.key === "ArrowUp") {
-                setSelectedIndex((i) => Math.max(0, i - 1));
-                e.preventDefault();
-              } else if (e.key === "Enter" && matches[selectedIndex]) {
-                router.push(matches[selectedIndex].href);
-                setJumpQuery("");
-                setJumpOpen(false);
-              } else if (e.key === "Escape") {
-                setJumpOpen(false);
-              }
-            }}
-            placeholder="Jump to a page…"
-            aria-label="Jump to a page"
-            autoComplete="off"
-            className="w-full rounded-full border border-green-300 py-2 pl-4 pr-10 text-sm dark:border-stone-700 dark:bg-stone-900"
-          />
-          <kbd className="pointer-events-none absolute right-3 top-2 rounded border border-green-300 px-1.5 text-xs text-stone-500 dark:border-stone-700">
-            /
-          </kbd>
-          {jumpOpen && jumpQuery.length > 0 ? (
-            <ul className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-md border border-green-200 bg-white shadow-lg dark:border-stone-800 dark:bg-stone-900">
-              {matches.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-stone-500">No matches</li>
-              ) : (
-                matches.map((page, i) => (
-                  <li key={page.href}>
-                    <Link
-                      href={page.href}
-                      className={`block px-3 py-2 text-sm ${i === selectedIndex ? "bg-green-100 dark:bg-stone-800" : ""}`}
-                      onClick={() => {
-                        setJumpQuery("");
-                        setJumpOpen(false);
-                      }}
-                    >
-                      {page.label}
-                    </Link>
-                  </li>
-                ))
-              )}
-            </ul>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="md:flex md:gap-6">
-      <nav
-        id="admin-nav"
-        aria-label="Admin sections"
-        className={`${navOpen ? "block" : "hidden"} mb-6 h-fit rounded-lg border border-green-200 p-3 md:block md:w-56 md:shrink-0 dark:border-stone-800`}
-      >
-        {NAV.map((group) => (
-          <div key={group.label || "top"} className="mb-3 last:mb-0">
-            {group.label ? (
-              <h2 className="mb-1 px-2 text-xs font-bold uppercase tracking-wide text-stone-500">{group.label}</h2>
-            ) : null}
-            <ul className="flex flex-col gap-0.5">
+    <div className={`admin-shell${navOpen ? " nav-open" : ""}`}>
+      <link rel="stylesheet" href="/css/admin.css" />
+      <a className="skip" href="#main">
+        Skip to content
+      </a>
+      <div className="app">
+        <aside className="side" id="side" aria-label="Admin sections">
+          <Link className="brand" href="/admin">
+            Furgarden
+            <small>Admin panel</small>
+          </Link>
+          {NAV.map((group) => (
+            <div key={group.label || "top"}>
+              {group.label ? <h2>{group.label}</h2> : null}
               {group.items.map((item) => {
                 const isCurrent = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
                 return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      aria-current={isCurrent ? "page" : undefined}
-                      onClick={() => setNavOpen(false)}
-                      className={`block rounded-md px-2 py-1.5 text-sm font-medium ${
-                        isCurrent
-                          ? "bg-green-800 text-white dark:bg-green-200 dark:text-green-950"
-                          : "text-stone-700 hover:bg-green-100 dark:text-stone-300 dark:hover:bg-stone-800"
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="nl"
+                    aria-current={isCurrent ? "page" : undefined}
+                    onClick={() => setNavOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
                 );
               })}
-            </ul>
+            </div>
+          ))}
+          <div className="foot">
+            <Link href="/">View site ↗</Link>
           </div>
-        ))}
-      </nav>
-      <div className="min-w-0 flex-1">{children}</div>
+        </aside>
+        <div className="mainwrap">
+          <header className="top">
+            <button
+              type="button"
+              className="btn menu-btn"
+              aria-expanded={navOpen}
+              aria-controls="side"
+              onClick={() => setNavOpen((o) => !o)}
+            >
+              ☰ Menu
+            </button>
+            <div className="jump">
+              <input
+                ref={jumpInputRef}
+                type="search"
+                value={jumpQuery}
+                onChange={(e) => {
+                  setJumpQuery(e.target.value);
+                  setSelectedIndex(0);
+                  setJumpOpen(true);
+                }}
+                onFocus={() => setJumpOpen(true)}
+                onBlur={() => setTimeout(() => setJumpOpen(false), 150)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown") {
+                    setSelectedIndex((i) => Math.min(matches.length - 1, i + 1));
+                    e.preventDefault();
+                  } else if (e.key === "ArrowUp") {
+                    setSelectedIndex((i) => Math.max(0, i - 1));
+                    e.preventDefault();
+                  } else if (e.key === "Enter" && matches[selectedIndex]) {
+                    router.push(matches[selectedIndex].href);
+                    setJumpQuery("");
+                    setJumpOpen(false);
+                  } else if (e.key === "Escape") {
+                    setJumpOpen(false);
+                  }
+                }}
+                placeholder="Jump to a page or record…"
+                aria-label="Jump to a page or record"
+                autoComplete="off"
+              />
+              <kbd aria-hidden="true">/</kbd>
+              {jumpOpen && jumpQuery.length > 0 ? (
+                <ul className="jr">
+                  {matches.length === 0 ? (
+                    <li>
+                      <span style={{ padding: "8px 10px", display: "block", color: "var(--soft)" }}>No matches</span>
+                    </li>
+                  ) : (
+                    matches.map((page, i) => (
+                      <li key={page.href}>
+                        <Link
+                          href={page.href}
+                          className={i === selectedIndex ? "on" : undefined}
+                          onClick={() => {
+                            setJumpQuery("");
+                            setJumpOpen(false);
+                          }}
+                        >
+                          {page.label}
+                        </Link>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              ) : null}
+            </div>
+            <a className="vs" href="/">
+              View site ↗
+            </a>
+          </header>
+          <AdminToastProvider>
+            <main id="main" tabIndex={-1}>
+              {children}
+            </main>
+          </AdminToastProvider>
+        </div>
       </div>
     </div>
   );

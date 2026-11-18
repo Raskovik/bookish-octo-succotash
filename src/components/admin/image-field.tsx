@@ -24,20 +24,18 @@ export function ImageField({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-sm font-medium">{label}</span>
-      <div className="flex items-center gap-3">
+    <div className="fld">
+      <span className="lbl">{label}</span>
+      <div className="imgf">
         {previewUrl || defaultUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- previewUrl is a local blob: URL, which next/image can't optimize
-          <img
-            src={previewUrl ?? defaultUrl!}
-            alt=""
-            className="h-16 w-16 rounded border border-green-300 object-cover dark:border-stone-700"
-          />
+          <div className="th lg">
+            {/* eslint-disable-next-line @next/next/no-img-element -- previewUrl is a local blob: URL, which next/image can't optimize */}
+            <img src={previewUrl ?? defaultUrl!} alt="" />
+          </div>
         ) : (
-          <div className="h-16 w-16 rounded border border-dashed border-green-300 dark:border-stone-700" />
+          <div className="th lg dash" />
         )}
-        <div className="flex flex-col gap-1">
+        <div className="imgc">
           <input
             name={fileFieldName}
             type="file"
@@ -46,20 +44,16 @@ export function ImageField({
               const file = e.target.files?.[0];
               setPreviewUrl(file ? URL.createObjectURL(file) : null);
             }}
-            className="text-sm"
           />
-          <p className="text-xs text-stone-500">PNG, JPEG, WebP, or GIF.</p>
+          <p className="hint">PNG, JPEG, WebP, or GIF.</p>
+          <div className="row">
+            <label className="hint" htmlFor={`${urlFieldName}-url`}>
+              Or paste an image web address instead (used only if no file is uploaded above)
+            </label>
+          </div>
+          <input id={`${urlFieldName}-url`} name={urlFieldName} defaultValue={defaultUrl ?? ""} placeholder="https://…" className="in" />
         </div>
       </div>
-      <label className="mt-1 text-xs text-stone-500">
-        Or paste an image web address instead (used only if no file is uploaded above)
-        <input
-          name={urlFieldName}
-          defaultValue={defaultUrl ?? ""}
-          placeholder="https://…"
-          className="mt-1 block w-full rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-      </label>
     </div>
   );
 }

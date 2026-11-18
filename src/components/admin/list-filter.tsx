@@ -43,35 +43,25 @@ export function ListFilter<T>({
   }, [rows, query, filter, getSearchText, getFilterFlag]);
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-green-200 p-3 dark:border-stone-800">
+    <div className="card">
+      <div className="tb">
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={searchPlaceholder}
-          className="w-full max-w-xs rounded-md border border-green-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
+          className="in"
         />
         {getFilterFlag && filterLabels ? (
-          <div className="flex overflow-hidden rounded-md border border-green-300 dark:border-stone-700" role="group" aria-label="Show">
+          <div className="seg" role="group" aria-label="Show">
             {(["all", "yes", "no"] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={filter === value}
-                onClick={() => setFilter(value)}
-                className={`border-r px-3 py-1.5 text-xs font-medium last:border-r-0 dark:border-stone-700 ${
-                  filter === value
-                    ? "bg-green-100 text-green-900 dark:bg-stone-800 dark:text-stone-100"
-                    : "bg-white text-stone-600 dark:bg-stone-950 dark:text-stone-400"
-                }`}
-              >
+              <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)}>
                 {value === "all" ? "All" : value === "yes" ? filterLabels[0] : filterLabels[1]}
               </button>
             ))}
           </div>
         ) : null}
-        <span className="ml-auto text-sm text-stone-500">
+        <span className="n">
           {visibleRows.length} of {rows.length} shown
         </span>
       </div>

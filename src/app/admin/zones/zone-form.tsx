@@ -27,104 +27,78 @@ export function ZoneForm({
 
   return (
     <>
-      <form id={formId} action={formAction} className="flex max-w-md flex-col gap-5">
+      <form id={formId} action={formAction} className="form">
         {zone ? <input type="hidden" name="zone_id" value={zone.id} /> : null}
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="name" className="text-sm font-medium">
-            Name
-          </label>
-          <input
-            id="name"
-            name="name"
-            defaultValue={zone?.name ?? ""}
-            required
-            className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-          />
+        <div className="fld">
+          <label htmlFor="name">Name</label>
+          <input id="name" name="name" defaultValue={zone?.name ?? ""} required className="in" />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="description" className="text-sm font-medium">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            defaultValue={zone?.description ?? ""}
-            rows={3}
-            className="resize-y rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-          />
+        <div className="fld">
+          <label htmlFor="description">Description</label>
+          <textarea id="description" name="description" defaultValue={zone?.description ?? ""} rows={3} className="in" />
         </div>
 
         <ImageField fileFieldName="image_file" urlFieldName="image_url" defaultUrl={zone?.image_url} label="Zone image" />
 
-        <fieldset className="flex flex-col gap-3 rounded-md border border-green-200 p-3 dark:border-stone-800">
-          <legend className="px-1 text-sm font-medium">Expedition rewards</legend>
-          <p className="text-xs text-stone-500">
-            Each trip pays a random amount of coins between the base and base+variance, plus a flat amount of XP.
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reward_coins_base" className="text-xs text-stone-500">
-                Base coins
-              </label>
-              <input
-                id="reward_coins_base"
-                name="reward_coins_base"
-                type="number"
-                min={0}
-                step={1}
-                defaultValue={zone?.reward_coins_base ?? 10}
-                required
-                className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reward_coins_variance" className="text-xs text-stone-500">
-                Coin variance
-              </label>
-              <input
-                id="reward_coins_variance"
-                name="reward_coins_variance"
-                type="number"
-                min={0}
-                step={1}
-                defaultValue={zone?.reward_coins_variance ?? 10}
-                required
-                className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="reward_xp" className="text-xs text-stone-500">
-                XP per trip
-              </label>
-              <input
-                id="reward_xp"
-                name="reward_xp"
-                type="number"
-                min={0}
-                step={1}
-                defaultValue={zone?.reward_xp ?? 10}
-                required
-                className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-              />
-            </div>
+        <div className="fh">Expedition rewards</div>
+        <p className="hint">
+          Each trip pays a random amount of coins between the base and base+variance, plus a flat amount of XP.
+        </p>
+        <div className="grid4">
+          <div>
+            <label htmlFor="reward_coins_base">Base coins</label>
+            <input
+              id="reward_coins_base"
+              name="reward_coins_base"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={zone?.reward_coins_base ?? 10}
+              required
+              className="in num"
+            />
           </div>
-        </fieldset>
+          <div>
+            <label htmlFor="reward_coins_variance">Coin variance</label>
+            <input
+              id="reward_coins_variance"
+              name="reward_coins_variance"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={zone?.reward_coins_variance ?? 10}
+              required
+              className="in num"
+            />
+          </div>
+          <div>
+            <label htmlFor="reward_xp">XP per trip</label>
+            <input
+              id="reward_xp"
+              name="reward_xp"
+              type="number"
+              min={0}
+              step={1}
+              defaultValue={zone?.reward_xp ?? 10}
+              required
+              className="in num"
+            />
+          </div>
+        </div>
 
-        <label className="flex items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            name="is_active"
-            defaultChecked={zone?.is_active ?? true}
-            className="h-4 w-4 rounded border-green-300 dark:border-stone-700"
-          />
-          Active (visible on the expeditions map)
-        </label>
+        <div className="fld">
+          <label className="chk">
+            <input type="checkbox" name="is_active" defaultChecked={zone?.is_active ?? true} />
+            <span>
+              <b>Active</b>
+              <small>Visible on the expeditions map</small>
+            </span>
+          </label>
+        </div>
 
-        {state?.error ? (
-          <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
-        ) : null}
+        {state?.error ? <p className="err">{state.error}</p> : null}
       </form>
       <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
     </>

@@ -1,19 +1,17 @@
 import { requireAdmin } from "@/lib/admin";
 import { AdminSidebar } from "./admin-sidebar";
-import { AdminToastProvider } from "@/components/admin/toast";
 
-// Grouped left sidebar (furgarden-admin-panel redesign package) —
-// replaces the old single row of top-nav text links. Deliberately
-// outside the jungle theme's .sheet/.panel card shell (admin doesn't
-// need the player-facing decoration) — a plain, scannable Tailwind
-// layout, same as every admin page's own content already was.
-//
-// Every other page gets an opaque surface for free from .sheet/.panel
-// (the parchment card) sitting on top of the site's fixed jungle sky/
-// cloud/grass body background. Admin skips that card on purpose, so it
-// needs its own solid background here instead — without one, that
-// background shows straight through behind the sidebar and content
-// (and badly washes out text contrast wherever it does).
+// Full app/side/mainwrap/top chrome, restyled to match the
+// furgarden-admin-panel static HTML/CSS prototype's visual design
+// system (dark-green sticky sidebar, sticky top "jump to page"
+// search, cards/tables/badges/forms everywhere below). The
+// stylesheet is scoped to this subtree by only ever being linked
+// from this layout — see public/css/admin.css — and AdminSidebar
+// owns the actual .app/.side/.top markup (and the mobile nav-open
+// toggle + jump-search state), since that's all one coordinated
+// piece of client-side UI. `children` is plain React output from
+// this Server Component, not a function, so passing it down is fine
+// — the Server->Client boundary only forbids functions.
 export default async function AdminLayout({
   children,
 }: {
@@ -21,15 +19,5 @@ export default async function AdminLayout({
 }) {
   await requireAdmin();
 
-  return (
-    <main
-      id="main"
-      className="mx-auto my-4 w-full max-w-6xl rounded-xl bg-white px-4 py-6 shadow-sm sm:px-6 dark:bg-stone-950"
-    >
-      <h1 className="mb-4 text-2xl font-semibold tracking-tight">Admin panel</h1>
-      <AdminToastProvider>
-        <AdminSidebar>{children}</AdminSidebar>
-      </AdminToastProvider>
-    </main>
-  );
+  return <AdminSidebar>{children}</AdminSidebar>;
 }

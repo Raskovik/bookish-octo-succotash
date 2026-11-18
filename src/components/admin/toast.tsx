@@ -25,17 +25,13 @@ export function AdminToastProvider({ children }: { children: React.ReactNode }) 
   return (
     <ToastContext.Provider value={showToast}>
       {children}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-2">
+      <div id="toasts">
         {toasts.map((t) => (
-          <div
-            key={t.id}
-            className="flex items-center gap-3 rounded-lg bg-stone-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg dark:bg-stone-800"
-          >
+          <div key={t.id} className="toast ok">
             <span>{t.message}</span>
             {t.undo ? (
               <button
                 type="button"
-                className="font-semibold text-amber-300 underline"
                 onClick={() => {
                   t.undo?.();
                   setToasts((curr) => curr.filter((x) => x.id !== t.id));

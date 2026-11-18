@@ -29,41 +29,36 @@ export function ZonesList({ rows }: { rows: ZoneRow[] }) {
       searchPlaceholder="Search zones…"
     >
       {(visibleRows) => (
-        <div className="overflow-hidden rounded-lg border border-green-200 dark:border-stone-800">
-          <table className="w-full text-sm">
-            <thead className="bg-green-100 text-left text-xs uppercase tracking-wide text-stone-500 dark:bg-stone-900">
+        <div className="tw">
+          <table className="tbl">
+            <thead>
               <tr>
-                <th className="px-4 py-2">Zone</th>
-                <th className="px-4 py-2">Rewards</th>
-                <th className="px-4 py-2">Tutorial</th>
-                <th className="px-4 py-2">Active</th>
+                <th>Zone</th>
+                <th>Rewards</th>
+                <th>Tutorial</th>
+                <th>Active</th>
               </tr>
             </thead>
             <tbody>
               {visibleRows.map((zone) => (
-                <tr
-                  key={zone.id}
-                  className="border-t border-green-200 hover:bg-green-50 dark:border-stone-800 dark:hover:bg-stone-900"
-                >
-                  <td className="px-4 py-2">
-                    <Link href={`/admin/zones/${zone.id}`} className="hover:underline">
+                <tr key={zone.id}>
+                  <td>
+                    <Link href={`/admin/zones/${zone.id}`} className="rl">
                       {zone.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-stone-600 dark:text-stone-400">
+                  <td className="muted">
                     {zone.reward_coins_base}–{zone.reward_coins_base + zone.reward_coins_variance} coins, {zone.reward_xp} XP
                   </td>
-                  <td className="px-4 py-2">{zone.is_tutorial ? "Yes" : "No"}</td>
-                  <td className="px-4 py-2">
+                  <td>{zone.is_tutorial ? "Yes" : "No"}</td>
+                  <td>
                     <ActiveBadge active={zone.is_active} />
                   </td>
                 </tr>
               ))}
               {visibleRows.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-stone-500">
-                    No zones match.
-                  </td>
+                <tr className="empty">
+                  <td colSpan={4}>No zones match.</td>
                 </tr>
               ) : null}
             </tbody>

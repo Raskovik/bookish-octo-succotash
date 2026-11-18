@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { ZoneForm } from "../zone-form";
@@ -63,63 +64,61 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
   const lootTotalWeight = loot.reduce((sum, l) => sum + l.drop_weight, 0);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold tracking-tight">Edit zone</h2>
-        {zone.is_tutorial ? (
-          <p className="text-sm text-green-600 dark:text-green-400">
-            This is the tutorial zone — its pool is fixed in code and isn&apos;t managed here.
-          </p>
-        ) : null}
-        <ZoneForm action={updateZone} zone={zone} isNew={false} cancelHref="/admin/zones" />
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/zones">Zones</Link>
+        <i>/</i>
+        <span>{zone.name}</span>
       </div>
+      <div className="ph">
+        <h1>Edit zone</h1>
+      </div>
+      {zone.is_tutorial ? (
+        <p className="note">This is the tutorial zone — its pool is fixed in code and isn&apos;t managed here.</p>
+      ) : null}
+      <ZoneForm action={updateZone} zone={zone} isNew={false} cancelHref="/admin/zones" />
 
       {!zone.is_tutorial ? (
         <>
-          <section className="flex flex-col gap-3">
-            <h3 className="text-base font-semibold tracking-tight">Pet pool</h3>
-            <div className="overflow-hidden rounded-lg border border-green-200 dark:border-stone-800">
-              <table className="w-full text-sm">
-                <thead className="bg-green-100 text-left text-xs uppercase tracking-wide text-stone-500 dark:bg-stone-900">
+          <section className="sub card">
+            <div className="sh">
+              <h2>
+                Pet pool
+                <span className="cnt">{pool.length}</span>
+              </h2>
+            </div>
+            <div className="tw">
+              <table className="tbl">
+                <thead>
                   <tr>
-                    <th className="px-4 py-2">Species</th>
-                    <th className="px-4 py-2">Drop weight</th>
-                    <th className="px-4 py-2">Chance</th>
-                    <th className="px-4 py-2" />
+                    <th>Species</th>
+                    <th>Drop weight</th>
+                    <th>Chance</th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
                   {pool.map((entry) => (
-                    <tr
-                      key={entry.species_id}
-                      className="border-t border-green-200 dark:border-stone-800"
-                    >
-                      <td className="px-4 py-2">
-                        <span className="flex items-center gap-2">
+                    <tr key={entry.species_id}>
+                      <td>
+                        <span className="rl">
                           {entry.species?.image_url ? (
-                            <Image
-                              src={entry.species.image_url}
-                              alt=""
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded"
-                            />
+                            <Image src={entry.species.image_url} alt="" width={24} height={24} className="th xs" />
                           ) : null}
                           {entry.species?.name ?? "(deleted species)"}
                         </span>
                       </td>
-                      <td className="px-4 py-2">{entry.drop_weight}</td>
-                      <td className="px-4 py-2 text-stone-500">
+                      <td>{entry.drop_weight}</td>
+                      <td className="muted">
                         {poolTotalWeight > 0 ? `${((entry.drop_weight / poolTotalWeight) * 100).toFixed(1)}%` : "—"}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="act">
                         <form action={removePoolEntry}>
                           <input type="hidden" name="zone_id" value={zone.id} />
                           <input type="hidden" name="species_id" value={entry.species_id} />
-                          <button
-                            type="submit"
-                            className="text-xs text-red-600 hover:underline dark:text-red-400"
-                          >
+                          <button type="submit" className="lnk red">
                             Remove
                           </button>
                         </form>
@@ -127,17 +126,15 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
                     </tr>
                   ))}
                   {pool.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-4 py-4 text-center text-stone-500">
-                        No pets in this zone&apos;s pool yet.
-                      </td>
+                    <tr className="empty">
+                      <td colSpan={4}>No pets in this zone&apos;s pool yet.</td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
             </div>
             {availableSpecies.length > 0 ? (
-              <form action={addPoolEntry} className="flex flex-wrap items-end gap-3">
+              <form action={addPoolEntry} className="addrow">
                 <input type="hidden" name="zone_id" value={zone.id} />
                 <SearchablePicker
                   name="species_id"
@@ -148,8 +145,8 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
                     imageUrl: s.image_url,
                   }))}
                 />
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="pool_drop_weight" className="text-xs text-stone-500">
+                <div>
+                  <label htmlFor="pool_drop_weight" className="lbl">
                     Drop weight
                   </label>
                   <input
@@ -160,71 +157,61 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
                     step={1}
                     defaultValue={1}
                     required
-                    className="w-24 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+                    className="in num nm"
                   />
                 </div>
-                <button
-                  type="submit"
-                  className="rounded-md border border-green-300 px-3 py-2 text-sm hover:bg-green-100 dark:border-stone-700 dark:hover:bg-stone-800"
-                >
+                <button type="submit" className="btn sm">
                   Add to pool
                 </button>
               </form>
             ) : null}
           </section>
 
-          <section className="flex flex-col gap-3">
-            <h3 className="text-base font-semibold tracking-tight">Item pool</h3>
-            <p className="text-xs text-stone-500">
-              The same item can appear more than once at a different amount — e.g. &quot;10 Blueberries&quot; and
-              &quot;5 Blueberries&quot; as two separately-weighted rows. Adding an item at an amount that&apos;s
-              already in the pool updates that row&apos;s weight instead of adding a duplicate.
-            </p>
-            <div className="overflow-hidden rounded-lg border border-green-200 dark:border-stone-800">
-              <table className="w-full text-sm">
-                <thead className="bg-green-100 text-left text-xs uppercase tracking-wide text-stone-500 dark:bg-stone-900">
+          <section className="sub card">
+            <div className="sh">
+              <h2>
+                Item pool
+                <span className="cnt">{loot.length}</span>
+              </h2>
+              <p className="hint">
+                The same item can appear more than once at a different amount — e.g. &quot;10 Blueberries&quot; and
+                &quot;5 Blueberries&quot; as two separately-weighted rows. Adding an item at an amount that&apos;s
+                already in the pool updates that row&apos;s weight instead of adding a duplicate.
+              </p>
+            </div>
+            <div className="tw">
+              <table className="tbl">
+                <thead>
                   <tr>
-                    <th className="px-4 py-2">Item</th>
-                    <th className="px-4 py-2">Amount</th>
-                    <th className="px-4 py-2">Drop weight</th>
-                    <th className="px-4 py-2">Chance</th>
-                    <th className="px-4 py-2" />
+                    <th>Item</th>
+                    <th>Amount</th>
+                    <th>Drop weight</th>
+                    <th>Chance</th>
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
                   {loot.map((entry) => (
-                    <tr
-                      key={`${entry.item_id}:${entry.amount}`}
-                      className="border-t border-green-200 dark:border-stone-800"
-                    >
-                      <td className="px-4 py-2">
-                        <span className="flex items-center gap-2">
+                    <tr key={`${entry.item_id}:${entry.amount}`}>
+                      <td>
+                        <span className="rl">
                           {entry.items?.image_url ? (
-                            <Image
-                              src={entry.items.image_url}
-                              alt=""
-                              width={24}
-                              height={24}
-                              className="h-6 w-6 rounded"
-                            />
+                            <Image src={entry.items.image_url} alt="" width={24} height={24} className="th xs" />
                           ) : null}
                           {entry.items?.name ?? "(deleted item)"}
                         </span>
                       </td>
-                      <td className="px-4 py-2">{entry.amount}</td>
-                      <td className="px-4 py-2">{entry.drop_weight}</td>
-                      <td className="px-4 py-2 text-stone-500">
+                      <td>{entry.amount}</td>
+                      <td>{entry.drop_weight}</td>
+                      <td className="muted">
                         {lootTotalWeight > 0 ? `${((entry.drop_weight / lootTotalWeight) * 100).toFixed(1)}%` : "—"}
                       </td>
-                      <td className="px-4 py-2 text-right">
+                      <td className="act">
                         <form action={removeLootEntry}>
                           <input type="hidden" name="zone_id" value={zone.id} />
                           <input type="hidden" name="item_id" value={entry.item_id} />
                           <input type="hidden" name="amount" value={entry.amount} />
-                          <button
-                            type="submit"
-                            className="text-xs text-red-600 hover:underline dark:text-red-400"
-                          >
+                          <button type="submit" className="lnk red">
                             Remove
                           </button>
                         </form>
@@ -232,17 +219,15 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
                     </tr>
                   ))}
                   {loot.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-4 text-center text-stone-500">
-                        No items in this zone&apos;s pool yet.
-                      </td>
+                    <tr className="empty">
+                      <td colSpan={5}>No items in this zone&apos;s pool yet.</td>
                     </tr>
                   ) : null}
                 </tbody>
               </table>
             </div>
             {availableItems.length > 0 ? (
-              <form action={addLootEntry} className="flex flex-wrap items-end gap-3">
+              <form action={addLootEntry} className="addrow">
                 <input type="hidden" name="zone_id" value={zone.id} />
                 <SearchablePicker
                   name="item_id"
@@ -253,23 +238,14 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
                     imageUrl: i.image_url,
                   }))}
                 />
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="loot_amount" className="text-xs text-stone-500">
+                <div>
+                  <label htmlFor="loot_amount" className="lbl">
                     Amount
                   </label>
-                  <input
-                    id="loot_amount"
-                    name="amount"
-                    type="number"
-                    min={1}
-                    step={1}
-                    defaultValue={1}
-                    required
-                    className="w-24 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-                  />
+                  <input id="loot_amount" name="amount" type="number" min={1} step={1} defaultValue={1} required className="in num nm" />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="loot_drop_weight" className="text-xs text-stone-500">
+                <div>
+                  <label htmlFor="loot_drop_weight" className="lbl">
                     Drop weight
                   </label>
                   <input
@@ -280,13 +256,10 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
                     step={1}
                     defaultValue={1}
                     required
-                    className="w-24 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+                    className="in num nm"
                   />
                 </div>
-                <button
-                  type="submit"
-                  className="rounded-md border border-green-300 px-3 py-2 text-sm hover:bg-green-100 dark:border-stone-700 dark:hover:bg-stone-800"
-                >
+                <button type="submit" className="btn sm">
                   Add to pool
                 </button>
               </form>
@@ -294,6 +267,6 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
           </section>
         </>
       ) : null}
-    </div>
+    </>
   );
 }

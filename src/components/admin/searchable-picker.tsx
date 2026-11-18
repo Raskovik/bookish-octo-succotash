@@ -55,23 +55,25 @@ export function SearchablePicker({
 
   if (selected) {
     return (
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs text-stone-500">Selected</span>
-        <div className="flex items-center gap-2 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900">
+      <div className="pick">
+        <span className="lbl">Selected</span>
+        <div className="in" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <input type="hidden" name={name} value={selected.id} />
           {selected.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- catalog thumbnails don't need next/image optimization here
-            <img src={selected.imageUrl} alt="" className="h-5 w-5 rounded" />
+            <div className="th xs">
+              {/* eslint-disable-next-line @next/next/no-img-element -- catalog thumbnails don't need next/image optimization here */}
+              <img src={selected.imageUrl} alt="" />
+            </div>
           ) : null}
-          <span className="flex-1 whitespace-nowrap">{selected.label}</span>
+          <span style={{ flex: 1, whiteSpace: "nowrap" }}>{selected.label}</span>
           <button
             type="button"
+            className="lnk"
             onClick={() => {
               setSelected(null);
               setQuery("");
               onSelect?.(null);
             }}
-            className="text-xs text-stone-500 hover:underline"
           >
             Change
           </button>
@@ -81,8 +83,8 @@ export function SearchablePicker({
   }
 
   return (
-    <div className="relative flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-xs text-stone-500">
+    <div className="pick">
+      <label htmlFor={inputId} className="lbl">
         Search
       </label>
       <input
@@ -97,12 +99,12 @@ export function SearchablePicker({
         onFocus={() => setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 150)}
         autoComplete="off"
-        className="w-56 rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+        className="in"
       />
       {isOpen ? (
-        <ul className="absolute top-full z-10 mt-1 max-h-56 w-56 overflow-y-auto rounded-md border border-green-200 bg-white shadow-lg dark:border-stone-800 dark:bg-stone-900">
+        <ul className="pk-list">
           {matches.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-stone-500">No matches</li>
+            <li className="none">No matches</li>
           ) : (
             matches.map((option) => (
               <li key={option.id}>
@@ -115,11 +117,12 @@ export function SearchablePicker({
                     setIsOpen(false);
                     onSelect?.(option);
                   }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-green-100 dark:hover:bg-stone-800"
                 >
                   {option.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- catalog thumbnails don't need next/image optimization here
-                    <img src={option.imageUrl} alt="" className="h-5 w-5 rounded" />
+                    <div className="th xs">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- catalog thumbnails don't need next/image optimization here */}
+                      <img src={option.imageUrl} alt="" />
+                    </div>
                   ) : null}
                   {option.label}
                 </button>
