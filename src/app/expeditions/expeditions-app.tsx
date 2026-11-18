@@ -100,18 +100,28 @@ function minutesLabel(totalMinutes: number): string {
   return `${h} hr ${m} min`;
 }
 
-// Mirrors start_expedition's duration roll (0069/0071, duration =
-// 60 + 120 * random()^k, k = 1 + 2*stat_saturation(speed)) so the
-// pre-send estimate on the right-hand pet panel is an actual range
-// for THIS pet's stats, not a leftover static guess from the old
-// 2-3 minute tutorial-era trips. Shows the 10th-90th percentile band,
-// rounded to the nearest 5 minutes, as "about X to Y".
-function estimatedTripRange(level: number, rollSpeed: number): [number, number] {
+export type TripDurationConfig = {
+  minMinutes: number;
+  maxMinutes: number;
+  speedSkew: number;
+  saturationK: number;
+  firstTripMinutes: number;
+};
+
+// Mirrors start_expedition's duration roll (duration = min + (max-min) *
+// random()^k, k = 1 + speedSkew*stat_saturation(speed)) using the SAME
+// live config values start_expedition itself reads (game_config, see
+// 0080_guaranteed_pet_and_tunable_odds.sql — passed in as `config` from
+// the server page) rather than a hardcoded copy, so this stays accurate
+// after an admin tunes /admin/game-config. Shows the 10th-90th
+// percentile band, rounded to the nearest 5 minutes, as "about X to Y".
+function estimatedTripRange(level: number, rollSpeed: number, config: TripDurationConfig): [number, number] {
   const speed = level * 2 * (rollSpeed / 10);
-  const gp = speed / (speed + 30);
-  const k = 1 + 2 * gp;
-  const low = 60 + 120 * Math.pow(0.1, k);
-  const high = 60 + 120 * Math.pow(0.9, k);
+  const gp = speed / (speed + config.saturationK);
+  const k = 1 + config.speedSkew * gp;
+  const range = config.maxMinutes - config.minMinutes;
+  const low = config.minMinutes + range * Math.pow(0.1, k);
+  const high = config.minMinutes + range * Math.pow(0.9, k);
   const round5 = (n: number) => Math.max(5, Math.round(n / 5) * 5);
   return [round5(low), round5(high)];
 }
@@ -206,6 +216,7 @@ export function ExpeditionsApp({
   activeExpeditions,
   ownedPotions,
   isFirstTrip,
+  tripDurationConfig,
 }: {
   userId: string;
   zones: ExplorableZone[];
@@ -214,10 +225,11 @@ export function ExpeditionsApp({
   activeExpeditions: ActiveExpeditionSummary[];
   ownedPotions: OwnedPotion[];
   // Whether the player's NEXT trip is their first-ever — start_expedition
-  // (0071) always caps that one at exactly 10 minutes regardless of
-  // Speed, so the duration estimate below shows that fixed number
-  // instead of the normal Speed-driven range.
+  // always caps that one at tripDurationConfig.firstTripMinutes
+  // regardless of Speed, so the duration estimate below shows that fixed
+  // number instead of the normal Speed-driven range.
   isFirstTrip: boolean;
+  tripDurationConfig: TripDurationConfig;
 }) {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -758,9 +770,13 @@ export function ExpeditionsApp({
                             Back in
                             <b>
                               {isFirstTrip
-                                ? "about 10 min"
+                                ? `about ${minutesLabel(tripDurationConfig.firstTripMinutes)}`
                                 : (() => {
-                                    const [low, high] = estimatedTripRange(selectedPet.level, selectedPet.roll_speed);
+                                    const [low, high] = estimatedTripRange(
+                                      selectedPet.level,
+                                      selectedPet.roll_speed,
+                                      tripDurationConfig,
+                                    );
                                     return low === high
                                       ? `about ${minutesLabel(low)}`
                                       : `about ${minutesLabel(low)} to ${minutesLabel(high)}`;

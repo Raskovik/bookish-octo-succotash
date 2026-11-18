@@ -58,6 +58,7 @@ export default async function ExpeditionsPage() {
     { data: activeData },
     { data: potionsData },
     { count: expeditionCount },
+    { data: configData },
   ] = await Promise.all([
     supabase
       .from("zones")
@@ -95,6 +96,22 @@ export default async function ExpeditionsPage() {
     // caps at 10 minutes, so the duration estimate below can reflect
     // that instead of the normal Speed-driven 60-180 minute range.
     supabase.from("expeditions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    // Live copy of the formula constants start_expedition actually uses
+    // (0080_guaranteed_pet_and_tunable_odds.sql), so the pre-send
+    // duration estimate below (estimatedTripRange, expeditions-app.tsx)
+    // stays accurate after an admin tunes /admin/game-config — it used
+    // to hardcode its own copy of these, which drifted out of sync the
+    // moment any of them changed.
+    supabase
+      .from("game_config")
+      .select("key, value")
+      .in("key", [
+        "trip_duration_min_minutes",
+        "trip_duration_max_minutes",
+        "trip_duration_speed_skew",
+        "stat_saturation_k",
+        "first_trip_duration_minutes",
+      ]),
   ]);
 
   // Pets and items are drawn from the same weighted roll server-side (see
@@ -143,6 +160,17 @@ export default async function ExpeditionsPage() {
       quantity: row.quantity,
     }));
 
+  // Fallbacks match game_config's own seeded defaults (0080) — only hit
+  // if a row is somehow missing, never the normal case.
+  const configByKey = new Map((configData ?? []).map((c) => [c.key, c.value]));
+  const tripDurationConfig = {
+    minMinutes: configByKey.get("trip_duration_min_minutes") ?? 60,
+    maxMinutes: configByKey.get("trip_duration_max_minutes") ?? 180,
+    speedSkew: configByKey.get("trip_duration_speed_skew") ?? 2,
+    saturationK: configByKey.get("stat_saturation_k") ?? 30,
+    firstTripMinutes: configByKey.get("first_trip_duration_minutes") ?? 10,
+  };
+
   return (
     <main id="main">
       <div className="sheet">
@@ -155,6 +183,7 @@ export default async function ExpeditionsPage() {
             activeExpeditions={activeExpeditions}
             ownedPotions={ownedPotions}
             isFirstTrip={(expeditionCount ?? 0) === 0}
+            tripDurationConfig={tripDurationConfig}
           />
         </div>
       </div>
