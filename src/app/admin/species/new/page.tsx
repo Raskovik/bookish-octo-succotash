@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { SpeciesForm } from "../species-form";
 import { createSpecies } from "../actions";
@@ -8,9 +9,18 @@ export default async function NewSpeciesPage() {
   const { data: breeds } = await supabase.from("breeds").select("id, name").order("name");
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">New model</h2>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/species">Models</Link>
+        <i>/</i>
+        <span>New</span>
+      </div>
+      <div className="ph">
+        <h1>New model</h1>
+      </div>
       <SpeciesForm action={createSpecies} breeds={breeds ?? []} isNew cancelHref="/admin/species" />
-    </div>
+    </>
   );
 }

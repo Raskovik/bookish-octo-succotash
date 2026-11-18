@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { ItemForm } from "../item-form";
 import { createItem } from "../actions";
@@ -6,9 +7,18 @@ export default async function NewItemPage() {
   await requireAdmin();
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">New item</h2>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/items">Items</Link>
+        <i>/</i>
+        <span>New</span>
+      </div>
+      <div className="ph">
+        <h1>New item</h1>
+      </div>
       <ItemForm action={createItem} isNew cancelHref="/admin/items" />
-    </div>
+    </>
   );
 }

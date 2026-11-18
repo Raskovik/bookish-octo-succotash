@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { SpeciesForm } from "../species-form";
@@ -27,37 +28,42 @@ export default async function EditSpeciesPage(props: PageProps<"/admin/species/[
   const obtainable = sources.some((s) => s.live);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold tracking-tight">Edit model</h2>
-        <SpeciesForm action={updateSpecies} species={species} breeds={breeds ?? []} isNew={false} cancelHref="/admin/species" />
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/species">Models</Link>
+        <i>/</i>
+        <span>{species.name}</span>
       </div>
+      <div className="ph">
+        <h1>Edit model</h1>
+      </div>
+      <SpeciesForm action={updateSpecies} species={species} breeds={breeds ?? []} isNew={false} cancelHref="/admin/species" />
 
-      <section className="flex flex-col gap-2">
-        <h3 className="text-base font-semibold tracking-tight">
-          Where it can be obtained — {obtainable ? "Obtainable" : "Not obtainable"}
-        </h3>
+      <section className="sub card pad">
+        <h2>Where it can be obtained — {obtainable ? "Obtainable" : "Not obtainable"}</h2>
         {sources.length === 0 ? (
-          <p className="text-sm text-stone-500">Not in any zone&apos;s pool or shop listing.</p>
+          <p className="muted">Not in any zone&apos;s pool or shop listing.</p>
         ) : (
-          <ul className="flex flex-col gap-1 text-sm">
+          <ul className="act-list">
             {sources.map((s, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <span className={s.live ? "text-green-700 dark:text-green-400" : "text-stone-500"}>
+              <li key={i}>
+                <span className={s.live ? "" : "muted"} style={s.live ? { color: "var(--greend)" } : undefined}>
                   {s.live ? "●" : "○"}
-                </span>
+                </span>{" "}
                 <span>{s.label}</span>
-                {s.reason ? <span className="text-xs text-stone-500">({s.reason})</span> : null}
+                {s.reason ? <small>({s.reason})</small> : null}
               </li>
             ))}
           </ul>
         )}
         {species.is_starter_option ? (
-          <p className="text-sm text-stone-500">
+          <p className="muted">
             Also offered as a starter pet on /welcome{species.starter_label ? ` ("${species.starter_label}")` : ""}.
           </p>
         ) : null}
       </section>
-    </div>
+    </>
   );
 }
