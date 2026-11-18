@@ -181,9 +181,9 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
                 </ul>
               ) : null}
             </div>
-            <a className="vs" href="/">
+            <Link className="vs" href="/">
               View site ↗
-            </a>
+            </Link>
           </header>
           <AdminToastProvider>
             <main id="main" tabIndex={-1}>
