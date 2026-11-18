@@ -1,7 +1,12 @@
-import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
-import { BREWING_ENABLED } from "@/lib/feature-flags";
+import { AdminSidebar } from "./admin-sidebar";
+import { AdminToastProvider } from "@/components/admin/toast";
 
+// Grouped left sidebar (furgarden-admin-panel redesign package) —
+// replaces the old single row of top-nav text links. Deliberately
+// outside the jungle theme's .sheet/.panel card shell (admin doesn't
+// need the player-facing decoration) — a plain, scannable Tailwind
+// layout, same as every admin page's own content already was.
 export default async function AdminLayout({
   children,
 }: {
@@ -10,64 +15,11 @@ export default async function AdminLayout({
   await requireAdmin();
 
   return (
-    <main id="main">
-      <div className="sheet">
-        <div className="panel flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Admin panel</h1>
-        <nav className="mt-3 flex flex-wrap gap-4 text-sm">
-          <Link href="/admin" className="hover:underline">
-            Dashboard
-          </Link>
-          <Link href="/admin/zones" className="hover:underline">
-            Zones
-          </Link>
-          <Link href="/admin/items" className="hover:underline">
-            Items
-          </Link>
-          <Link href="/admin/breeds" className="hover:underline">
-            Breeds
-          </Link>
-          <Link href="/admin/species" className="hover:underline">
-            Models
-          </Link>
-          <Link href="/admin/shop-listings" className="hover:underline">
-            Shop listings
-          </Link>
-          {BREWING_ENABLED ? (
-            <Link href="/admin/recipes" className="hover:underline">
-              Potion recipes
-            </Link>
-          ) : null}
-          <Link href="/admin/news" className="hover:underline">
-            Site news
-          </Link>
-          <Link href="/admin/forums" className="hover:underline">
-            Forums
-          </Link>
-          <Link href="/admin/canned-messages" className="hover:underline">
-            Canned messages
-          </Link>
-          <Link href="/admin/currency" className="hover:underline">
-            Currency
-          </Link>
-          <Link href="/admin/audit-log" className="hover:underline">
-            Audit log
-          </Link>
-          <Link href="/admin/accounts" className="hover:underline">
-            Accounts
-          </Link>
-          <Link href="/admin/content-filter" className="hover:underline">
-            Content filter
-          </Link>
-          <Link href="/admin/game-config" className="hover:underline">
-            Adventuring odds
-          </Link>
-        </nav>
-      </div>
-      {children}
-        </div>
-      </div>
+    <main id="main" className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+      <h1 className="mb-4 text-2xl font-semibold tracking-tight">Admin panel</h1>
+      <AdminToastProvider>
+        <AdminSidebar>{children}</AdminSidebar>
+      </AdminToastProvider>
     </main>
   );
 }
