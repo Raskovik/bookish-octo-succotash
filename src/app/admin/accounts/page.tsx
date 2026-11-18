@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { DeleteAccountButton } from "./delete-account-button";
 
@@ -24,61 +25,54 @@ export default async function AdminAccountsPage(props: PageProps<"/admin/account
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Accounts</h2>
-      <p className="text-sm text-stone-500">Most recently created accounts, or search by username/email.</p>
-
-      <form className="flex gap-2">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search by username…"
-          autoComplete="off"
-          className="w-full max-w-sm rounded-md border border-green-300 px-3 py-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
-        />
-        <button
-          type="submit"
-          className="rounded-md bg-green-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-        >
-          Search
-        </button>
-      </form>
-
-      <div className="overflow-hidden rounded-lg border border-green-200 dark:border-stone-800">
-        <table className="w-full text-sm">
-          <thead className="bg-green-100 text-left text-xs uppercase tracking-wide text-stone-500 dark:bg-stone-900">
-            <tr>
-              <th className="px-4 py-2">Username</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Admin</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody>
-            {(users ?? []).map((u) => (
-              <tr
-                key={u.id}
-                className="border-t border-green-200 hover:bg-green-50 dark:border-stone-800 dark:hover:bg-stone-900"
-              >
-                <td className="px-4 py-2">{u.display_name ?? <i className="text-stone-500">unset — mid-onboarding</i>}</td>
-                <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2">{u.is_admin ? "Yes" : "No"}</td>
-                <td className="px-4 py-2 text-right">
-                  <DeleteAccountButton targetUserId={u.id} targetName={u.display_name ?? "Unknown player"} />
-                </td>
-              </tr>
-            ))}
-            {(users ?? []).length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-stone-500">
-                  {q.length > 0 ? <>No accounts match &ldquo;{q}&rdquo;.</> : "No accounts yet."}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <span>Accounts</span>
       </div>
-    </div>
+      <div className="ph">
+        <h1>Accounts</h1>
+      </div>
+      <p className="desc" style={{ marginBottom: 14 }}>Most recently created accounts, or search by username/email.</p>
+
+      <div className="card">
+        <form className="tb">
+          <input type="text" name="q" defaultValue={q} placeholder="Search by username…" autoComplete="off" className="in" />
+          <button type="submit" className="btn pri">
+            Search
+          </button>
+        </form>
+        <div className="tw">
+          <table className="tbl">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Admin</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {(users ?? []).map((u) => (
+                <tr key={u.id}>
+                  <td>{u.display_name ?? <i className="muted">unset — mid-onboarding</i>}</td>
+                  <td>{u.email}</td>
+                  <td>{u.is_admin ? "Yes" : "No"}</td>
+                  <td className="act">
+                    <DeleteAccountButton targetUserId={u.id} targetName={u.display_name ?? "Unknown player"} />
+                  </td>
+                </tr>
+              ))}
+              {(users ?? []).length === 0 ? (
+                <tr className="empty">
+                  <td colSpan={4}>{q.length > 0 ? <>No accounts match &ldquo;{q}&rdquo;.</> : "No accounts yet."}</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 
 type AuditLogEntryRow = {
@@ -29,42 +30,38 @@ export default async function AdminAuditLogPage() {
   const entries = (data ?? []) as unknown as AuditLogEntryRow[];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Audit log</h2>
-        <p className="text-sm text-stone-500">
-          Every admin-panel write to zones, items, species, and potion recipes, most recent
-          first. Read-only — the {PAGE_SIZE} most recent entries.
-        </p>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <span>Audit log</span>
       </div>
+      <div className="ph">
+        <h1>Audit log</h1>
+      </div>
+      <p className="desc" style={{ marginBottom: 14 }}>
+        Every admin-panel write to zones, items, species, and potion recipes, most recent first. Read-only — the{" "}
+        {PAGE_SIZE} most recent entries.
+      </p>
 
-      <div className="flex flex-col gap-3">
+      <div className="card">
         {entries.map((entry) => (
-          <details
-            key={entry.id}
-            className="rounded-lg border border-green-200 p-3 text-sm dark:border-stone-800"
-          >
-            <summary className="flex cursor-pointer flex-wrap items-center gap-2">
-              <span className="font-medium uppercase text-xs tracking-wide text-stone-500">
+          <details key={entry.id} className="ad">
+            <summary>
+              <span className="muted" style={{ fontSize: 12, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".6px" }}>
                 {entry.action_type}
               </span>
-              <span className="font-medium">{entry.target_table}</span>
-              <span className="text-stone-500">
-                by {entry.users?.display_name ?? entry.admin_user_id ?? "unknown"}
-              </span>
-              <span className="ml-auto text-xs text-stone-500">
-                {new Date(entry.created_at).toLocaleString()}
-              </span>
+              <span style={{ fontWeight: 800 }}>{entry.target_table}</span>
+              <span className="muted">by {entry.users?.display_name ?? entry.admin_user_id ?? "unknown"}</span>
+              <span className="when">{new Date(entry.created_at).toLocaleString()}</span>
             </summary>
-            <pre className="mt-2 overflow-x-auto rounded-md bg-green-100 p-3 text-xs dark:bg-stone-900">
-              {JSON.stringify(entry.change_summary, null, 2)}
-            </pre>
+            <div className="body">
+              <pre>{JSON.stringify(entry.change_summary, null, 2)}</pre>
+            </div>
           </details>
         ))}
-        {entries.length === 0 ? (
-          <p className="py-6 text-center text-sm text-stone-500">No admin actions logged yet.</p>
-        ) : null}
+        {entries.length === 0 ? <p className="muted" style={{ padding: "24px 16px", textAlign: "center" }}>No admin actions logged yet.</p> : null}
       </div>
-    </div>
+    </>
   );
 }

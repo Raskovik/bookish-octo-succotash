@@ -59,27 +59,19 @@ export function ResultsChart({ days }: { days: DailyResults[] }) {
   const ticks = [0, max / 2, max];
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-green-200 p-4 dark:border-stone-800">
+    <div className="card pad">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-medium text-stone-500">Last {days.length} days</h3>
-          <p className="text-2xl font-semibold tracking-tight" id={titleId}>
-            {formatCompact(total)} <span className="text-base font-normal text-stone-500">{activeMetric.axisLabel}</span>
+          <h3 className="hint" style={{ margin: 0 }}>
+            Last {days.length} days
+          </h3>
+          <p style={{ margin: 0, font: "800 24px var(--font)" }} id={titleId}>
+            {formatCompact(total)} <span className="muted" style={{ fontWeight: 400, fontSize: 16 }}>{activeMetric.axisLabel}</span>
           </p>
         </div>
-        <div className="flex flex-wrap gap-1" role="group" aria-label="Metric">
+        <div className="seg" role="group" aria-label="Metric">
           {METRICS.map((m) => (
-            <button
-              key={m.key}
-              type="button"
-              onClick={() => setMetric(m.key)}
-              aria-pressed={metric === m.key}
-              className={`rounded-md border px-2.5 py-1 text-xs font-medium ${
-                metric === m.key
-                  ? "border-blue-600 bg-blue-600 text-white dark:border-blue-400 dark:bg-blue-500"
-                  : "border-green-300 text-stone-600 hover:bg-green-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
-              }`}
-            >
+            <button key={m.key} type="button" onClick={() => setMetric(m.key)} aria-pressed={metric === m.key}>
               {m.label}
             </button>
           ))}

@@ -23,15 +23,11 @@ export function DeleteAccountButton({ targetUserId, targetName }: { targetUserId
       }}
     >
       <input type="hidden" name="target_user_id" value={targetUserId} />
-      <button
-        type="submit"
-        className="rounded-md bg-red-700 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
-        disabled={isPending}
-      >
+      <button type="submit" className="btn sm danger solid" disabled={isPending}>
         {isPending ? "Deleting…" : "Delete"}
       </button>
       {state && "error" in state ? (
-        <p className="mt-1 text-xs text-red-700 dark:text-red-400" role="alert">
+        <p className="err" role="alert">
           {state.error}
         </p>
       ) : null}

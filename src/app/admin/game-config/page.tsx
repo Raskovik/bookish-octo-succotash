@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
 import { updateGameConfig } from "./actions";
 import type { GameConfigRow } from "@/lib/supabase/types";
@@ -40,48 +41,42 @@ export default async function AdminGameConfigPage() {
 
   function ConfigRow({ row }: { row: GameConfigRow }) {
     return (
-      <div className="flex flex-col gap-1 rounded-lg border border-green-200 p-3 dark:border-stone-800">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">{row.label}</p>
-            <p className="text-xs text-stone-500">{row.description}</p>
-          </div>
-          <form action={updateGameConfig} className="flex shrink-0 items-center gap-2">
-            <input type="hidden" name="key" value={row.key} />
-            <input
-              name="value"
-              type="number"
-              step="any"
-              defaultValue={row.value}
-              className="w-28 rounded-md border border-green-300 px-2 py-1 text-right text-sm dark:border-stone-700 dark:bg-stone-900"
-            />
-            <button
-              type="submit"
-              className="rounded-md bg-green-800 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-700 dark:bg-green-200 dark:text-green-950 dark:hover:bg-green-300"
-            >
-              Save
-            </button>
-          </form>
+      <div className="cc">
+        <div>
+          <b>{row.label}</b>
+          <small>{row.description}</small>
         </div>
+        <form action={updateGameConfig} className="ctl">
+          <input type="hidden" name="key" value={row.key} />
+          <input name="value" type="number" step="any" defaultValue={row.value} className="in sm" style={{ textAlign: "right" }} />
+          <button type="submit" className="btn sm">
+            Save
+          </button>
+        </form>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h2 className="text-lg font-semibold tracking-tight">Adventuring odds</h2>
-        <p className="text-sm text-stone-500">
-          Every number that drives trip duration, loot, double hauls, and coin/XP rewards — changes take effect
-          immediately, no deploy needed. A friend pet is now always offered on a completed trip (no longer a
-          chance), so there&apos;s no knob for that here.
-        </p>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <span>Adventuring odds</span>
       </div>
+      <div className="ph">
+        <h1>Adventuring odds</h1>
+      </div>
+      <p className="desc" style={{ marginBottom: 14 }}>
+        Every number that drives trip duration, loot, double hauls, and coin/XP rewards — changes take effect
+        immediately, no deploy needed. A friend pet is now always offered on a completed trip (no longer a chance),
+        so there&apos;s no knob for that here.
+      </p>
 
       {SECTIONS.map((section) => (
-        <section key={section.title} className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-stone-500">{section.title}</h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <section key={section.title}>
+          <h3 className="fh">{section.title}</h3>
+          <div className="cfg">
             {section.keys.map((key) => {
               const row = byKey.get(key);
               return row ? <ConfigRow key={key} row={row} /> : null;
@@ -91,15 +86,15 @@ export default async function AdminGameConfigPage() {
       ))}
 
       {otherRows.length > 0 ? (
-        <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Other</h3>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <section>
+          <h3 className="fh">Other</h3>
+          <div className="cfg">
             {otherRows.map((row) => (
               <ConfigRow key={row.key} row={row} />
             ))}
           </div>
         </section>
       ) : null}
-    </div>
+    </>
   );
 }

@@ -89,24 +89,24 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <>
+      <div className="crumbs">
+        <span>Admin</span>
+      </div>
+      <div className="ph">
+        <h1>Dashboard</h1>
+      </div>
+
+      <div className="tiles">
         {cards.map((card) => (
-          <Link
-            key={card.href}
-            href={card.href}
-            className="flex flex-col gap-1 rounded-lg border border-green-200 p-4 hover:bg-green-100 dark:border-stone-800 dark:hover:bg-stone-900"
-          >
-            <span className="text-2xl font-semibold tracking-tight">{card.count}</span>
-            <span className="text-sm text-stone-500">{card.label}</span>
+          <Link key={card.href} href={card.href} className="tile">
+            <b>{card.count}</b>
+            <span>{card.label}</span>
           </Link>
         ))}
       </div>
 
-      <div>
-        <h2 className="mb-3 text-lg font-semibold tracking-tight">Adventuring results</h2>
-        <ResultsChart days={dailyResults} />
-      </div>
-    </div>
+      <ResultsChart days={dailyResults} />
+    </>
   );
 }
