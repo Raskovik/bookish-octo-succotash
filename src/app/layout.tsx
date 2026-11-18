@@ -64,6 +64,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             same build SHA as the footer's version line
             (NEXT_PUBLIC_BUILD_SHA, see next.config.ts). */}
         <link rel="stylesheet" href={`/css/furgarden.css?v=${buildSha}`} />
+        {/* Admin panel's own design system — every selector is scoped
+            under .admin-shell (see public/css/admin.css), so loading it
+            site-wide is harmless. Linked from <head> for the same reason
+            as furgarden.css above: a plain <link> rendered from inside
+            the body (as this used to be, in admin-sidebar.tsx) isn't a
+            reliable way to load a stylesheet with React 19/Next's own
+            resource handling, and caused real cascade/layout breakage. */}
+        <link rel="stylesheet" href={`/css/admin.css?v=${buildSha}`} />
         <script src={`/js/furgarden.js?v=${buildSha}`} defer />
       </head>
       {/* suppressHydrationWarning here only covers this element's own

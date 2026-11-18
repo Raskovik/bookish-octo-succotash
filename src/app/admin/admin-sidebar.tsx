@@ -80,7 +80,6 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
 
   return (
     <div className={`admin-shell${navOpen ? " nav-open" : ""}`}>
-      <link rel="stylesheet" href="/css/admin.css" />
       <a className="skip" href="#main">
         Skip to content
       </a>
