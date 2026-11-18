@@ -419,7 +419,16 @@ export function PetsApp({
   }
   async function persistGroupName(id: string, name: string) {
     const trimmed = name.trim() || "Group";
-    await supabase.from("pet_folders").update({ name: trimmed }).eq("id", id).eq("owner_id", userId);
+    const { error } = await supabase.from("pet_folders").update({ name: trimmed }).eq("id", id).eq("owner_id", userId);
+    if (error) {
+      // renameGroupLocal already applied the (rejected) name optimistically
+      // on every keystroke — re-pull the real saved value so the UI
+      // doesn't keep showing something that was never actually written
+      // (e.g. the content filter, 0077_content_filter.sql, rejecting it).
+      toast(error.message);
+      const { data } = await supabase.from("pet_folders").select("name").eq("id", id).single();
+      if (data) setGroups((curr) => curr.map((g) => (g.id === id ? { ...g, name: data.name } : g)));
+    }
   }
 
   async function setGroupColor(id: string, color: PetFolderColor) {
@@ -458,7 +467,14 @@ export function PetsApp({
     setEditingBio(false);
     setBioDraft(null);
     setBioPreview(false);
-    await supabase.from("pet_folders").update({ bio }).eq("id", id).eq("owner_id", userId);
+    const { error } = await supabase.from("pet_folders").update({ bio }).eq("id", id).eq("owner_id", userId);
+    if (error) {
+      // Same re-pull-the-real-value reasoning as persistGroupName above.
+      toast(error.message);
+      const { data } = await supabase.from("pet_folders").select("bio").eq("id", id).single();
+      if (data) setGroups((curr) => curr.map((g) => (g.id === id ? { ...g, bio: data.bio } : g)));
+      return;
+    }
     toast("Bio saved");
   }
 

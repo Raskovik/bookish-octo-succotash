@@ -87,7 +87,12 @@ export async function createForumThread(
     body_html: body.html,
   });
   if (postError) {
-    return { error: `Thread created, but the first post failed to save: ${postError.message}` };
+    // A thread with no posts at all would be a dead, empty listing —
+    // roll it back rather than leave an orphan behind. Most likely
+    // cause now is the content filter (0077_content_filter.sql)
+    // rejecting the post body even though the title passed.
+    await supabase.from("forum_threads").delete().eq("id", thread.id);
+    return { error: postError.message };
   }
 
   revalidatePath(`/forums/${categoryId}`);

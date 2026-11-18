@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyWriteError } from "@/lib/content-filter-error";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -97,7 +98,12 @@ export async function sendMessageToUser(
     .insert({ conversation_id: conversationId, sender_id: user.id, body });
 
   if (error) {
-    return { error: "Could not send that message — the other player may be unable to receive DMs right now." };
+    return {
+      error: friendlyWriteError(
+        error.message,
+        "Could not send that message — the other player may be unable to receive DMs right now.",
+      ),
+    };
   }
 
   revalidatePath("/messages");

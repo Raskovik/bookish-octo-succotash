@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyWriteError } from "@/lib/content-filter-error";
 
 export type SendMessageState = { error: string } | null;
 
@@ -46,7 +47,10 @@ export async function sendMessage(
 
   if (error) {
     return {
-      error: "Could not send that message — the other player may be unable to receive DMs right now.",
+      error: friendlyWriteError(
+        error.message,
+        "Could not send that message — the other player may be unable to receive DMs right now.",
+      ),
     };
   }
 

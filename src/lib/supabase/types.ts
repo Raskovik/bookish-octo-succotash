@@ -96,6 +96,21 @@ export type SpeciesRow = {
   created_at: string;
 };
 
+// See 0077_content_filter.sql — assert_clean_text()/enforce_text_filter()
+// check every free-text field in the app against these two admin-managed
+// lists via a database trigger, not application code.
+export type BannedPhraseRow = {
+  id: string;
+  phrase: string;
+  created_at: string;
+};
+
+export type BannedDomainRow = {
+  id: string;
+  domain: string;
+  created_at: string;
+};
+
 export type BreedRow = {
   id: string;
   name: string;
@@ -1150,6 +1165,8 @@ export type Database = {
         Partial<Omit<UserRow, "id">>
       >;
       breeds: TableOf<BreedRow, Partial<BreedRow> & { name: string }>;
+      banned_phrases: TableOf<BannedPhraseRow, Partial<BannedPhraseRow> & { phrase: string }>;
+      banned_domains: TableOf<BannedDomainRow, Partial<BannedDomainRow> & { domain: string }>;
       species: TableOf<SpeciesRow, Partial<SpeciesRow> & { breed_id: string }>;
       pets: TableOf<PetRow, Partial<PetRow> & { owner_id: string }>;
       pet_folders: TableOf<

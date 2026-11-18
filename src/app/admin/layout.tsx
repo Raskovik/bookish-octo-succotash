@@ -57,6 +57,9 @@ export default async function AdminLayout({
           <Link href="/admin/accounts" className="hover:underline">
             Accounts
           </Link>
+          <Link href="/admin/content-filter" className="hover:underline">
+            Content filter
+          </Link>
         </nav>
       </div>
       {children}

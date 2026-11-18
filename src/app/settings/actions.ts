@@ -84,7 +84,11 @@ export async function updateProfileSettings(
     .single();
 
   if (error) {
-    return { error: "Could not save your changes. Please try again." };
+    // Surfaces the real message for a rejected bio (the content filter,
+    // 0077_content_filter.sql) instead of flattening it to a generic
+    // "try again" — same as every other RPC-backed form in this app
+    // already does with error.message.
+    return { error: error.message };
   }
 
   revalidatePath("/settings");
