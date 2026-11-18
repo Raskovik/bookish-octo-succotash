@@ -86,7 +86,6 @@ export type SpeciesRow = {
   breed_id: string;
   model_number: number | null;
   image_url: string | null;
-  is_active: boolean;
   // Starter-pet picker flags — see 0070_account_setup_onboarding.sql.
   // starter_label/starter_blurb are only meaningful when
   // is_starter_option is true.
@@ -179,12 +178,20 @@ export type PetFolderRow = {
 export type ZoneRow = {
   id: string;
   name: string;
-  tier: number;
   description: string | null;
   image_url: string | null;
-  unlock_requirement: string | null;
   is_tutorial: boolean;
   is_active: boolean;
+  // Flat per-zone reward override, replacing the old shared tier-
+  // multiplier formula — see 0082_admin_redesign_schema.sql. Guaranteed
+  // coins per trip = reward_coins_base + random(0..reward_coins_variance).
+  reward_coins_base: number;
+  reward_coins_variance: number;
+  reward_xp: number;
+  // Pixel hotspot on the expedition map image — not editable from the
+  // admin zone form anymore (0082); set directly by hand per zone when
+  // the real map art position is known. Still load-bearing for the
+  // player-facing map's hover hit-testing (expeditions-app.tsx).
   map_x: number | null;
   map_y: number | null;
   map_width: number | null;
@@ -207,14 +214,10 @@ export type ItemRow = {
   // Shown on /items' detail panel — see 0054_food_points.sql.
   description: string | null;
   sell_value: number;
-  // Coin price in the NPC shop (/shop) — see 0036_shop.sql. Null means
-  // not for sale there; distinct from sell_value.
-  shop_price: number | null;
   // Food points gained per unit converted via convert_items_to_food()
   // (/items' "Food points" action) — see 0054_food_points.sql. Null/0
   // means this item can't be converted.
   food_value: number | null;
-  is_active: boolean;
   created_at: string;
 };
 
@@ -228,12 +231,17 @@ export type ShopListingRow = {
   listing_type: ShopListingType;
   item_id: string | null;
   species_id: string | null;
+  // Override shown instead of the item's own description (species have
+  // none) — null falls back to the item's description at read time. See
+  // 0082_admin_redesign_schema.sql.
   description: string | null;
   price_coins: number | null;
   price_gems: number | null;
-  is_new: boolean;
+  // Status (Scheduled/In the shop/Ended) and tags (New/Limited) are all
+  // computed from these two dates at read time, not stored — see
+  // shopListingStatus() in lib/shop-status.ts.
+  starts_at: string;
   ends_at: string | null;
-  is_active: boolean;
   sort_order: number;
   created_at: string;
 };
@@ -248,6 +256,11 @@ export type UserInventoryRow = {
 export type ZoneLootTableRow = {
   zone_id: string;
   item_id: string;
+  // How many of the item one "stack" (one pick from this pool) grants —
+  // the same item can appear as several rows at different amounts (see
+  // 0082_admin_redesign_schema.sql). Part of the primary key now, along
+  // with zone_id/item_id.
+  amount: number;
   drop_weight: number;
 };
 
@@ -593,10 +606,14 @@ export type BuyShopListingResult = {
 // A shop_listings row resolved to its actual item/species for display —
 // one of itemName/speciesName is set depending on listing_type, never
 // both (same shape the table's own CHECK constraint enforces).
+// is_new/is_limited are computed (see lib/shop-status.ts) from
+// starts_at/ends_at at read time, not read directly off ShopListingRow.
 export type ShopListingWithTarget = Pick<
   ShopListingRow,
-  "id" | "section" | "listing_type" | "price_coins" | "price_gems" | "is_new" | "ends_at"
+  "id" | "section" | "listing_type" | "price_coins" | "price_gems" | "ends_at"
 > & {
+  is_new: boolean;
+  is_limited: boolean;
   name: string;
   description: string | null;
   imageUrl: string | null;
@@ -778,7 +795,6 @@ export type ExplorableZone = Pick<
   ZoneRow,
   | "id"
   | "name"
-  | "tier"
   | "description"
   | "image_url"
   | "map_x"

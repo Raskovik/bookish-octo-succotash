@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ShopFolder } from "@/components/shop/shop-folder";
+import { isNewListing, isLimitedListing } from "@/lib/shop-status";
 import type { ShopListingWithTarget, ShopSection } from "@/lib/supabase/types";
 
 type ListingJoinRow = {
@@ -10,9 +11,9 @@ type ListingJoinRow = {
   description: string | null;
   price_coins: number | null;
   price_gems: number | null;
-  is_new: boolean;
+  starts_at: string;
   ends_at: string | null;
-  items: { name: string; image_url: string | null } | null;
+  items: { name: string; image_url: string | null; description: string | null } | null;
   species: { name: string; image_url: string | null } | null;
 };
 
@@ -31,12 +32,12 @@ export default async function ShopPage() {
     supabase
       .from("shop_listings")
       .select(
-        "id, section, listing_type, description, price_coins, price_gems, is_new, ends_at, items(name, image_url), species(name, image_url)",
+        "id, section, listing_type, description, price_coins, price_gems, starts_at, ends_at, items(name, image_url, description), species(name, image_url)",
       )
-      .eq("is_active", true)
-      // ends_at in the past is excluded entirely rather than shown
-      // "sold out" — a limited-time listing is meant to just leave the
-      // shop on its own once its time is up, per the ask.
+      // A listing not yet started, or past its end date, is excluded
+      // entirely rather than shown "sold out" — it's meant to just
+      // arrive/leave the shop on its own, per the ask.
+      .lte("starts_at", new Date().toISOString())
       .or(`ends_at.is.null,ends_at.gt.${new Date().toISOString()}`)
       .order("section")
       .order("sort_order"),
@@ -47,16 +48,21 @@ export default async function ShopPage() {
 
   const listings = ((listingsData ?? []) as unknown as ListingJoinRow[]).map((row): ShopListingWithTarget => {
     const target = row.listing_type === "item" ? row.items : row.species;
+    // The shop shows the item's own description unless an override was
+    // typed — species have no description at all, so a pet listing
+    // shows nothing unless an override is set.
+    const itemDescription = row.listing_type === "item" ? row.items?.description ?? null : null;
     return {
       id: row.id,
       section: row.section,
       listing_type: row.listing_type,
       price_coins: row.price_coins,
       price_gems: row.price_gems,
-      is_new: row.is_new,
       ends_at: row.ends_at,
+      is_new: isNewListing(row.starts_at),
+      is_limited: isLimitedListing(row.starts_at, row.ends_at),
       name: target?.name ?? "(unavailable)",
-      description: row.description,
+      description: row.description ?? itemDescription,
       imageUrl: target?.image_url ?? null,
     };
   });

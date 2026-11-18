@@ -35,7 +35,6 @@ export default async function WelcomePage() {
     .from("species")
     .select("id, starter_label, starter_blurb, image_url")
     .eq("is_starter_option", true)
-    .eq("is_active", true)
     .order("starter_label");
 
   return (

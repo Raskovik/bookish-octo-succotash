@@ -135,7 +135,6 @@ export function ShopFolder({
                     const note = affordabilityNote(listing, coinBalance, gemBalance);
                     const coinOk = listing.price_coins !== null && coinBalance >= listing.price_coins;
                     const gemOk = listing.price_gems !== null && gemBalance >= listing.price_gems;
-                    const expiresSoon = listing.ends_at !== null;
                     return (
                       <li className="sh-item" key={listing.id}>
                         <div
@@ -147,7 +146,7 @@ export function ShopFolder({
                             <img src={listing.imageUrl} alt="" />
                           ) : null}
                         </div>
-                        {expiresSoon ? <span className="tag">Limited</span> : listing.is_new ? <span className="tag green">New</span> : null}
+                        {listing.is_limited ? <span className="tag">Limited</span> : listing.is_new ? <span className="tag green">New</span> : null}
                         <div className="sh-info">
                           <h3 className="sh-name">{listing.name}</h3>
                           {listing.description ? <p className="sh-desc">{listing.description}</p> : null}
