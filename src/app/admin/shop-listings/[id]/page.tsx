@@ -11,12 +11,12 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
     supabase
       .from("shop_listings")
       .select(
-        "id, section, listing_type, item_id, species_id, description, price_coins, price_gems, is_new, ends_at, is_active, sort_order, created_at, items(name, image_url), species(name, image_url)",
+        "id, section, listing_type, item_id, species_id, description, price_coins, price_gems, starts_at, ends_at, sort_order, created_at, items(name, image_url), species(name, image_url)",
       )
       .eq("id", id)
       .maybeSingle(),
-    supabase.from("items").select("id, name, image_url").eq("is_active", true).order("name"),
-    supabase.from("species").select("id, name, image_url").eq("is_active", true).order("name"),
+    supabase.from("items").select("id, name, image_url, description").order("name"),
+    supabase.from("species").select("id, name, image_url").order("name"),
   ]);
 
   if (!listing) {
@@ -32,7 +32,7 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
       <ShopListingForm
         action={updateShopListing}
         listing={listing}
-        itemOptions={(items ?? []).map((i) => ({ id: i.id, label: i.name, imageUrl: i.image_url }))}
+        itemOptions={(items ?? []).map((i) => ({ id: i.id, label: i.name, imageUrl: i.image_url, description: i.description }))}
         speciesOptions={(species ?? []).map((s) => ({ id: s.id, label: s.name, imageUrl: s.image_url }))}
         defaultItem={
           listing.item_id && targetItem ? { id: listing.item_id, label: targetItem.name, imageUrl: targetItem.image_url } : null
@@ -42,7 +42,8 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
             ? { id: listing.species_id, label: targetSpecies.name, imageUrl: targetSpecies.image_url }
             : null
         }
-        submitLabel="Save changes"
+        isNew={false}
+        cancelHref="/admin/shop-listings"
       />
     </div>
   );

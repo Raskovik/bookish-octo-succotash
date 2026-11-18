@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin";
-import { BREWING_ENABLED, GARDEN_ENABLED } from "@/lib/feature-flags";
 import { ResultsChart, type DailyResults } from "./results-chart";
 
 const RESULTS_WINDOW_DAYS = 30;
@@ -68,23 +67,15 @@ export default async function AdminDashboardPage() {
     { count: zoneCount },
     { count: itemCount },
     { count: speciesCount },
-    { count: recipeCount },
     { count: newsCount },
     { count: forumCategoryCount },
-    { count: gardenPlantCount },
     { count: shopListingCount },
   ] = await Promise.all([
     supabase.from("zones").select("*", { count: "exact", head: true }),
     supabase.from("items").select("*", { count: "exact", head: true }),
     supabase.from("species").select("*", { count: "exact", head: true }),
-    BREWING_ENABLED
-      ? supabase.from("potion_recipes").select("*", { count: "exact", head: true })
-      : Promise.resolve({ count: null }),
     supabase.from("site_news_posts").select("*", { count: "exact", head: true }),
     supabase.from("forum_categories").select("*", { count: "exact", head: true }),
-    GARDEN_ENABLED
-      ? supabase.from("garden_plants").select("*", { count: "exact", head: true })
-      : Promise.resolve({ count: null }),
     supabase.from("shop_listings").select("*", { count: "exact", head: true }),
   ]);
 
@@ -92,10 +83,8 @@ export default async function AdminDashboardPage() {
     { href: "/admin/zones", label: "Zones", count: zoneCount ?? 0 },
     { href: "/admin/items", label: "Items", count: itemCount ?? 0 },
     { href: "/admin/species", label: "Models", count: speciesCount ?? 0 },
-    ...(BREWING_ENABLED ? [{ href: "/admin/recipes", label: "Potion recipes", count: recipeCount ?? 0 }] : []),
     { href: "/admin/news", label: "Site news", count: newsCount ?? 0 },
     { href: "/admin/forums", label: "Forum categories", count: forumCategoryCount ?? 0 },
-    ...(GARDEN_ENABLED ? [{ href: "/admin/garden-plants", label: "Garden plants", count: gardenPlantCount ?? 0 }] : []),
     { href: "/admin/shop-listings", label: "Shop listings", count: shopListingCount ?? 0 },
   ];
 
