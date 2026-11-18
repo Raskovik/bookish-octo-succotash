@@ -111,6 +111,17 @@ export type BannedDomainRow = {
   created_at: string;
 };
 
+// Admin-tunable knobs driving start_expedition/resolve_due_expeditions
+// (trip duration, loot counts, double-haul chance, coin/XP formulas) —
+// see 0080_guaranteed_pet_and_tunable_odds.sql and /admin/game-config.
+export type GameConfigRow = {
+  key: string;
+  value: number;
+  label: string;
+  description: string;
+  updated_at: string;
+};
+
 export type BreedRow = {
   id: string;
   name: string;
@@ -1167,6 +1178,7 @@ export type Database = {
       breeds: TableOf<BreedRow, Partial<BreedRow> & { name: string }>;
       banned_phrases: TableOf<BannedPhraseRow, Partial<BannedPhraseRow> & { phrase: string }>;
       banned_domains: TableOf<BannedDomainRow, Partial<BannedDomainRow> & { domain: string }>;
+      game_config: TableOf<GameConfigRow, Partial<GameConfigRow> & { key: string; value: number }>;
       species: TableOf<SpeciesRow, Partial<SpeciesRow> & { breed_id: string }>;
       pets: TableOf<PetRow, Partial<PetRow> & { owner_id: string }>;
       pet_folders: TableOf<

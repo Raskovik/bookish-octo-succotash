@@ -60,6 +60,9 @@ export default async function AdminLayout({
           <Link href="/admin/content-filter" className="hover:underline">
             Content filter
           </Link>
+          <Link href="/admin/game-config" className="hover:underline">
+            Adventuring odds
+          </Link>
         </nav>
       </div>
       {children}
