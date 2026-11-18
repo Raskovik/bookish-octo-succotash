@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { SiteChrome } from "@/components/site-chrome";
 import { SITE_NAME, SITE_TAGLINE } from "@/config";
 import "./globals.css";
 
@@ -76,15 +77,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             the full-width footer outside .page. Not yet converted: every
             individual page's own content still renders its pre-theme
             Tailwind styling inside that <main>, now sitting directly
-            against the new background instead of inside a boxed wrapper. */}
-        <a className="btn btn-orange skip" href="#main">
-          Skip to content
-        </a>
-        <div className="page">
-          <SiteHeader />
+            against the new background instead of inside a boxed wrapper.
+            SiteChrome omits all of this for /admin/* routes, which get
+            the whole viewport for their own chrome instead. */}
+        <SiteChrome header={<SiteHeader />} footer={<SiteFooter />}>
           {children}
-        </div>
-        <SiteFooter />
+        </SiteChrome>
       </body>
     </html>
   );
