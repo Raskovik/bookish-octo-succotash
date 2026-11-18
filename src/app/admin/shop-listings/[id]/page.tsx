@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { ShopListingForm } from "../shop-listing-form";
@@ -27,8 +28,17 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
   const targetSpecies = listing.species as unknown as { name: string; image_url: string | null } | null;
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Edit shop listing</h2>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/shop-listings">Shop listings</Link>
+        <i>/</i>
+        <span>{targetItem?.name ?? targetSpecies?.name ?? "Edit"}</span>
+      </div>
+      <div className="ph">
+        <h1>Edit shop listing</h1>
+      </div>
       <ShopListingForm
         action={updateShopListing}
         listing={listing}
@@ -45,6 +55,6 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
         isNew={false}
         cancelHref="/admin/shop-listings"
       />
-    </div>
+    </>
   );
 }

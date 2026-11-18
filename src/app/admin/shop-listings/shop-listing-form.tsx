@@ -48,13 +48,13 @@ export function ShopListingForm({
 
   return (
     <>
-      <form id={formId} action={formAction} className="flex max-w-md flex-col gap-5">
+      <form id={formId} action={formAction} className="form">
         {listing ? <input type="hidden" name="listing_id" value={listing.id} /> : null}
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Sells</span>
-          <div className="flex gap-4 text-sm">
-            <label className="flex items-center gap-1.5">
+        <div className="fld">
+          <span className="lbl">Sells</span>
+          <div style={{ display: "flex", gap: 16, fontSize: 14 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
               <input
                 type="radio"
                 name="listing_type"
@@ -67,7 +67,7 @@ export function ShopListingForm({
               />
               An existing item
             </label>
-            <label className="flex items-center gap-1.5">
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 400 }}>
               <input
                 type="radio"
                 name="listing_type"
@@ -81,8 +81,8 @@ export function ShopListingForm({
         </div>
 
         {listingType === "item" ? (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Item</span>
+          <div className="fld">
+            <span className="lbl">Item</span>
             <SearchablePicker
               name="item_id"
               placeholder="Search items…"
@@ -92,25 +92,23 @@ export function ShopListingForm({
             />
           </div>
         ) : (
-          <div className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium">Species</span>
+          <div className="fld">
+            <span className="lbl">Species</span>
             <SearchablePicker
               name="species_id"
               placeholder="Search species…"
               options={speciesOptions}
               defaultSelected={defaultSpecies}
             />
-            <p className="text-xs text-stone-500">
+            <p className="hint">
               Buying this listing mints a brand-new pet of this species for the buyer — it&apos;s never taken from
               another player.
             </p>
           </div>
         )}
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="description" className="text-sm font-medium">
-            Shop description override
-          </label>
+        <div className="fld">
+          <label htmlFor="description">Shop description override</label>
           <textarea
             id="description"
             name="description"
@@ -120,32 +118,22 @@ export function ShopListingForm({
             placeholder={
               listingType === "item" ? "Blank = uses the item's own description" : "Blank = no description shown"
             }
-            className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+            className="in"
           />
-          <p className="text-xs text-stone-500">
-            Shown in the shop: {shownDescription ? `"${shownDescription}"` : "(nothing)"}
-          </p>
+          <p className="hint">Shown in the shop: {shownDescription ? `"${shownDescription}"` : "(nothing)"}</p>
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="section" className="text-sm font-medium">
-            Shop section
-          </label>
+        <div className="fld">
+          <label htmlFor="section">Shop section</label>
           {listingType === "pet" ? (
             <>
               <input type="hidden" name="section" value="pets" />
-              <p className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900">
+              <p className="in" style={{ background: "var(--greenbg)" }}>
                 Pets — set automatically for pet models
               </p>
             </>
           ) : (
-            <select
-              id="section"
-              name="section"
-              value={section}
-              onChange={(e) => setSection(e.target.value as ShopSection)}
-              className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-            >
+            <select id="section" name="section" value={section} onChange={(e) => setSection(e.target.value as ShopSection)} className="in">
               {ITEM_SECTIONS.map((s) => (
                 <option key={s} value={s}>
                   {s === "food" ? "Food" : "Special"}
@@ -155,11 +143,9 @@ export function ShopListingForm({
           )}
         </div>
 
-        <div className="flex gap-4">
-          <div className="flex flex-1 flex-col gap-1.5">
-            <label htmlFor="price_coins" className="text-sm font-medium">
-              Coin price
-            </label>
+        <div className="grid4" style={{ gridTemplateColumns: "repeat(2, minmax(0,1fr))" }}>
+          <div>
+            <label htmlFor="price_coins">Coin price</label>
             <input
               id="price_coins"
               name="price_coins"
@@ -168,13 +154,11 @@ export function ShopListingForm({
               step={1}
               defaultValue={listing?.price_coins ?? ""}
               placeholder="Blank = not buyable with coins"
-              className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+              className="in"
             />
           </div>
-          <div className="flex flex-1 flex-col gap-1.5">
-            <label htmlFor="price_gems" className="text-sm font-medium">
-              Gem price
-            </label>
+          <div>
+            <label htmlFor="price_gems">Gem price</label>
             <input
               id="price_gems"
               name="price_gems"
@@ -183,46 +167,26 @@ export function ShopListingForm({
               step={1}
               defaultValue={listing?.price_gems ?? ""}
               placeholder="Blank = not buyable with gems"
-              className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
+              className="in"
             />
           </div>
         </div>
-        <p className="text-xs text-stone-500">
-          Set either or both, at least one above zero — a player buying will choose which to pay with.
-        </p>
+        <p className="hint">Set either or both, at least one above zero — a player buying will choose which to pay with.</p>
 
-        <div className="flex gap-4">
-          <div className="flex flex-1 flex-col gap-1.5">
-            <label htmlFor="starts_at" className="text-sm font-medium">
-              Arrives
-            </label>
-            <input
-              id="starts_at"
-              name="starts_at"
-              type="date"
-              defaultValue={toInputValue(listing?.starts_at ?? null)}
-              className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-            />
-            <p className="text-xs text-stone-500">Blank = available immediately.</p>
+        <div className="grid4" style={{ gridTemplateColumns: "repeat(2, minmax(0,1fr))" }}>
+          <div>
+            <label htmlFor="starts_at">Arrives</label>
+            <input id="starts_at" name="starts_at" type="date" defaultValue={toInputValue(listing?.starts_at ?? null)} className="in" />
+            <p className="hint">Blank = available immediately.</p>
           </div>
-          <div className="flex flex-1 flex-col gap-1.5">
-            <label htmlFor="ends_at" className="text-sm font-medium">
-              Leaves
-            </label>
-            <input
-              id="ends_at"
-              name="ends_at"
-              type="date"
-              defaultValue={toInputValue(listing?.ends_at ?? null)}
-              className="rounded-md border border-green-300 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-900"
-            />
-            <p className="text-xs text-stone-500">
-              Blank = stays indefinitely. A short window here shows players a &quot;Limited&quot; tag.
-            </p>
+          <div>
+            <label htmlFor="ends_at">Leaves</label>
+            <input id="ends_at" name="ends_at" type="date" defaultValue={toInputValue(listing?.ends_at ?? null)} className="in" />
+            <p className="hint">Blank = stays indefinitely. A short window here shows players a &quot;Limited&quot; tag.</p>
           </div>
         </div>
 
-        {state?.error ? <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p> : null}
+        {state?.error ? <p className="err">{state.error}</p> : null}
       </form>
       <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
     </>

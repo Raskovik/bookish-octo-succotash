@@ -14,7 +14,7 @@ export function DeleteListingButton({ listingId, listingName }: { listingId: str
       body={`"${listingName}" will stop showing in the shop immediately. This can't be undone.`}
       confirmLabel="Delete"
       danger
-      className="text-xs text-red-600 hover:underline dark:text-red-400"
+      className="lnk red"
       onConfirm={async () => {
         const fd = new FormData();
         fd.set("listing_id", listingId);

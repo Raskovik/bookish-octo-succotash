@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { NewsForm } from "../news-form";
@@ -18,9 +19,18 @@ export default async function EditSiteNewsPage(props: PageProps<"/admin/news/[id
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold tracking-tight">Edit news post</h2>
+    <>
+      <div className="crumbs">
+        <Link href="/admin">Admin</Link>
+        <i>/</i>
+        <Link href="/admin/news">Site news</Link>
+        <i>/</i>
+        <span>{post.title}</span>
+      </div>
+      <div className="ph">
+        <h1>Edit news post</h1>
+      </div>
       <NewsForm action={updateSiteNewsPost} post={post} submitLabel="Save changes" />
-    </div>
+    </>
   );
 }
