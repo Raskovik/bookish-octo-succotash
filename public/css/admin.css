@@ -5,6 +5,30 @@
    kept identical to the prototype on purpose so page markup can reuse
    its patterns directly. */
 :root{--bg:#f4f3ee;--card:#fff;--line:#dcd9cc;--line2:#ebe8dc;--ink:#26241f;--soft:#6a665a;--side:#22392a;--side2:#2d4a37;--green:#2d7a30;--greend:#235f26;--greenbg:#e5f2dc;--orange:#c9650f;--orangebg:#fdeedd;--red:#b8321f;--redbg:#fbe6e1;--blue:#1d5fae;--bluebg:#e1edfa;--gray:#ece9de;--r:10px;--font:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+/* furgarden.css (loaded on every page, admin included) already defines
+   its own .tile, .btn, .seg, .note, .foot, .lnk, .skip, .sr, .st,
+   .toast and .empty classes for the player-facing design system —
+   totally unrelated components that happen to share these (deliberately
+   generic) names with this file's own. Without this reset, properties
+   furgarden.css sets that this file's own (later, more specific) rules
+   for the same classes don't also set — e.g. furgarden's `.tile{width:
+   34px;height:34px}`, meant for a small notification icon — leak
+   straight through onto admin's same-named elements (e.g. the dashboard
+   stat tiles), since there's no competing declaration for admin.css to
+   win on. `all:revert` clears every property furgarden.css set for
+   these classes back to the user-agent default before this file's own
+   rules for them (all later in this file, confirmed higher-or-equal
+   specificity) apply normally on top — verified in an isolated
+   Playwright test against the real compiled Tailwind + furgarden.css
+   output before shipping this. Scoped to .admin-shell so none of this
+   touches furgarden.css's actual behavior on player-facing pages. */
+.admin-shell .tile,.admin-shell .tile::after,.admin-shell .tile::before,
+.admin-shell .btn,.admin-shell .btn::before,
+.admin-shell .seg,.admin-shell .seg button,.admin-shell .seg button[aria-pressed="true"],
+.admin-shell .note,.admin-shell .foot,.admin-shell .foot::before,
+.admin-shell .lnk,.admin-shell .skip,.admin-shell .sr,.admin-shell .st,.admin-shell .st b,
+.admin-shell .toast,.admin-shell .toast.show,.admin-shell .empty
+{ all: revert; }
 /* furgarden.css sets `html, body { overflow-x: hidden; }` site-wide (to
    clip decorative background elements on player-facing pages). Leaving
    overflow-y at its default while overflow-x is non-visible makes the
