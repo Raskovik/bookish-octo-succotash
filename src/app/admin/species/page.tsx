@@ -27,7 +27,7 @@ export default async function AdminSpeciesPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Models</span>
       </div>

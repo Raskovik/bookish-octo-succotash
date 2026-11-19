@@ -19,7 +19,7 @@ export default async function AdminContentFilterPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Content filter</span>
       </div>

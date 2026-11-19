@@ -53,7 +53,15 @@ const ALL_PAGES = NAV.flatMap((g) => g.items);
 // sidebar's open/closed state are the same piece of UI, and because
 // the jump-search's live filtering/keyboard nav needs client state —
 // same architecture the original redesign used, just restyled.
-export function AdminSidebar({ children }: { children: React.ReactNode }) {
+export function AdminSidebar({
+  children,
+  counts,
+  signedInAs,
+}: {
+  children: React.ReactNode;
+  counts: Record<string, number>;
+  signedInAs: string;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [navOpen, setNavOpen] = useState(false);
@@ -94,6 +102,7 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
               {group.label ? <h2>{group.label}</h2> : null}
               {group.items.map((item) => {
                 const isCurrent = item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
+                const count = counts[item.href];
                 return (
                   <Link
                     key={item.href}
@@ -102,15 +111,18 @@ export function AdminSidebar({ children }: { children: React.ReactNode }) {
                     aria-current={isCurrent ? "page" : undefined}
                     onClick={() => setNavOpen(false)}
                   >
-                    {item.label}
+                    <span>{item.label}</span>
+                    {count !== undefined ? <span className="ct">{count}</span> : null}
                   </Link>
                 );
               })}
             </div>
           ))}
-          <div className="foot">
-            <Link href="/">View site ↗</Link>
-          </div>
+          <p className="foot">
+            <Link href="/">View the site ↗</Link>
+            <br />
+            Signed in as {signedInAs}
+          </p>
         </aside>
         <div className="mainwrap">
           <header className="top">

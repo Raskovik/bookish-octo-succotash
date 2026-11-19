@@ -16,7 +16,7 @@ export default async function AdminItemsPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Items</span>
       </div>

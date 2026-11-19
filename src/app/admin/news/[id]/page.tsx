@@ -21,7 +21,7 @@ export default async function EditSiteNewsPage(props: PageProps<"/admin/news/[id
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/news">Site news</Link>
         <i>/</i>

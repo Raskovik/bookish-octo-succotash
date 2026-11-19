@@ -9,7 +9,7 @@ export default async function NewItemPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/items">Items</Link>
         <i>/</i>

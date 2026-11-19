@@ -14,7 +14,7 @@ export default async function NewShopListingPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/shop-listings">Shop listings</Link>
         <i>/</i>

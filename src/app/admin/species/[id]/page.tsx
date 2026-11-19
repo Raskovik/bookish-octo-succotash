@@ -30,7 +30,7 @@ export default async function EditSpeciesPage(props: PageProps<"/admin/species/[
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/species">Models</Link>
         <i>/</i>

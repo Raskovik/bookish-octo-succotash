@@ -24,7 +24,7 @@ export default async function EditForumCategoryPage(props: PageProps<"/admin/for
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/forums">Forums</Link>
         <i>/</i>

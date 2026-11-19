@@ -66,7 +66,7 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/zones">Zones</Link>
         <i>/</i>

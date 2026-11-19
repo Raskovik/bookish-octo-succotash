@@ -45,7 +45,7 @@ export default async function EditItemPage(props: PageProps<"/admin/items/[id]">
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/items">Items</Link>
         <i>/</i>

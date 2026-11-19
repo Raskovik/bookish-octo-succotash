@@ -10,7 +10,7 @@ export default async function AdminBreedsPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Breeds</span>
       </div>

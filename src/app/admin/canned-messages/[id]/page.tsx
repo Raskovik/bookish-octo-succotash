@@ -21,7 +21,7 @@ export default async function EditCannedMessagePage(props: PageProps<"/admin/can
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <Link href="/admin/canned-messages">Canned messages</Link>
         <i>/</i>

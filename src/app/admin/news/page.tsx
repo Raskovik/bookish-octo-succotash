@@ -13,7 +13,7 @@ export default async function AdminNewsPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Site news</span>
       </div>

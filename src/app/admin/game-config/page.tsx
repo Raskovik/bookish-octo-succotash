@@ -60,7 +60,7 @@ export default async function AdminGameConfigPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Adventuring odds</span>
       </div>

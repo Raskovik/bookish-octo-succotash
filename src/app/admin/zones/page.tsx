@@ -15,7 +15,7 @@ export default async function AdminZonesPage() {
   return (
     <>
       <div className="crumbs">
-        <Link href="/admin">Admin</Link>
+        <Link href="/admin">Dashboard</Link>
         <i>/</i>
         <span>Zones</span>
       </div>
