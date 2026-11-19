@@ -7,7 +7,7 @@ export default async function AdminItemsPage() {
   const { supabase } = await requireAdmin();
 
   const [{ data: items }, obtainableIds] = await Promise.all([
-    supabase.from("items").select("id, name, type, rarity, image_url, sell_value").order("name"),
+    supabase.from("items").select("id, name, type, image_url, sell_value").order("name"),
     getObtainableIdSet(supabase, "item"),
   ]);
 
@@ -28,6 +28,7 @@ export default async function AdminItemsPage() {
           </Link>
         </div>
       </div>
+      <p className="desc">Everything players can find, buy, sell and use.</p>
 
       <ItemsList rows={rows} />
     </>

@@ -2,12 +2,11 @@
 
 import { useActionState } from "react";
 import type { ItemFormState } from "./actions";
-import type { ItemRarity, ItemRow, ItemType } from "@/lib/supabase/types";
+import type { ItemRow, ItemType } from "@/lib/supabase/types";
 import { ImageField } from "@/components/admin/image-field";
 import { SaveBar } from "@/components/admin/save-bar";
 
 const ITEM_TYPES: ItemType[] = ["ingredient", "cosmetic", "potion", "seed", "fertilizer"];
-const ITEM_RARITIES: ItemRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
 const initialState: ItemFormState = null;
 
@@ -18,10 +17,7 @@ export function ItemForm({
   cancelHref,
 }: {
   action: (prevState: ItemFormState, formData: FormData) => Promise<ItemFormState>;
-  item?: Pick<
-    ItemRow,
-    "id" | "name" | "type" | "rarity" | "image_url" | "description" | "sell_value" | "food_value"
-  >;
+  item?: Pick<ItemRow, "id" | "name" | "type" | "image_url" | "description" | "sell_value" | "food_value">;
   isNew: boolean;
   cancelHref: string;
 }) {
@@ -44,17 +40,6 @@ export function ItemForm({
             {ITEM_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="fld">
-          <label htmlFor="rarity">Rarity</label>
-          <select id="rarity" name="rarity" defaultValue={item?.rarity ?? "common"} className="in">
-            {ITEM_RARITIES.map((rarity) => (
-              <option key={rarity} value={rarity}>
-                {rarity}
               </option>
             ))}
           </select>

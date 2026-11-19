@@ -30,7 +30,7 @@ export default async function EditItemPage(props: PageProps<"/admin/items/[id]">
   const [{ data: item }, sources] = await Promise.all([
     supabase
       .from("items")
-      .select("id, name, type, rarity, image_url, description, sell_value, food_value, created_at")
+      .select("id, name, type, image_url, description, sell_value, food_value, created_at")
       .eq("id", id)
       .maybeSingle(),
     getObtainableSources(supabase, "item", id),

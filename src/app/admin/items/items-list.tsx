@@ -2,14 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ObtainableBadge } from "@/components/admin/badges";
+import { Badge, ObtainableBadge } from "@/components/admin/badges";
 import { ListFilter } from "@/components/admin/list-filter";
 
 type ItemRow = {
   id: string;
   name: string;
   type: string;
-  rarity: string;
   image_url: string | null;
   sell_value: number;
   obtainable: boolean;
@@ -36,7 +35,6 @@ export function ItemsList({ rows }: { rows: ItemRow[] }) {
               <tr>
                 <th>Item</th>
                 <th>Type</th>
-                <th>Rarity</th>
                 <th>Sell value</th>
                 <th>Obtainable</th>
               </tr>
@@ -54,8 +52,9 @@ export function ItemsList({ rows }: { rows: ItemRow[] }) {
                       {item.name}
                     </Link>
                   </td>
-                  <td>{item.type}</td>
-                  <td style={{ textTransform: "capitalize" }}>{item.rarity}</td>
+                  <td>
+                    <Badge color="gray">{item.type}</Badge>
+                  </td>
                   <td>{item.sell_value}</td>
                   <td>
                     <ObtainableBadge obtainable={item.obtainable} />
@@ -64,7 +63,7 @@ export function ItemsList({ rows }: { rows: ItemRow[] }) {
               ))}
               {visibleRows.length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={5}>No items match.</td>
+                  <td colSpan={4}>No items match.</td>
                 </tr>
               ) : null}
             </tbody>

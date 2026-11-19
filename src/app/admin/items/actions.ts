@@ -4,17 +4,21 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin";
 import { uploadGameImage } from "@/lib/game-image-upload";
-import type { FertilizerEffectType, ItemRarity, ItemType } from "@/lib/supabase/types";
+import type { FertilizerEffectType, ItemType } from "@/lib/supabase/types";
 
 const ITEM_TYPES: ItemType[] = ["ingredient", "cosmetic", "potion", "seed", "fertilizer"];
-const ITEM_RARITIES: ItemRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
 export type ItemFormState = { error: string } | null;
 
+// rarity stays on the item (it's load-bearing for the marketplace,
+// trades, pickers, and loot reveal elsewhere in the app — see
+// 0082_admin_redesign_schema's comment), but per the admin redesign
+// decision it's not editable here: the admin item form doesn't send it
+// at all, so create falls back to the column's own 'common' default
+// and update leaves whatever rarity the item already has untouched.
 function readItemFields(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const type = String(formData.get("type") ?? "");
-  const rarity = String(formData.get("rarity") ?? "");
   const imageUrlRaw = String(formData.get("image_url") ?? "").trim();
   const descriptionRaw = String(formData.get("description") ?? "").trim();
   const sellValueRaw = String(formData.get("sell_value") ?? "");
@@ -23,8 +27,6 @@ function readItemFields(formData: FormData) {
   if (name.length === 0) return { ok: false as const, error: "Name can't be empty." };
   if (!ITEM_TYPES.includes(type as ItemType))
     return { ok: false as const, error: "Invalid item type." };
-  if (!ITEM_RARITIES.includes(rarity as ItemRarity))
-    return { ok: false as const, error: "Invalid rarity." };
 
   const sellValue = Number(sellValueRaw);
   if (!Number.isInteger(sellValue) || sellValue < 0) {
@@ -44,7 +46,6 @@ function readItemFields(formData: FormData) {
     fields: {
       name,
       type: type as ItemType,
-      rarity: rarity as ItemRarity,
       image_url: imageUrlRaw.length > 0 ? imageUrlRaw : null,
       description: descriptionRaw.length > 0 ? descriptionRaw : null,
       sell_value: sellValue,
