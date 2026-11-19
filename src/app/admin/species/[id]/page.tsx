@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin";
 import { SpeciesForm } from "../species-form";
 import { updateSpecies } from "../actions";
 import { getObtainableSources } from "@/lib/admin-obtainable";
+import { Badge, ObtainableBadge } from "@/components/admin/badges";
 
 export default async function EditSpeciesPage(props: PageProps<"/admin/species/[id]">) {
   const { id } = await props.params;
@@ -37,33 +38,73 @@ export default async function EditSpeciesPage(props: PageProps<"/admin/species/[
         <span>{species.name}</span>
       </div>
       <div className="ph">
-        <h1>Edit model</h1>
+        <h1>{species.name}</h1>
       </div>
-      <SpeciesForm action={updateSpecies} species={species} breeds={breeds ?? []} isNew={false} cancelHref="/admin/species" />
-
-      <section className="sub card pad">
-        <h2>Where it can be obtained — {obtainable ? "Obtainable" : "Not obtainable"}</h2>
-        {sources.length === 0 ? (
-          <p className="muted">Not in any zone&apos;s pool or shop listing.</p>
-        ) : (
-          <ul className="act-list">
-            {sources.map((s, i) => (
-              <li key={i}>
-                <span className={s.live ? "" : "muted"} style={s.live ? { color: "var(--greend)" } : undefined}>
-                  {s.live ? "●" : "○"}
-                </span>{" "}
-                <span>{s.label}</span>
-                {s.reason ? <small>({s.reason})</small> : null}
-              </li>
-            ))}
-          </ul>
-        )}
-        {species.is_starter_option ? (
-          <p className="muted">
-            Also offered as a starter pet on /welcome{species.starter_label ? ` ("${species.starter_label}")` : ""}.
-          </p>
-        ) : null}
-      </section>
+      <SpeciesForm
+        action={updateSpecies}
+        species={species}
+        breeds={breeds ?? []}
+        isNew={false}
+        cancelHref="/admin/species"
+        obtainableSection={
+          <div className="fld" style={{ marginTop: 22 }}>
+            <div className="fh" style={{ margin: "0 0 4px", borderTop: "1px solid var(--line2)", paddingTop: 16 }}>
+              Where it can be obtained
+            </div>
+            <p style={{ margin: "0 0 4px" }}>
+              Status: <ObtainableBadge obtainable={obtainable} />
+            </p>
+            <p className="hint">
+              {obtainable
+                ? "Players can get this model right now from the places below."
+                : "Players can't get this model anywhere right now."}
+            </p>
+            {species.is_starter_option ? (
+              <p className="hint">
+                Also offered as a starter pet on /welcome
+                {species.starter_label ? ` ("${species.starter_label}")` : ""}.
+              </p>
+            ) : null}
+            {sources.length === 0 ? (
+              <p className="muted">Not in any zone&apos;s pool or shop listing.</p>
+            ) : (
+              <div className="tw">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Where</th>
+                      <th>Details</th>
+                      <th>Status</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sources.map((s, i) => (
+                      <tr key={i}>
+                        <td>{s.where}</td>
+                        <td>{s.details}</td>
+                        <td>
+                          <Badge color={s.live ? "green" : "gray"}>{s.live ? "Live" : "Not live"}</Badge>
+                          {!s.live && s.reason ? (
+                            <small className="muted" style={{ display: "block" }}>
+                              {s.reason}
+                            </small>
+                          ) : null}
+                        </td>
+                        <td className="act">
+                          <Link href={s.editHref} className="lnk">
+                            {s.editLabel} →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        }
+      />
     </>
   );
 }

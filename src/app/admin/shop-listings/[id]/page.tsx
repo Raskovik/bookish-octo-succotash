@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { ShopListingForm } from "../shop-listing-form";
 import { updateShopListing } from "../actions";
+import { DeleteListingButton } from "../delete-listing-button";
 
 export default async function EditShopListingPage(props: PageProps<"/admin/shop-listings/[id]">) {
   const { id } = await props.params;
@@ -26,6 +27,7 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
 
   const targetItem = listing.items as unknown as { name: string; image_url: string | null } | null;
   const targetSpecies = listing.species as unknown as { name: string; image_url: string | null } | null;
+  const name = targetItem?.name ?? targetSpecies?.name ?? "Edit listing";
 
   return (
     <>
@@ -34,10 +36,10 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
         <i>/</i>
         <Link href="/admin/shop-listings">Shop listings</Link>
         <i>/</i>
-        <span>{targetItem?.name ?? targetSpecies?.name ?? "Edit"}</span>
+        <span>{name}</span>
       </div>
       <div className="ph">
-        <h1>Edit shop listing</h1>
+        <h1>{name}</h1>
       </div>
       <ShopListingForm
         action={updateShopListing}
@@ -54,6 +56,14 @@ export default async function EditShopListingPage(props: PageProps<"/admin/shop-
         }
         isNew={false}
         cancelHref="/admin/shop-listings"
+        deleteSlot={
+          <DeleteListingButton
+            listingId={listing.id}
+            listingName={name}
+            className="btn danger"
+            redirectTo="/admin/shop-listings"
+          />
+        }
       />
     </>
   );

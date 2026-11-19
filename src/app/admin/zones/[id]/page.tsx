@@ -73,21 +73,34 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
         <span>{zone.name}</span>
       </div>
       <div className="ph">
-        <h1>Edit zone</h1>
+        <h1>{zone.name}</h1>
       </div>
+      {!zone.is_tutorial ? (
+        <p className="chips">
+          <span>On this page:</span>
+          <a href="#details">Details</a>
+          <a href="#pet-pool">Pet pool</a>
+          <a href="#item-pool">Item pool</a>
+        </p>
+      ) : null}
       {zone.is_tutorial ? (
         <p className="note">This is the tutorial zone — its pool is fixed in code and isn&apos;t managed here.</p>
       ) : null}
-      <ZoneForm action={updateZone} zone={zone} isNew={false} cancelHref="/admin/zones" />
+      <div id="details">
+        <ZoneForm action={updateZone} zone={zone} isNew={false} cancelHref="/admin/zones" />
+      </div>
 
       {!zone.is_tutorial ? (
         <>
-          <section className="sub card">
+          <section className="sub card" id="pet-pool">
             <div className="sh">
               <h2>
                 Pet pool
                 <span className="cnt">{pool.length}</span>
               </h2>
+              <p className="hint">
+                Pet models a trip here can meet. <b>Changes in this section save right away.</b>
+              </p>
             </div>
             <div className="tw">
               <table className="tbl">
@@ -167,16 +180,17 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
             ) : null}
           </section>
 
-          <section className="sub card">
+          <section className="sub card" id="item-pool">
             <div className="sh">
               <h2>
                 Item pool
                 <span className="cnt">{loot.length}</span>
               </h2>
               <p className="hint">
-                The same item can appear more than once at a different amount — e.g. &quot;10 Blueberries&quot; and
-                &quot;5 Blueberries&quot; as two separately-weighted rows. Adding an item at an amount that&apos;s
-                already in the pool updates that row&apos;s weight instead of adding a duplicate.
+                Items (and how many of them) a trip here can bring back. The same item can appear more than once at a
+                different amount — e.g. &quot;10 Blueberries&quot; and &quot;5 Blueberries&quot; as two
+                separately-weighted rows. Adding an item at an amount that&apos;s already in the pool updates that
+                row&apos;s weight instead of adding a duplicate. <b>Changes in this section save right away.</b>
               </p>
             </div>
             <div className="tw">

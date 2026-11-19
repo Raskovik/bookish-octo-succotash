@@ -37,6 +37,7 @@ export function ZonesList({ rows }: { rows: ZoneRow[] }) {
                 <th>Rewards</th>
                 <th>Tutorial</th>
                 <th>Active</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -54,11 +55,16 @@ export function ZonesList({ rows }: { rows: ZoneRow[] }) {
                   <td>
                     <ActiveBadge active={zone.is_active} />
                   </td>
+                  <td className="act">
+                    <Link href={`/admin/zones/${zone.id}`} className="btn sm">
+                      Edit
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {visibleRows.length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={4}>No zones match.</td>
+                  <td colSpan={5}>No zones match.</td>
                 </tr>
               ) : null}
             </tbody>

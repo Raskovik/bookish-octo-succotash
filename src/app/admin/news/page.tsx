@@ -35,6 +35,7 @@ export default async function AdminNewsPage() {
                 <th>Title</th>
                 <th>Posted</th>
                 <th>Active</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -49,11 +50,16 @@ export default async function AdminNewsPage() {
                   <td>
                     <ActiveBadge active={post.is_active} />
                   </td>
+                  <td className="act">
+                    <Link href={`/admin/news/${post.id}`} className="btn sm">
+                      Edit
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {(posts ?? []).length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={3}>No news posts yet.</td>
+                  <td colSpan={4}>No news posts yet.</td>
                 </tr>
               ) : null}
             </tbody>

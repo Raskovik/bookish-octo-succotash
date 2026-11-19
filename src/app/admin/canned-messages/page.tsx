@@ -37,6 +37,7 @@ export default async function AdminCannedMessagesPage() {
                 <th>Label</th>
                 <th>Order</th>
                 <th>Active</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -51,11 +52,16 @@ export default async function AdminCannedMessagesPage() {
                   <td>
                     <ActiveBadge active={m.is_active} />
                   </td>
+                  <td className="act">
+                    <Link href={`/admin/canned-messages/${m.id}`} className="btn sm">
+                      Edit
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {(messages ?? []).length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={3}>No canned messages yet.</td>
+                  <td colSpan={4}>No canned messages yet.</td>
                 </tr>
               ) : null}
             </tbody>

@@ -27,7 +27,7 @@ export function ZoneForm({
 
   return (
     <>
-      <form id={formId} action={formAction} className="form">
+      <form id={formId} action={formAction} className="card form">
         {zone ? <input type="hidden" name="zone_id" value={zone.id} /> : null}
 
         <div className="fld">
@@ -100,7 +100,7 @@ export function ZoneForm({
 
         {state?.error ? <p className="err">{state.error}</p> : null}
       </form>
-      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
+      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} backLabel="zones" />
     </>
   );
 }

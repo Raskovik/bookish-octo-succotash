@@ -38,6 +38,9 @@ export default async function AdminForumsPage() {
           </Link>
         </div>
       </div>
+      <p className="desc" style={{ marginBottom: 14 }}>
+        Forum categories. Subcategories are shown under their parent.
+      </p>
 
       <div className="card">
         <div className="tw">
@@ -47,6 +50,7 @@ export default async function AdminForumsPage() {
                 <th>Category</th>
                 <th>Sort</th>
                 <th>Active</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -55,7 +59,7 @@ export default async function AdminForumsPage() {
               ))}
               {tree.length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={3}>No forum categories yet.</td>
+                  <td colSpan={4}>No forum categories yet.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -94,6 +98,11 @@ function CategoryRow({ category, indent }: { category: ForumCategoryRow; indent?
       <td>{category.sort_order}</td>
       <td>
         <ActiveBadge active={category.is_active} />
+      </td>
+      <td className="act">
+        <Link href={`/admin/forums/${category.id}`} className="btn sm">
+          Edit
+        </Link>
       </td>
     </tr>
   );

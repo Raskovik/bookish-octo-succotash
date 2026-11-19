@@ -39,6 +39,10 @@ export default async function AdminSpeciesPage() {
           </Link>
         </div>
       </div>
+      <p className="desc" style={{ marginBottom: 14 }}>
+        Every pet model in the game. Each belongs to a breed. Players get them from zone pet pools and the shop.
+        Models can&apos;t be deleted, because players may already own them.
+      </p>
 
       <SpeciesList rows={rows} />
     </>

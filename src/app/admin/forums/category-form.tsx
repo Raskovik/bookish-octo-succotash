@@ -28,7 +28,7 @@ export function CategoryForm({
   const parentOptions = topLevelCategories.filter((c) => c.id !== category?.id);
 
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className="card form">
       {category ? <input type="hidden" name="category_id" value={category.id} /> : null}
 
       <div className="fld">

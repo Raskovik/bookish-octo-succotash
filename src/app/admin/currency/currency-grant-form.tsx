@@ -10,7 +10,7 @@ export function CurrencyGrantForm() {
   const [state, formAction, isPending] = useActionState(grantSelfCurrency, initialState);
 
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className="card form">
       <div className="fld">
         <label htmlFor="coin_delta">
           <CurrencyIcon kind="coin" /> Coins

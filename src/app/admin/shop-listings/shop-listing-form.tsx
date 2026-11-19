@@ -26,6 +26,7 @@ export function ShopListingForm({
   defaultSpecies,
   isNew,
   cancelHref,
+  deleteSlot,
 }: {
   action: (prevState: ShopListingFormState, formData: FormData) => Promise<ShopListingFormState>;
   listing?: Pick<ShopListingRow, "id" | "section" | "listing_type" | "price_coins" | "price_gems" | "starts_at" | "ends_at" | "description">;
@@ -35,6 +36,7 @@ export function ShopListingForm({
   defaultSpecies?: PickerOption | null;
   isNew: boolean;
   cancelHref: string;
+  deleteSlot?: React.ReactNode;
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
   const [listingType, setListingType] = useState<ShopListingType>(listing?.listing_type ?? "item");
@@ -48,7 +50,7 @@ export function ShopListingForm({
 
   return (
     <>
-      <form id={formId} action={formAction} className="form">
+      <form id={formId} action={formAction} className="card form">
         {listing ? <input type="hidden" name="listing_id" value={listing.id} /> : null}
 
         <div className="fld">
@@ -188,7 +190,14 @@ export function ShopListingForm({
 
         {state?.error ? <p className="err">{state.error}</p> : null}
       </form>
-      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
+      <SaveBar
+        formId={formId}
+        cancelHref={cancelHref}
+        isNew={isNew}
+        isPending={isPending}
+        backLabel="shop listings"
+        deleteSlot={deleteSlot}
+      />
     </>
   );
 }

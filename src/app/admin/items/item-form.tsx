@@ -15,18 +15,24 @@ export function ItemForm({
   item,
   isNew,
   cancelHref,
+  obtainableSection,
 }: {
   action: (prevState: ItemFormState, formData: FormData) => Promise<ItemFormState>;
   item?: Pick<ItemRow, "id" | "name" | "type" | "image_url" | "description" | "sell_value" | "food_value">;
   isNew: boolean;
   cancelHref: string;
+  // Server-rendered "Where it can be obtained" section (see
+  // getObtainableSources) — part of this same form card in the reference
+  // design, not a separate .sub.card below it, so it's a slot here rather
+  // than its own element on the edit page.
+  obtainableSection?: React.ReactNode;
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
   const formId = "item-form";
 
   return (
     <>
-      <form id={formId} action={formAction} className="form">
+      <form id={formId} action={formAction} className="card form">
         {item ? <input type="hidden" name="item_id" value={item.id} /> : null}
 
         <div className="fld">
@@ -79,9 +85,11 @@ export function ItemForm({
           />
         </div>
 
+        {obtainableSection}
+
         {state?.error ? <p className="err">{state.error}</p> : null}
       </form>
-      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
+      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} backLabel="items" />
     </>
   );
 }

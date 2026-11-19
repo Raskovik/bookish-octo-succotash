@@ -36,6 +36,7 @@ export function SpeciesList({ rows }: { rows: SpeciesRow[] }) {
                 <th>Model #</th>
                 <th>Breed</th>
                 <th>Obtainable</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -55,11 +56,16 @@ export function SpeciesList({ rows }: { rows: SpeciesRow[] }) {
                   <td>
                     <ObtainableBadge obtainable={s.obtainable} />
                   </td>
+                  <td className="act">
+                    <Link href={`/admin/species/${s.id}`} className="btn sm">
+                      Edit
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {visibleRows.length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={3}>No models match.</td>
+                  <td colSpan={4}>No models match.</td>
                 </tr>
               ) : null}
             </tbody>

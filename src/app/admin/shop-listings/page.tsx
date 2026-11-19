@@ -41,6 +41,7 @@ export default async function AdminShopListingsPage() {
           </Link>
         </div>
       </div>
+      <p className="desc" style={{ marginBottom: 14 }}>What the shop sells right now, and for how much.</p>
 
       <div className="card">
         <div className="tw">

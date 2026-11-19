@@ -37,6 +37,7 @@ export function ItemsList({ rows }: { rows: ItemRow[] }) {
                 <th>Type</th>
                 <th>Sell value</th>
                 <th>Obtainable</th>
+                <th />
               </tr>
             </thead>
             <tbody>
@@ -59,11 +60,16 @@ export function ItemsList({ rows }: { rows: ItemRow[] }) {
                   <td>
                     <ObtainableBadge obtainable={item.obtainable} />
                   </td>
+                  <td className="act">
+                    <Link href={`/admin/items/${item.id}`} className="btn sm">
+                      Edit
+                    </Link>
+                  </td>
                 </tr>
               ))}
               {visibleRows.length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={4}>No items match.</td>
+                  <td colSpan={5}>No items match.</td>
                 </tr>
               ) : null}
             </tbody>

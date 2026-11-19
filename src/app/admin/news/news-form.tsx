@@ -19,7 +19,7 @@ export function NewsForm({
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className="card form">
       {post ? <input type="hidden" name="post_id" value={post.id} /> : null}
 
       <div className="fld">

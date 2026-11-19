@@ -16,12 +16,16 @@ export function SaveBar({
   isNew,
   isPending,
   deleteSlot,
+  backLabel,
 }: {
   formId: string;
   cancelHref: string;
   isNew: boolean;
   isPending: boolean;
   deleteSlot?: React.ReactNode;
+  // Plural name of the list this edit page belongs to, e.g. "zones" — shown
+  // as "Back to zones" once a record exists. Falls back to a plain "Back".
+  backLabel?: string;
 }) {
   const [dirty, setDirty] = useState(false);
 
@@ -51,7 +55,7 @@ export function SaveBar({
         {isPending ? "Saving…" : isNew ? "Create" : "Save changes"}
       </button>
       <Link href={cancelHref} className="btn">
-        {isNew ? "Cancel" : "Back"}
+        {isNew ? "Cancel" : backLabel ? `Back to ${backLabel}` : "Back"}
       </Link>
       <span className={`st${dirty ? " dirty" : ""}`}>
         {isNew ? "Not saved yet" : dirty ? "You have unsaved changes" : "All changes saved"}

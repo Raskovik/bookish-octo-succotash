@@ -31,7 +31,7 @@ export default async function EditForumCategoryPage(props: PageProps<"/admin/for
         <span>{category.name}</span>
       </div>
       <div className="ph">
-        <h1>Edit forum category</h1>
+        <h1>{category.name}</h1>
       </div>
       <CategoryForm
         action={updateForumCategory}

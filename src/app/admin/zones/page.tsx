@@ -27,6 +27,9 @@ export default async function AdminZonesPage() {
           </Link>
         </div>
       </div>
+      <p className="desc" style={{ marginBottom: 14 }}>
+        Places pets can go exploring. Each zone has its own pet pool and item pool, with the odds for each.
+      </p>
 
       <ZonesList rows={rows} />
     </>

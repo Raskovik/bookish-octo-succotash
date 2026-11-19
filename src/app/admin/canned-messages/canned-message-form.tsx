@@ -18,7 +18,7 @@ export function CannedMessageForm({
   const [state, formAction, isPending] = useActionState(action, initialState);
 
   return (
-    <form action={formAction} className="form">
+    <form action={formAction} className="card form">
       {message ? <input type="hidden" name="message_id" value={message.id} /> : null}
 
       <div className="fld">

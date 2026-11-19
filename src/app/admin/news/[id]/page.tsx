@@ -28,8 +28,11 @@ export default async function EditSiteNewsPage(props: PageProps<"/admin/news/[id
         <span>{post.title}</span>
       </div>
       <div className="ph">
-        <h1>Edit news post</h1>
+        <h1>{post.title}</h1>
       </div>
+      <p className="desc" style={{ marginBottom: 14 }}>
+        Posted {new Date(post.created_at).toLocaleDateString()}
+      </p>
       <NewsForm action={updateSiteNewsPost} post={post} submitLabel="Save changes" />
     </>
   );

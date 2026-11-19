@@ -15,19 +15,24 @@ export function SpeciesForm({
   breeds,
   isNew,
   cancelHref,
+  obtainableSection,
 }: {
   action: (prevState: SpeciesFormState, formData: FormData) => Promise<SpeciesFormState>;
   species?: Pick<SpeciesRow, "id" | "model_number" | "breed_id" | "image_url">;
   breeds: Pick<BreedRow, "id" | "name">[];
   isNew: boolean;
   cancelHref: string;
+  // Server-rendered "Where it can be obtained" section — part of this same
+  // form card in the reference design, so it's a slot here, not a separate
+  // element on the edit page.
+  obtainableSection?: React.ReactNode;
 }) {
   const [state, formAction, isPending] = useActionState(action, initialState);
   const formId = "species-form";
 
   return (
     <>
-      <form id={formId} action={formAction} className="form">
+      <form id={formId} action={formAction} className="card form">
         {species ? <input type="hidden" name="species_id" value={species.id} /> : null}
 
         {species ? (
@@ -63,9 +68,11 @@ export function SpeciesForm({
 
         <ImageField fileFieldName="image_file" urlFieldName="image_url" defaultUrl={species?.image_url} />
 
+        {obtainableSection}
+
         {state?.error ? <p className="err">{state.error}</p> : null}
       </form>
-      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} />
+      <SaveBar formId={formId} cancelHref={cancelHref} isNew={isNew} isPending={isPending} backLabel="models" />
     </>
   );
 }

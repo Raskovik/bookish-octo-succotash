@@ -4,7 +4,19 @@ import { useRouter } from "next/navigation";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { deleteShopListing } from "./actions";
 
-export function DeleteListingButton({ listingId, listingName }: { listingId: string; listingName: string }) {
+export function DeleteListingButton({
+  listingId,
+  listingName,
+  className = "lnk red",
+  redirectTo,
+}: {
+  listingId: string;
+  listingName: string;
+  className?: string;
+  // Edit page usage: the record is gone after deleting, so navigate away
+  // instead of refreshing the (now 404) page it was on.
+  redirectTo?: string;
+}) {
   const router = useRouter();
 
   return (
@@ -14,12 +26,13 @@ export function DeleteListingButton({ listingId, listingName }: { listingId: str
       body={`"${listingName}" will stop showing in the shop immediately. This can't be undone.`}
       confirmLabel="Delete"
       danger
-      className="lnk red"
+      className={className}
       onConfirm={async () => {
         const fd = new FormData();
         fd.set("listing_id", listingId);
         await deleteShopListing(fd);
-        router.refresh();
+        if (redirectTo) router.push(redirectTo);
+        else router.refresh();
       }}
     />
   );

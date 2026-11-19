@@ -28,7 +28,7 @@ export default async function EditCannedMessagePage(props: PageProps<"/admin/can
         <span>{message.label}</span>
       </div>
       <div className="ph">
-        <h1>Edit canned message</h1>
+        <h1>{message.label}</h1>
       </div>
       <CannedMessageForm action={updateCannedMessage} message={message} submitLabel="Save changes" />
     </>
