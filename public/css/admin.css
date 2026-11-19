@@ -5,6 +5,19 @@
    kept identical to the prototype on purpose so page markup can reuse
    its patterns directly. */
 :root{--bg:#f4f3ee;--card:#fff;--line:#dcd9cc;--line2:#ebe8dc;--ink:#26241f;--soft:#6a665a;--side:#22392a;--side2:#2d4a37;--green:#2d7a30;--greend:#235f26;--greenbg:#e5f2dc;--orange:#c9650f;--orangebg:#fdeedd;--red:#b8321f;--redbg:#fbe6e1;--blue:#1d5fae;--bluebg:#e1edfa;--gray:#ece9de;--r:10px;--font:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+/* furgarden.css sets `html, body { overflow-x: hidden; }` site-wide (to
+   clip decorative background elements on player-facing pages). Leaving
+   overflow-y at its default while overflow-x is non-visible makes the
+   browser silently promote overflow-y to auto on BOTH html and body —
+   so body becomes its own nested scroll container instead of the page
+   viewport being the only one. That breaks .side's position:sticky (it
+   sticks relative to the wrong scroll ancestor, so it drifts away
+   instead of staying pinned) and lets body's own fixed jungle-hills
+   background show through wherever admin content doesn't happen to
+   cover it. Cancelling it only when .admin-shell is on the page restores
+   the normal single-viewport-scroller behavior admin needs, without
+   touching this for any player-facing page. */
+body:has(.admin-shell){overflow:visible}
 .admin-shell *{box-sizing:border-box}
 .admin-shell{scroll-padding-top:70px}
 .admin-shell{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font)}
