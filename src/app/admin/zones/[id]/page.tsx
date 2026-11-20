@@ -34,7 +34,7 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
     supabase
       .from("zones")
       .select(
-        "id, name, description, image_url, is_tutorial, is_active, reward_coins_base, reward_coins_variance, reward_xp, created_at",
+        "id, name, description, image_url, is_active, reward_coins_base, reward_coins_variance, reward_xp, created_at",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -75,24 +75,17 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
       <div className="ph">
         <h1>{zone.name}</h1>
       </div>
-      {!zone.is_tutorial ? (
-        <p className="chips">
-          <span>On this page:</span>
-          <a href="#details">Details</a>
-          <a href="#pet-pool">Pet pool</a>
-          <a href="#item-pool">Item pool</a>
-        </p>
-      ) : null}
-      {zone.is_tutorial ? (
-        <p className="note">This is the tutorial zone — its pool is fixed in code and isn&apos;t managed here.</p>
-      ) : null}
+      <p className="chips">
+        <span>On this page:</span>
+        <a href="#details">Details</a>
+        <a href="#pet-pool">Pet pool</a>
+        <a href="#item-pool">Item pool</a>
+      </p>
       <div id="details">
         <ZoneForm action={updateZone} zone={zone} isNew={false} cancelHref="/admin/zones" />
       </div>
 
-      {!zone.is_tutorial ? (
-        <>
-          <section className="sub card" id="pet-pool">
+      <section className="sub card" id="pet-pool">
             <div className="sh">
               <h2>
                 Pet pool
@@ -279,8 +272,6 @@ export default async function EditZonePage(props: PageProps<"/admin/zones/[id]">
               </form>
             ) : null}
           </section>
-        </>
-      ) : null}
     </>
   );
 }

@@ -7,12 +7,10 @@ import { uploadGameImage } from "@/lib/game-image-upload";
 
 export type ZoneFormState = { error: string } | null;
 
-// is_tutorial is deliberately never read from form input here — it's set
-// once by the seed migration for the single tutorial zone and isn't meant
-// to be reassignable from the admin panel. Map position (map_x/y/width/
-// height) is likewise never read here — per the admin redesign, a new
-// zone's map hotspot is positioned directly in the database by whoever
-// adds it, not through this form; see ZoneRow's comment in types.ts.
+// Map position (map_x/y/width/height) is never read from form input
+// here — per the admin redesign, a new zone's map hotspot is positioned
+// directly in the database by whoever adds it, not through this form;
+// see ZoneRow's comment in types.ts.
 function readZoneFields(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const descriptionRaw = String(formData.get("description") ?? "").trim();

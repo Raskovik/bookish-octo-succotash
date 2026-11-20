@@ -64,7 +64,6 @@ export default async function ExpeditionsPage() {
       .from("zones")
       .select("id, name, description, image_url, map_x, map_y, map_width, map_height, reward_coins_base")
       .eq("is_active", true)
-      .eq("is_tutorial", false)
       // No more explicit tier — reward_coins_base is the closest thing
       // to a difficulty ordering now (0082_admin_redesign_schema.sql).
       .order("reward_coins_base", { ascending: true }),

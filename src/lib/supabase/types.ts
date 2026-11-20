@@ -180,7 +180,6 @@ export type ZoneRow = {
   name: string;
   description: string | null;
   image_url: string | null;
-  is_tutorial: boolean;
   is_active: boolean;
   // Flat per-zone reward override, replacing the old shared tier-
   // multiplier formula — see 0082_admin_redesign_schema.sql. Guaranteed

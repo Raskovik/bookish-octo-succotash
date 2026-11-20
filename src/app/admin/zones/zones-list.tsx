@@ -7,7 +7,6 @@ import { ListFilter } from "@/components/admin/list-filter";
 type ZoneRow = {
   id: string;
   name: string;
-  is_tutorial: boolean;
   is_active: boolean;
   reward_coins_base: number;
   reward_coins_variance: number;
@@ -35,7 +34,6 @@ export function ZonesList({ rows }: { rows: ZoneRow[] }) {
               <tr>
                 <th>Zone</th>
                 <th>Rewards</th>
-                <th>Tutorial</th>
                 <th>Active</th>
                 <th />
               </tr>
@@ -51,7 +49,6 @@ export function ZonesList({ rows }: { rows: ZoneRow[] }) {
                   <td className="muted">
                     {zone.reward_coins_base}–{zone.reward_coins_base + zone.reward_coins_variance} coins, {zone.reward_xp} XP
                   </td>
-                  <td>{zone.is_tutorial ? "Yes" : "No"}</td>
                   <td>
                     <ActiveBadge active={zone.is_active} />
                   </td>
@@ -64,7 +61,7 @@ export function ZonesList({ rows }: { rows: ZoneRow[] }) {
               ))}
               {visibleRows.length === 0 ? (
                 <tr className="empty">
-                  <td colSpan={5}>No zones match.</td>
+                  <td colSpan={4}>No zones match.</td>
                 </tr>
               ) : null}
             </tbody>

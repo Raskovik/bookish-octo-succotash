@@ -7,7 +7,7 @@ export default async function AdminZonesPage() {
 
   const { data: zones } = await supabase
     .from("zones")
-    .select("id, name, is_tutorial, is_active, reward_coins_base, reward_coins_variance, reward_xp")
+    .select("id, name, is_active, reward_coins_base, reward_coins_variance, reward_xp")
     .order("name");
 
   const rows = zones ?? [];
