@@ -22,6 +22,7 @@ const TYPE_LABELS: Record<ItemType, string> = {
   cosmetic: "Cosmetics",
   seed: "Seeds",
   fertilizer: "Fertilizer",
+  custom_pet_ticket: "Custom Pet Tickets",
 };
 
 // Tinted mask-icon fallback for an item with no art uploaded — same
@@ -36,6 +37,7 @@ const TYPE_PLACEHOLDER: Record<ItemType, { icon: "bag" | "star" | "diamond" | "p
   fertilizer: { icon: "bag", tint: "gold" },
   potion: { icon: "star", tint: "gold" },
   cosmetic: { icon: "diamond", tint: "pink" },
+  custom_pet_ticket: { icon: "paw", tint: "pink" },
 };
 
 type SortKey = "name" | "qty" | "food";

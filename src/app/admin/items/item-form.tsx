@@ -6,7 +6,7 @@ import type { ItemRow, ItemType } from "@/lib/supabase/types";
 import { ImageField } from "@/components/admin/image-field";
 import { SaveBar } from "@/components/admin/save-bar";
 
-const ITEM_TYPES: ItemType[] = ["ingredient", "cosmetic", "potion", "seed", "fertilizer"];
+const ITEM_TYPES: ItemType[] = ["ingredient", "cosmetic", "potion", "seed", "fertilizer", "custom_pet_ticket"];
 
 const initialState: ItemFormState = null;
 

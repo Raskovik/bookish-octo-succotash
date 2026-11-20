@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/admin";
 import { uploadGameImage } from "@/lib/game-image-upload";
 import type { FertilizerEffectType, ItemType } from "@/lib/supabase/types";
 
-const ITEM_TYPES: ItemType[] = ["ingredient", "cosmetic", "potion", "seed", "fertilizer"];
+const ITEM_TYPES: ItemType[] = ["ingredient", "cosmetic", "potion", "seed", "fertilizer", "custom_pet_ticket"];
 
 export type ItemFormState = { error: string } | null;
 

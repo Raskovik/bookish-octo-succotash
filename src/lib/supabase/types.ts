@@ -62,7 +62,7 @@ export type PublicUserProfile = Pick<
 // is an item-only concept again now — ItemRarity is the only name for it.
 export type ItemRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export type ExpeditionStatus = "in_progress" | "awaiting_claim" | "completed";
-export type ItemType = "ingredient" | "cosmetic" | "potion" | "seed" | "fertilizer";
+export type ItemType = "ingredient" | "cosmetic" | "potion" | "seed" | "fertilizer" | "custom_pet_ticket";
 export type PotionEffectType =
   | "duration_reduction"
   | "rarity_boost"
@@ -92,6 +92,16 @@ export type SpeciesRow = {
   is_starter_option: boolean;
   starter_label: string | null;
   starter_blurb: string | null;
+  // Custom (player-submitted) model fields — see
+  // 0084_custom_pet_submissions.sql. review_status is only meaningful
+  // when is_custom; 'approved' for every official model. A pending or
+  // rejected custom model's row is only visible to its owner and staff
+  // (RLS), so a plain select never returns one for anyone else.
+  is_custom: boolean;
+  artist_name: string | null;
+  artist_user_id: string | null;
+  review_status: "pending" | "approved" | "rejected";
+  rejection_reason: string | null;
   created_at: string;
 };
 
