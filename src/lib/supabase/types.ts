@@ -1089,7 +1089,8 @@ export type NotificationType =
   | "ban_issued"
   | "report_filed"
   | "friend_request"
-  | "friend_accepted";
+  | "friend_accepted"
+  | "expedition_complete";
 
 export type NotificationRow = {
   id: string;

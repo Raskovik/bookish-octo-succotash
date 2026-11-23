@@ -27,6 +27,7 @@ const NOTIFICATION_TILE: Record<NotificationType, string> = {
   report_filed: "t-gold i-megaphone",
   friend_request: "t-leaf i-paw",
   friend_accepted: "t-gold i-star",
+  expedition_complete: "t-leaf i-paw",
 };
 
 /**

@@ -36,6 +36,10 @@ export function describeNotification(notification: NotificationWithActor): strin
       return `${actor} sent you a friend request`;
     case "friend_accepted":
       return `${actor} accepted your friend request`;
+    case "expedition_complete":
+      return notification.target_label
+        ? `Your trip to ${notification.target_label} is ready to claim`
+        : "Your expedition is ready to claim";
     default:
       return "New notification";
   }
